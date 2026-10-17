@@ -75,7 +75,6 @@ local function setProtected(player, ms)
     local data = getData(player)
     killTimerSafe(data.protectTimer)
     setElementData(player, "dm:protected", true)
-    setElementData(player, "dm:protectUntil", getTickCount() + ms)
     data.protectTimer = setTimer(function()
         if isElement(player) then
             setElementData(player, "dm:protected", false)

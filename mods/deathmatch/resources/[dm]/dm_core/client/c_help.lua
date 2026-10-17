@@ -68,7 +68,8 @@ local function onClick(button, state)
 end
 
 function openHelp()
-    if help.open or not UI.setPanelOpen(PANEL, true) then return end
+    if help.open or not getElementData(localPlayer, "dm:ready") then return end
+    if not UI.setPanelOpen(PANEL, true) then return end
     help.open = true
     help.tick = getTickCount()
     addEventHandler("onClientRender", root, render)

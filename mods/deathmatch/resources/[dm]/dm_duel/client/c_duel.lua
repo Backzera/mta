@@ -387,7 +387,7 @@ addEventHandler("onClientRender", root, function()
                 end
                 local frac = (remaining % 1000) / 1000
                 local scale = 1 + (1 - frac) * 0.25
-                UI.textShadow(tostring(sec), 0, UI.sh / 2 - s(120) * scale, UI.sw, s(120) * scale, UI.color("accent"), "bold", math.floor(72 * scale), "center", "center")
+                UI.textShadow(tostring(sec), 0, UI.sh / 2 - s(120) * scale, UI.sw, s(120) * scale, UI.color("accent"), "bold", 72, "center", "center")
                 UI.textShadow("PREPARE-SE", 0, UI.sh / 2 + s(10), UI.sw, s(24), tocolor(255, 255, 255, 220), "semibold", 14, "center", "center")
             end
         elseif duel.state == "fight" and duel.fightTick and now - duel.fightTick < 900 then

@@ -81,7 +81,10 @@ end
 local function render()
     local progress = UI.openProgress(login, 300)
     if progress <= 0 then
-        if not login.open then removeEventHandler("onClientRender", root, render) end
+        if not login.open then
+            removeEventHandler("onClientRender", root, render)
+            setCameraTarget(localPlayer)
+        end
         return
     end
     local a = progress
@@ -92,7 +95,7 @@ local function render()
     local radius = 70
     local camX = cx + math.cos(t * 0.08) * radius
     local camY = cy + math.sin(t * 0.08) * radius
-    setCameraMatrix(camX, camY, 1012 + math.sin(t * 0.2) * 3, cx, cy, 994)
+    if login.open then setCameraMatrix(camX, camY, 1012 + math.sin(t * 0.2) * 3, cx, cy, 994) end
 
     -- fundo
     dxDrawRectangle(0, 0, UI.sw, UI.sh, tocolor(6, 8, 14, 170 * a))
@@ -207,6 +210,8 @@ local function hide()
     removeEventHandler("onClientClick", root, onClick)
     UI.unbindInputs(inputState)
     inputState = nil
+    showCursor(false)
+    toggleAllControls(true, true, true)
     setCameraTarget(localPlayer)
 end
 

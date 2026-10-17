@@ -92,14 +92,6 @@ addEventHandler("onClientPlayerWeaponFire", localPlayer, function()
     end
 end)
 
--- Em zona segura, não permite atirar/bater (sem armas, mas por segurança)
-addEventHandler("onClientPlayerWeaponFire", localPlayer, function()
-    local arena = arenaOf(localPlayer)
-    if arena and arena.safe and not getElementData(localPlayer, "dm:inDuel") then
-        cancelEvent()
-    end
-end)
-
 addEventHandler("onClientRender", root, function()
     local s = UI.s
     local now = getTickCount()
@@ -133,16 +125,15 @@ addEventHandler("onClientRender", root, function()
     -- Indicador de proteção de spawn
     local arena = arenaOf(localPlayer)
     if arena and not arena.safe and getElementData(localPlayer, "dm:protected") and not isPedDead(localPlayer) then
-        local untilTick = tonumber(getElementData(localPlayer, "dm:protectUntil")) or 0
-        local remaining = untilTick - now
-        if remaining > 0 then
-            local total = DM.server.spawnProtection
+        local total = DM.server.spawnProtection
+        local remaining = total - (now - spawnTick)
+        if remaining > 0 and remaining <= total then
             local w, h = s(220), s(40)
             local x, y = (UI.sw - w) / 2, UI.sh - s(160)
             UI.rect(x, y, w, h, UI.color("card", 220), h / 2)
             UI.border(x, y, w, h, UI.color("accent", 120), h / 2)
             UI.text(("PROTEÇÃO  %.1fs"):format(remaining / 1000), x, y, w, h, UI.color("accent"), "semibold", 11, "center", "center")
-            UI.rect(x + s(16), y + h - s(6), (w - s(32)) * (remaining / total), s(3), UI.color("accent", 200), 1)
+            UI.rect(x + s(16), y + h - s(6), (w - s(32)) * math.min(1, remaining / total), s(3), UI.color("accent", 200), 1)
         end
     end
 end)

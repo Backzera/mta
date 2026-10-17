@@ -145,7 +145,6 @@ local function startRound(duel)
             })
             setElementFrozen(p, true)
             setElementData(p, "dm:protected", true)
-            setElementData(p, "dm:protectUntil", 0)
         end
     end
     local seconds = cfg().duelCountdown or 3

@@ -32,10 +32,14 @@ addEventHandler("onResourceStop", resourceRoot, function()
 end)
 
 -- Previne que o jogador fique com armas de pickups do mundo (mantém regra da arena)
-addEventHandler("onPlayerPickupHit", root, function(player)
-    local arena = getPlayerArena(player)
+addEventHandler("onPlayerPickupHit", root, function(pickup)
+    local arena = getPlayerArena(source)
     if not arena then return end
-    if getPickupType(source) == 2 then -- arma
+    if getPickupType(pickup) == 2 then -- arma
+        local weapon = getPickupWeapon(pickup)
+        for _, w in ipairs(arena.weapons or {}) do
+            if w[1] == weapon then return end
+        end
         cancelEvent()
     end
 end)

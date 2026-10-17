@@ -6,6 +6,7 @@
 local db
 local stats = {}        -- player -> row (cache)
 local sessionStart = {} -- player -> tick
+local loading = {}      -- player -> key em carregamento
 
 local COLUMNS = { "kills", "deaths", "headshots", "best_streak", "duels_won", "duels_lost", "xp", "playtime" }
 
@@ -68,9 +69,12 @@ end
 function loadPlayerStats(player, callback)
     if not db or not isElement(player) then return end
     local key = getStatsKey(player)
+    if loading[player] == key then return end
+    loading[player] = key
     sessionStart[player] = getTickCount()
     dbQuery(function(qh, p, k)
         local result = dbPoll(qh, 0)
+        if loading[p] == k then loading[p] = nil end
         if not isElement(p) then return end
         -- O jogador pode ter trocado de conta enquanto a query rodava
         if getStatsKey(p) ~= k then return end
@@ -166,6 +170,7 @@ addEventHandler("onPlayerQuit", root, function()
     savePlayerStats(source)
     stats[source] = nil
     sessionStart[source] = nil
+    loading[source] = nil
 end)
 
 -- Ao logar em uma conta, recarrega as stats da conta (migra do serial se era convidado)

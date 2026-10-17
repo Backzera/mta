@@ -150,7 +150,7 @@ addCommandHandler("mute", function(player, cmd, target, minutes)
     if not target then usage(player, "/mute <jogador> [minutos]") return end
     local other = targetAndReason(player, target)
     if not other then return end
-    minutes = tonumber(minutes) or 5
+    minutes = math.max(1, math.floor(tonumber(minutes) or 5))
     setElementData(other, "dm:muted", true)
     setTimer(function()
         if isElement(other) then
