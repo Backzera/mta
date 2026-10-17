@@ -1,0 +1,7 @@
+<meta>
+    <info author="Arena PVP" name="DM C-Bug" description="C-Bug liberado apenas na Arena C-Bug; bloqueado nas demais" type="script" version="1.0.0" />
+    <include resource="dm_core" />
+    <script src="s_cbug.lua" type="server" />
+    <script src="c_cbug.lua" type="client" cache="false" />
+    <min_mta_version server="1.5.9" client="1.5.9" />
+</meta>

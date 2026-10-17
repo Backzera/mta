@@ -1,0 +1,71 @@
+<meta>
+    <info author="Arena PVP" name="DM Core" description="Núcleo do servidor mata-mata: arenas, spawns, armas, kills, stats, HUD" type="script" version="1.0.0" />
+
+    <!-- Compartilhado -->
+    <script src="shared/config.lua" type="shared" />
+
+    <!-- Servidor -->
+    <script src="server/s_util.lua" type="server" />
+    <script src="server/s_stats.lua" type="server" />
+    <script src="server/s_arenas.lua" type="server" />
+    <script src="server/s_kills.lua" type="server" />
+    <script src="server/s_chat.lua" type="server" />
+    <script src="server/s_commands.lua" type="server" />
+    <script src="server/s_world.lua" type="server" />
+
+    <!-- Cliente -->
+    <script src="client/c_exports.lua" type="client" cache="false" />
+    <script src="client/c_ui.lua" type="client" cache="false" />
+    <script src="client/c_sounds.lua" type="client" cache="false" />
+    <script src="client/c_notify.lua" type="client" cache="false" />
+    <script src="client/c_hud.lua" type="client" cache="false" />
+    <script src="client/c_killfeed.lua" type="client" cache="false" />
+    <script src="client/c_spawn.lua" type="client" cache="false" />
+    <script src="client/c_hitmarker.lua" type="client" cache="false" />
+    <script src="client/c_nametags.lua" type="client" cache="false" />
+    <script src="client/c_arenas.lua" type="client" cache="false" />
+    <script src="client/c_scoreboard.lua" type="client" cache="false" />
+    <script src="client/c_help.lua" type="client" cache="false" />
+
+    <!-- Assets -->
+    <file src="assets/fonts/Poppins-Regular.ttf" />
+    <file src="assets/fonts/Poppins-Medium.ttf" />
+    <file src="assets/fonts/Poppins-SemiBold.ttf" />
+    <file src="assets/fonts/Poppins-Bold.ttf" />
+    <file src="assets/sounds/click.wav" />
+    <file src="assets/sounds/hover.wav" />
+    <file src="assets/sounds/hit.wav" />
+    <file src="assets/sounds/headshot.wav" />
+    <file src="assets/sounds/kill.wav" />
+    <file src="assets/sounds/death.wav" />
+    <file src="assets/sounds/notify.wav" />
+    <file src="assets/sounds/error.wav" />
+    <file src="assets/sounds/tick.wav" />
+    <file src="assets/sounds/go.wav" />
+    <file src="assets/sounds/levelup.wav" />
+    <file src="assets/sounds/streak.wav" />
+    <file src="assets/sounds/win.wav" />
+    <file src="assets/sounds/lose.wav" />
+
+    <!-- Exports -->
+    <export function="getArenas" type="shared" />
+    <export function="getArena" type="shared" />
+    <export function="getPlayerArena" type="shared" />
+    <export function="setPlayerArena" type="server" />
+    <export function="spawnPlayerInArena" type="server" />
+    <export function="setArenaSpawns" type="server" />
+    <export function="giveArenaWeapons" type="server" />
+    <export function="addPlayerStat" type="server" />
+    <export function="getPlayerStats" type="server" />
+    <export function="notifyPlayer" type="server" />
+    <export function="isPlayerAdmin" type="server" />
+    <export function="findPlayer" type="server" />
+    <export function="getDuelWeaponSets" type="shared" />
+    <export function="getConfig" type="shared" />
+    <export function="getArenaSpawns" type="server" />
+    <export function="notify" type="client" />
+    <export function="playUISound" type="client" />
+    <export function="isPanelOpen" type="client" />
+
+    <min_mta_version server="1.5.9" client="1.5.9" />
+</meta>

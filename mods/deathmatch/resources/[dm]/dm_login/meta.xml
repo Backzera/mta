@@ -1,0 +1,8 @@
+<meta>
+    <info author="Arena PVP" name="DM Login" description="Painel de login/registro moderno com opção de lembrar e modo convidado" type="script" version="1.0.0" />
+    <include resource="dm_core" />
+    <script src="server/s_login.lua" type="server" />
+    <script src="client/c_ui.lua" type="client" cache="false" />
+    <script src="client/c_login.lua" type="client" cache="false" />
+    <min_mta_version server="1.5.9" client="1.5.9" />
+</meta>
