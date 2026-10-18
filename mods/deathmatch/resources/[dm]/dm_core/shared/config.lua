@@ -186,7 +186,6 @@ DM.colors = {
     health  = { 34, 230, 138 },
     armor   = { 120, 210, 255 },
     money   = { 245, 196, 81 },
-},
 }
 
 -- Skins aleatórias ao nascer (o jogador pode trocar com /skin <id>)

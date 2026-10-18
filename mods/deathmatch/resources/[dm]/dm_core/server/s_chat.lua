@@ -54,7 +54,7 @@ addCommandHandler("pm", function(player, cmd, target, ...)
     end
     if other == player then notifyPlayer(player, "Você não pode enviar PM para si mesmo.", "warn") return end
     text = DM.stripColors(text):sub(1, 160)
-    outputChatBox(("#7C5CFF[PM para %s] #E6E9F0%s"):format(getPlayerVisibleName(other), text), player, 255, 255, 255, true)
-    outputChatBox(("#7C5CFF[PM de %s] #E6E9F0%s"):format(getPlayerVisibleName(player), text), other, 255, 255, 255, true)
+    outputChatBox(("#22E68A[PM para %s] #E6E9F0%s"):format(getPlayerVisibleName(other), text), player, 255, 255, 255, true)
+    outputChatBox(("#22E68A[PM de %s] #E6E9F0%s"):format(getPlayerVisibleName(player), text), other, 255, 255, 255, true)
     triggerClientEvent(other, "dm:notify", resourceRoot, text, "info", "PM de " .. getPlayerVisibleName(player))
 end)
