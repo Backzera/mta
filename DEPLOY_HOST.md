@@ -71,6 +71,18 @@ No console também dá para testar na mão: `refresh` → `start dm_core` → `s
   Sem isso a interface (CEF) não aparece; o jogo avisa no chat e `/uidebug` mostra o estado.
 - `/debugscript 3` mostra `[dm_ui] criando browser` → `browser criado` → `documento pronto` quando tudo carregou.
 
+## 6. Atualizar em um clique (sem baixar zip)
+
+Instale uma vez o **Git para Windows** e o **WinSCP**, clone o repositório (`git clone <url-do-repo>`), copie
+`deploy\ftp.exemplo.txt` para `deploy\ftp.local.txt` e preencha com usuário, senha, IP e porta do FTP que o
+painel mostra. Depois, a cada alteração minha, basta dar **dois cliques em `deploy\deploy.bat`**: ele faz
+`git pull` e envia por FTP apenas os arquivos que mudaram dentro de `resources\[dm]` (e apaga na hospedagem o
+que saiu do repositório). No fim, no console do painel: `restart dm_ui` (ou o resource alterado) — não
+precisa reiniciar o servidor inteiro.
+
+Alternativa manual: WinSCP → conectar no FTP → menu Comandos → **Sincronizar** (local `resources\[dm]` ↔
+remoto `/mods/deathmatch/resources/[dm]`, direção "remoto").
+
 ## Checklist rápido quando "não funciona"
 
 | Sintoma | Causa provável |
