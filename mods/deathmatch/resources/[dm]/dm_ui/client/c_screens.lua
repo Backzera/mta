@@ -377,7 +377,7 @@ local function cratesState()
     local items = {}
     for _, it in ipairs(C.items) do
         items[#items + 1] = { key = it.key, type = it.type, name = it.name, rarity = it.rarity, texture = it.texture or false, model = it.model or false,
-            weapon = it.weapon or false, preview = it.preview and (it.key .. ".png") or false,
+            weapon = it.weapon or false, preview = it.preview or false,
             weaponLabel = it.weapon and (C.weaponSkins and C.weaponSkins[it.weapon] and C.weaponSkins[it.weapon].label or "Outras armas") or false }
     end
     local eq = getElementData(localPlayer, "dm:wskin")

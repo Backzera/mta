@@ -21,7 +21,7 @@ local function skinInfo(player, weapon)
     for _, it in ipairs(C.items) do
         if it.key == e[wkey] then
             local r = C.rarities[it.rarity]
-            return { name = (it.name:gsub("^[^|]*| ", "")), rarity = r and r.name or it.rarity, color = r and hexColor(r.color) or "#FFFFFF", preview = it.preview and (it.key .. ".png") or false, trail = e.trail or false }
+            return { name = (it.name:gsub("^[^|]*| ", "")), rarity = r and r.name or it.rarity, color = r and hexColor(r.color) or "#FFFFFF", preview = it.preview or false, trail = e.trail or false }
         end
     end
     return false

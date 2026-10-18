@@ -51,7 +51,7 @@ export default function Hud({ h, feed, duelIncoming, screen }) {
           <div className={`weapon ${h.skin ? 'weapon--skin' : ''}`} style={h.skin ? { '--c': h.skin.color } : undefined}>
             {h.streak >= 2 && <span className="weapon__streak"><img src="./img/flame.png" alt="" />SEQUÊNCIA x{h.streak}</span>}
             <div className="weapon__art">
-              {h.skin && h.skin.preview ? <img src={`./img/wskins/${h.skin.preview}`} alt="" />
+              {h.skin && h.skin.preview ? <img src={`./img/${h.skin.preview}`} alt="" />
                 : h.weaponIcon ? <img src={`./img/weapons/${h.weaponIcon}`} alt="" /> : <span className="weapon__noicon">{h.weapon.slice(0, 2)}</span>}
             </div>
             <div className="weapon__body">

@@ -8,10 +8,10 @@ const RARITY_ORDER = ['comum', 'rara', 'epica', 'lendaria', 'mitica', 'ultimate'
 
 function ItemCard({ it, rar, selected, children, className = '' }) {
   const rc = rar.color
-  const art = it.type === 'wskin' ? (it.preview ? `./img/wskins/${it.preview}` : it.texture ? `./img/wskins/${it.texture}` : null) : null
+  const art = it.preview ? `./img/${it.preview}` : it.type === 'wskin' && it.texture ? `./img/wskins/${it.texture}` : null
   return (
     <div className={`item item--${it.rarity} ${selected ? 'is-selected' : ''} ${className}`} style={{ '--c': rgb(rc) }}>
-      <div className={`item__art ${it.preview ? 'item__art--icon' : ''}`}>
+      <div className={`item__art ${it.preview ? 'item__art--icon' : ''} ${it.type === 'skin' ? 'item__art--ped' : ''}`}>
         {art ? <img src={art} alt="" /> : <img className="item__icon" src={`./img/${it.type === 'skin' ? 'shield.png' : 'coin.png'}`} alt="" />}
       </div>
       <b>{it.name}</b>

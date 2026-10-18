@@ -129,6 +129,14 @@ substitui a AK-47 e a M4 para todos; a skin de cada jogador é só a textura, ap
 restrito ao ped dele, então cada um vê a skin de cada um. Se o seu MTA não aplicar shader por ped na
 arma, troque `DM.crates.skinMode` para `"local"` (você vê a sua skin em todas as armas daquele tipo).
 
+As fotos das skins (HUD, inventário, roleta) são renderizadas pelo `tools/dff_render.py` direto do `.dff` com
+a textura da skin (vista lateral para armas, frontal para personagens), sem depender de imagens dos packs.
+
+Skins de personagem: pastas em `dm_skins/<n>/` (dff + txd) listadas em `PED_SKINS` no `build_skins.py`, com
+nome, raridade e o **ID do ped** que substituem (fora de `DM.skins` e sem repetir; o script confere). Atenção:
+os `.txd` de personagem são grandes (150 MB no total) e todo jogador baixa ao entrar — se o download ficar
+lento, remova os maiores (Usada Pekora tem 43 MB).
+
 Raridades: Comum, Rara, Épica, Lendária, Mítica, Ultimate (AK Fire Serpent e M4 Masterpiece).
 Caixas: Munição $5.000 (ultimate 0,01%), Tática $15.000 (0,1%), Elite $40.000 (1%); repetidos devolvem
 metade. Uma skin equipada por arma (AK-47, M4, outras). Para adicionar packs: coloque as pastas, edite

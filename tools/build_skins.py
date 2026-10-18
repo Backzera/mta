@@ -11,13 +11,38 @@ Rode: python3 tools/build_skins.py   (depois: cd dm_ui/web && npm run build)
 import os, sys, glob, shutil, re, unicodedata
 sys.path.insert(0, os.path.dirname(__file__))
 from extract_txd import extract
+from dff_render import render_dff
 from PIL import Image
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "mods", "deathmatch", "resources", "[dm]")
 CRATES = os.path.join(ROOT, "dm_crates")
 PACKS = os.path.join(CRATES, "models", "weapons")
 UI_IMG = os.path.join(ROOT, "dm_ui", "web", "public", "img", "wskins")
+UI_PIMG = os.path.join(ROOT, "dm_ui", "web", "public", "img", "pskins")
+UI_WIMG = os.path.join(ROOT, "dm_ui", "web", "public", "img", "weapons")
+ARMAS = os.path.join(ROOT, "dm_armas")
+PSKINS = os.path.join(ROOT, "dm_skins")
+
+# fotos frontais das skins de personagem: chave do item (lista `skins` abaixo) -> arquivos em dm_skins/
+# (os modelos são carregados pelo resource dm_skins nos IDs 298-304; aqui só geramos a foto para a interface)
+PED_PREVIEWS = {
+    "skin_miku": ("1", "DFF_Normal/M077SonicMiku.dff", "Textures(TXD)/M077SonicMiku.txd"),
+    "skin_sakura_miku": ("2", "DFF_Normal/M082SakuraMiku.dff", "Textures(TXD)/M082SakuraMiku.txd"),
+    "skin_zoro": ("3", "Zoro.dff", "Zoro.txd"),
+    "skin_luffy": ("4", "Lufy.dff", "Lufy.txd"),
+    "skin_usada_pekora": ("5", "Usada_Pekora.dff", "Usada_Pekora.txd"),
+    "skin_tanjiro": ("6", "TanjiroDS.dff", "TanjiroDS.txd"),
+    "skin_naruto_bijuu": ("7", "Naruto_Bijuu.dff", "Naruto_Bijuu.txd"),
+}
+# ícones de armas sem skin: modelos do dm_armas (id da arma -> arquivo)
+ARMAS_ICONS = {23: "silenced", 24: "desert_eagle", 25: "shotgspa", 29: "mp5lng", 34: "sniper", 16: "grenade", 4: "knifecur"}
+
+
+def load_textures(txd, tmp):
+    shutil.rmtree(tmp, ignore_errors=True)
+    return {n.lower(): Image.open(os.path.join(tmp, n + ".png")) for n, *_ in extract(txd, tmp, 1024)}
 TIERS = ["comum", "rara", "epica", "lendaria", "mitica", "ultimate"]
+FAST = "--fast" in sys.argv   # reaproveita fotos de arma já geradas
 
 # nome russo/pasta -> (nome exibido, raridade)
 AK = {
@@ -106,13 +131,35 @@ def main():
                 print("AVISO: textura", w["texture"], "não está em", txd, "->", list(found)); continue
             shutil.copyfile(os.path.join(tmp, w["texture"] + ".png"), os.path.join(skindir, key + ".png"))
             files.append(f"skins/{wkey}/{key}.png")
-            # preview: ícone do TXD (ou a textura, se não houver)
-            src = os.path.join(tmp, (w["icon"] if w["icon"] in found else w["texture"]) + ".png")
-            im = Image.open(src).convert("RGBA")
-            im.thumbnail((320, 320), Image.LANCZOS)
-            im.save(os.path.join(UI_IMG, key + ".png"), optimize=True)
+            # preview: foto lateral do modelo com a textura desta skin
+            out_png = os.path.join(UI_IMG, key + ".png")
+            if not (FAST and os.path.exists(out_png)):
+                texs = {n.lower(): Image.open(os.path.join(tmp, n + ".png")) for n in found}
+                render_dff(w["base_dff"], texs, out_png, "side", (480, 200))
             items.append(dict(key=key, weapon=wkey, name=f'{w["label"]} | {name}', rarity=rarity))
             print(f"{key:36} {rarity:9} {found[w['texture']]}")
+
+    # ---- fotos laterais das outras armas (modelos do dm_armas) para o HUD
+    os.makedirs(UI_WIMG, exist_ok=True)
+    for wid, base in ARMAS_ICONS.items():
+        dff, txd = os.path.join(ARMAS, base + ".dff"), os.path.join(ARMAS, base + ".txd")
+        if os.path.exists(dff) and os.path.exists(txd) and not (FAST and os.path.exists(os.path.join(UI_WIMG, f"{wid}.png"))):
+            render_dff(dff, load_textures(txd, "/tmp/utg_armas_" + base), os.path.join(UI_WIMG, f"{wid}.png"), "side", (480, 200))
+    for wid, src in {30: "ak47_classica", 31: "m4_basilisk"}.items():
+        if os.path.exists(os.path.join(UI_IMG, src + ".png")):
+            shutil.copyfile(os.path.join(UI_IMG, src + ".png"), os.path.join(UI_WIMG, f"{wid}.png"))
+
+    # ---- fotos frontais das skins de personagem (modelos ficam no resource dm_skins)
+    os.makedirs(UI_PIMG, exist_ok=True)
+    ped_previews = {}
+    for key, (folder, dff, txd) in PED_PREVIEWS.items():
+        src_dff, src_txd = os.path.join(PSKINS, folder, dff), os.path.join(PSKINS, folder, txd)
+        if not (os.path.exists(src_dff) and os.path.exists(src_txd)):
+            print("AVISO: skin de personagem ausente:", src_dff); continue
+        out_png = os.path.join(UI_PIMG, key + ".png")
+        if not (FAST and os.path.exists(out_png)):
+            render_dff(src_dff, load_textures(src_txd, "/tmp/utg_ped_" + key), out_png, "auto", (240, 420))
+        ped_previews[key] = f"pskins/{key}.png"
 
     # ---- itens de dinheiro + skins antigas (texturas das outras armas) continuam
     money = [("money_2k", "$2.000", 2000, "comum"), ("money_5k", "$5.000", 5000, "comum"), ("money_12k", "$12.000", 12000, "rara"), ("money_30k", "$30.000", 30000, "epica")]
@@ -138,10 +185,19 @@ def main():
     for k, n, a, r in money: all_items.append(dict(key=k, type="money", name=n, amount=a, rarity=r))
     for k, n, t, r in legacy: all_items.append(dict(key=k, type="wskin", weapon="all", name=n + " (outras armas)", texture=t, rarity=r))
     for it in items:
-        d = dict(key=it["key"], type="wskin", weapon=it["weapon"], name=it["name"], rarity=it["rarity"], preview=1)
+        d = dict(key=it["key"], type="wskin", weapon=it["weapon"], name=it["name"], rarity=it["rarity"], preview=f'wskins/{it["key"]}.png')
         if it["key"] in FX: d["fx"] = FX[it["key"]]
         all_items.append(d)
-    for k, n, m, r in skins: all_items.append(dict(key=k, type="skin", name=n, model=m, rarity=r))
+    for k, n, m, r in skins:
+        d = dict(key=k, type="skin", name=n, model=m, rarity=r)
+        if k in ped_previews: d["preview"] = ped_previews[k]
+        all_items.append(d)
+    # conferência de IDs: nenhum modelo de personagem repetido
+    seen = {}
+    for it in all_items:
+        if it["type"] == "skin":
+            assert it["model"] not in seen, f"ID {it['model']} repetido: {seen[it['model']]} e {it['key']}"
+            seen[it["model"]] = it["key"]
 
     # ---- caixas: peso por raridade dividido entre os itens daquela raridade
     boxes = [

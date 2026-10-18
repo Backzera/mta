@@ -330,6 +330,8 @@ select.input { appearance: none; }
 .item__art img { width: 100%; height: 100%; object-fit: cover; }
 .item__art--icon { background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 28%, transparent), rgba(0,0,0,.35)); }
 .item__art--icon img { object-fit: contain; padding: .3vw; }
+.item__art--ped { height: 6vw; }
+.item__art--ped img { object-fit: contain; padding: .15vw; }
 .item--ultimate { border-color: rgb(124,255,178); background: linear-gradient(160deg, rgba(124,255,178,.22), rgba(255,255,255,.04) 40%, rgba(245,196,81,.18)); box-shadow: 0 0 1.4vw rgba(124,255,178,.45); }
 .item--ultimate small { color: #fff; text-shadow: 0 0 .6vw rgb(124,255,178); }
 .item--mitica { box-shadow: 0 0 1vw rgba(255,77,109,.35); } .item__art .item__icon { width: 2.4vw; height: 2.4vw; object-fit: contain; filter: drop-shadow(0 0 .6vw var(--c)); }
@@ -414,7 +416,7 @@ select.input { appearance: none; }
 @keyframes popRise { 0% { opacity: 0; transform: translateY(.4vw) } 10% { opacity: 1 } 75% { opacity: 1 } 100% { opacity: 0; transform: translateY(-1.6vw) } }
 .weapon { position: absolute; right: 1.2vw; bottom: 1.2vw; width: 17vw; display: flex; gap: .7vw; align-items: center; padding: .55vw .9vw .6vw .8vw; border-radius: .7vw; background: rgba(var(--bg), .8); border: 1px solid var(--line); box-shadow: inset 3px 0 0 rgb(var(--g)), 0 0 1.2vw rgba(var(--g), .15); --c: rgb(var(--g)); }
 .weapon--skin { border-color: color-mix(in srgb, var(--c) 55%, transparent); box-shadow: inset 3px 0 0 var(--c), 0 0 1.4vw color-mix(in srgb, var(--c) 35%, transparent); }
-.weapon__art { flex: 0 0 5.6vw; height: 2.9vw; display: flex; align-items: center; justify-content: center; border-radius: .5vw; background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 30%, transparent), rgba(0,0,0,.35)); overflow: hidden; }
+.weapon__art { flex: 0 0 6.4vw; height: 2.9vw; display: flex; align-items: center; justify-content: center; border-radius: .5vw; background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 30%, transparent), rgba(0,0,0,.35)); overflow: hidden; }
 .weapon__art img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 .4vw rgba(0,0,0,.8)); }
 .weapon__noicon { font: 700 1.1vw 'Oswald'; color: var(--muted); }
 .weapon__body { flex: 1; min-width: 0; }
