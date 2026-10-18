@@ -28,8 +28,10 @@ local function js(code)
         if #queue > 60 then table.remove(queue, 1) end
     end
 end
+function UI.isReady() return ready end
 function UI.set(key, value)
     if current == key then lastOpen[key] = value end
+    if not ready and key == "hud" then return end   -- não enche a fila antes de a página carregar
     js(("window.ui.set(%q,%s)"):format(key, toJSON(value or {})))
 end
 function UI.merge(key, value) js(("window.ui.merge(%q,%s)"):format(key, toJSON(value or {}))) end
@@ -103,6 +105,7 @@ addEventHandler("ui:act", root, function(screen, action, json)
         local ok, decoded = pcall(fromJSON, json)
         if ok and type(decoded) == "table" then payload = decoded end
     end
+    if screen == "app" and action == "mounted" then triggerEvent("ui:mounted", localPlayer) return end
     local h = handlers[screen] and handlers[screen][action]
     if action == "close" and not h then UI.close(screen) return end
     if h then h(payload) end
@@ -178,13 +181,12 @@ local function createUIBrowser()
         if chatPending then chatPending = false showChat(false) end
         for _, code in ipairs(queue) do executeBrowserJavascript(browser, code) end
         queue = {}
+        -- garante que a tela aberta antes do carregamento apareça (a fila pode ter sido podada)
+        if current and lastOpen[current] then js(("window.ui.open(%q,%s)"):format(current, toJSON(lastOpen[current]))) end
         if first then
             addEventHandler("onClientRender", root, render, true, "low-5")
             outputChatBox("#7CFFB2[UTG] Interface carregada.", 255, 255, 255, true)
             triggerEvent("ui:ready", localPlayer)
-        else
-            -- página recarregou: reabre a tela atual
-            if current and lastOpen[current] then js(("window.ui.open(%q,%s)"):format(current, toJSON(lastOpen[current]))) end
         end
     end)
     -- diagnóstico: se em 12 s nada carregou, avisa no chat (sem travar o jogador)
@@ -195,6 +197,17 @@ local function createUIBrowser()
         outputChatBox("#FF4D6D[UTG] Interface não carregou: " .. why .. ". Use /uidebug e me mande o resultado.", 255, 77, 109, true)
     end, 12000, 1)
 end
+addEvent("ui:jserror")
+addEventHandler("ui:jserror", root, function(msg) diag("ERRO JS: " .. tostring(msg), 1) readyTick = getTickCount() end)
+addEvent("ui:mounted")
+addEventHandler("ui:mounted", root, function() diag("app React montado") end)
+-- /uitest: pinta a página de verde por 3 s para separar "página não desenha" de "erro no JS"
+addCommandHandler("uitest", function()
+    if not browser then return end
+    executeBrowserJavascript(browser, "document.documentElement.style.background='rgba(0,255,120,.35)';setTimeout(function(){document.documentElement.style.background='transparent'},3000)")
+    diag("teste: a tela deveria ficar esverdeada por 3 s")
+    readyTick = getTickCount()
+end)
 addCommandHandler("uidebug", function()
     outputChatBox(("#7CFFB2[dm_ui] browser=%s criado=%s pronto=%s url=%s res=%dx%d"):format(tostring(browser ~= nil), tostring(created), tostring(ready), browser and tostring(getBrowserURL(browser)) or "-", sw, sh), 255, 255, 255, true)
     if browser then outputChatBox(("#7CFFB2[dm_ui] carregando=%s titulo=%s"):format(tostring(isBrowserLoading(browser)), tostring(getBrowserTitle(browser))), 255, 255, 255, true) end

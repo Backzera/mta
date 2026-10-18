@@ -14,7 +14,7 @@ import Hud from './screens/Hud.jsx'
 
 export default function App() {
   const [st, setSt] = useState(() => ({}))
-  useEffect(() => subscribe(setSt), [])
+  useEffect(() => { toLua('app', 'mounted'); return subscribe(setSt) }, [])
   const screen = st.screen
   const hud = st.hud && !Array.isArray(st.hud) ? st.hud : null
   const feed = st.feed || {}
