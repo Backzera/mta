@@ -42,11 +42,6 @@ local function loadSkins()
                         loadedModels[skin.id] = { txd = txd, dff = dff }
                         loaded = loaded + 1
 
-                        -- Recarrega entidades que já estavam usando o modelo, especialmente o ped 304.
-                        if not engineRestreamModel(skin.id) then
-                            outputDebugString(("[dm_skins] Modelo %s (ID %d) foi substituído, mas não pôde ser atualizado via restream."):format(skin.name, skin.id), 2)
-                        end
-
                         outputDebugString(("[dm_skins] Skin carregada: %s (ID %d)."):format(skin.name, skin.id), 3)
                     end
                 end
