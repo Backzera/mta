@@ -40,6 +40,11 @@ export default defineConfig({
     modulePreload: false,
     rollupOptions: {
       output: {
+        // IIFE em modo estrito: nenhuma variável do bundle vira global da página (o CEF do MTA injeta/altera
+        // globais e isso quebrava o script clássico com escopo global)
+        format: 'iife',
+        strict: true,
+        inlineDynamicImports: true,
         entryFileNames: 'assets/hub-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash][extname]',
