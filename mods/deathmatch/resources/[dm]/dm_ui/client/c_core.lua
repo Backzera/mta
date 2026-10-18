@@ -15,6 +15,7 @@ local escapeFns = {}        -- [tela] = fn
 local openFns, closeFns = {}, {}
 local current = nil         -- tela aberta
 local hudVisible = true
+local chatPending = false  -- painel aberto antes da página carregar: chat fica visível até lá
 local lastOpen = {}       -- [tela] = últimos dados (para reabrir se a página recarregar)
 
 setElementData(localPlayer, "dm:hubCEF", true, false)
@@ -59,7 +60,7 @@ function UI.open(name, data, opts)
     current = name
     setElementData(localPlayer, "dm:panel", name, false)
     if not opts.noCursor then showCursor(true) end
-    showChat(false)
+    if ready then showChat(false) else chatPending = true end
     toggleAllControls(false, true, false)
     lastOpen[name] = data or {}
     js(("window.ui.open(%q,%s)"):format(name, toJSON(data or {})))
@@ -74,6 +75,7 @@ function UI.close(name)
     local closing = current
     current = nil
     if UI.getOpenPanel() == closing then setElementData(localPlayer, "dm:panel", false, false) end
+    chatPending = false
     showCursor(false)
     showChat(true)
     toggleAllControls(true, true, true)
@@ -127,13 +129,31 @@ local function render()
 end
 
 local URL = "http://mta/local/dist/index.html"
+
 local created = false
+local diagLines, readyTick = {}, nil
 local function diag(msg, level)
     outputDebugString("[dm_ui] " .. msg, level or 3)
+    diagLines[#diagLines + 1] = msg
+    if #diagLines > 8 then table.remove(diagLines, 1) end
+end
+-- Diagnóstico desenhado na tela (não depende do chat): some 6 s depois de a página carregar
+local function drawDiag()
+    if ready and readyTick and getTickCount() - readyTick > 6000 then return end
+    local y = 8
+    dxDrawText("UTG UI (CEF)  browser=" .. tostring(browser ~= nil) .. "  criado=" .. tostring(created) .. "  pronto=" .. tostring(ready), 9, y + 1, 0, 0, tocolor(0, 0, 0, 200), 1.1, "default-bold")
+    dxDrawText("UTG UI (CEF)  browser=" .. tostring(browser ~= nil) .. "  criado=" .. tostring(created) .. "  pronto=" .. tostring(ready), 8, y, 0, 0, ready and tocolor(124, 255, 178) or tocolor(255, 181, 71), 1.1, "default-bold")
+    for i, line in ipairs(diagLines) do
+        y = y + 16
+        dxDrawText(line, 9, y + 1, 0, 0, tocolor(0, 0, 0, 200), 1, "default")
+        dxDrawText(line, 8, y, 0, 0, tocolor(255, 255, 255), 1, "default")
+    end
 end
 local function createUIBrowser()
     if browser then return end
-    diag("criando browser " .. sw .. "x" .. sh)
+    addEventHandler("onClientRender", root, drawDiag)
+    local bs = getBrowserSettings and getBrowserSettings() or {}
+    diag(("criando browser %dx%d (remoto=%s js=%s)"):format(sw, sh, tostring(bs.RemoteEnabled), tostring(bs.RemoteJavascript)))
     browser = createBrowser(sw, sh, true, true)   -- local, transparente
     if not browser then
         diag("createBrowser falhou: ative o navegador em Configurações > Navegador (CEF) e reconecte", 1)
@@ -153,7 +173,9 @@ local function createUIBrowser()
         end
         local first = not ready
         ready = true
+        readyTick = getTickCount()
         diag("documento pronto: " .. tostring(url))
+        if chatPending then chatPending = false showChat(false) end
         for _, code in ipairs(queue) do executeBrowserJavascript(browser, code) end
         queue = {}
         if first then
