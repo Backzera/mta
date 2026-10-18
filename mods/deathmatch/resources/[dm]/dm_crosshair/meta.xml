@@ -1,0 +1,11 @@
+<meta>
+    <info author="UTG" name="UTG Crosshair" description="Mira customizável integrada ao visual do servidor UTG" type="script" version="1.0" />
+    <min_mta_version client="1.5.9" />
+
+    <script src="client.lua" type="client" cache="false" />
+    <script src="server.lua" type="server" />
+
+    <file src="ui/index.html" />
+    <file src="ui/style.css" />
+    <file src="ui/app.js" />
+</meta>
