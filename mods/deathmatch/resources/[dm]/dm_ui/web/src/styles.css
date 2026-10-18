@@ -322,12 +322,17 @@ select.input { appearance: none; }
 .box__odds { display: flex; flex-wrap: wrap; justify-content: center; gap: .3vw; margin: .3vw 0 .8vw; }
 .box .btn { width: 100%; }
 .inv { display: flex; flex-direction: column; gap: 1vw; }
-.inv__grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: .8vw; }
+.inv__grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: .8vw; max-height: 44vh; overflow: auto; padding-right: .4vw; }
 .item { position: relative; display: flex; flex-direction: column; align-items: center; gap: .2vw; padding: .7vw .6vw; border-radius: .7vw; border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--c) 12%, transparent), rgba(0,0,0,.35)); text-align: center; transition: .2s; }
 .item:hover { transform: translateY(-3px); box-shadow: 0 0 1.2vw color-mix(in srgb, var(--c) 35%, transparent); }
 .item.is-selected { border-color: var(--c); box-shadow: 0 0 1.6vw color-mix(in srgb, var(--c) 55%, transparent); }
 .item__art { width: 100%; height: 4.2vw; display: flex; align-items: center; justify-content: center; border-radius: .4vw; overflow: hidden; background: rgba(0,0,0,.3); }
-.item__art img { width: 100%; height: 100%; object-fit: cover; } .item__art .item__icon { width: 2.4vw; height: 2.4vw; object-fit: contain; filter: drop-shadow(0 0 .6vw var(--c)); }
+.item__art img { width: 100%; height: 100%; object-fit: cover; }
+.item__art--icon { background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 28%, transparent), rgba(0,0,0,.35)); }
+.item__art--icon img { object-fit: contain; padding: .3vw; }
+.item--ultimate { border-color: rgb(124,255,178); background: linear-gradient(160deg, rgba(124,255,178,.22), rgba(255,255,255,.04) 40%, rgba(245,196,81,.18)); box-shadow: 0 0 1.4vw rgba(124,255,178,.45); }
+.item--ultimate small { color: #fff; text-shadow: 0 0 .6vw rgb(124,255,178); }
+.item--mitica { box-shadow: 0 0 1vw rgba(255,77,109,.35); } .item__art .item__icon { width: 2.4vw; height: 2.4vw; object-fit: contain; filter: drop-shadow(0 0 .6vw var(--c)); }
 .item b { font-size: .72vw; margin-top: .3vw; } .item small { font: 700 .55vw 'Poppins'; letter-spacing: .15em; color: var(--c); }
 .item .btn { height: 1.8vw; padding: 0 .6vw; font-size: .56vw; margin-top: .4vw; width: 100%; }
 .reel { position: fixed; inset: 0; background: rgba(var(--bg), .85); animation: fade .3s both; overflow: hidden; }

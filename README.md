@@ -119,6 +119,21 @@ privada com as tags dos clãs. Resultado anunciado para o servidor com o placar.
 - **Munição**: ao trocar de arma e pegar de novo ela volta cheia; ao matar recarrega.
 - **Nametags**: tag (staff/VIP/comprada/elo) e tag do clã destacadas acima do nick colorido, vida e colete.
 
+## Skins de arma (caixas F7)
+
+Packs CS:GO em `dm_crates/models/weapons/` (AK-47: 29 skins, M4A1-S: 7). `tools/build_skins.py` extrai
+a textura principal de cada `.txd` para `dm_crates/skins/<arma>/<key>.png`, o ícone para a interface, copia
+o modelo base para `dm_crates/models/<arma>.dff/.txd` e gera `dm_core/shared/skins_generated.lua`
+(itens, raridades, caixas) e o `meta.xml` do `dm_crates`. Como funciona no jogo: o modelo base (CS:GO)
+substitui a AK-47 e a M4 para todos; a skin de cada jogador é só a textura, aplicada com shader
+restrito ao ped dele, então cada um vê a skin de cada um. Se o seu MTA não aplicar shader por ped na
+arma, troque `DM.crates.skinMode` para `"local"` (você vê a sua skin em todas as armas daquele tipo).
+
+Raridades: Comum, Rara, Épica, Lendária, Mítica, Ultimate (AK Fire Serpent e M4 Masterpiece).
+Caixas: Munição $5.000 (ultimate 0,01%), Tática $15.000 (0,1%), Elite $40.000 (1%); repetidos devolvem
+metade. Uma skin equipada por arma (AK-47, M4, outras). Para adicionar packs: coloque as pastas, edite
+os dicionários `AK`/`M4` do script com nome e raridade, rode o script e depois `npm run build` no `dm_ui/web`.
+
 ## Chat
 
 Estilo moderno com ícones de texto, ID e cores (o chat padrão do MTA renderiza os glifos):

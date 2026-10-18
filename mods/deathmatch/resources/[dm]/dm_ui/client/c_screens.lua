@@ -375,9 +375,15 @@ local function cratesState()
     local owned = {}
     for _, it in ipairs(C.items) do if hasPerk("item:" .. it.key) then owned[#owned + 1] = it.key end end
     local items = {}
-    for _, it in ipairs(C.items) do items[#items + 1] = { key = it.key, type = it.type, name = it.name, rarity = it.rarity, texture = it.texture or false, model = it.model or false } end
+    for _, it in ipairs(C.items) do
+        items[#items + 1] = { key = it.key, type = it.type, name = it.name, rarity = it.rarity, texture = it.texture or false, model = it.model or false,
+            weapon = it.weapon or false, preview = it.preview and (it.key .. ".png") or false,
+            weaponLabel = it.weapon and (C.weaponSkins and C.weaponSkins[it.weapon] and C.weaponSkins[it.weapon].label or "Outras armas") or false }
+    end
+    local eq = getElementData(localPlayer, "dm:wskin")
+    if type(eq) == "string" then eq = { all = eq } end
     return { money = money(), rarities = C.rarities, items = items, boxes = C.boxes, owned = owned,
-        equippedSkin = tonumber(getElementData(localPlayer, "dm:skin")) or 0, equippedW = getElementData(localPlayer, "dm:wskin") or false }
+        equippedSkin = tonumber(getElementData(localPlayer, "dm:skin")) or 0, equippedW = type(eq) == "table" and eq or {} }
 end
 local reelOpen = false
 function openCratesPanel()

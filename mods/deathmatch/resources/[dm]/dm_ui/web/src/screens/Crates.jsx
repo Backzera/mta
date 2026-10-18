@@ -3,18 +3,18 @@ import { toLua, asArray, asObj } from '../bridge.js'
 import { Frame, Btn, Tabs, Counter, Empty, Pill, rgb, rgba, money } from '../ui.jsx'
 
 const GOLD = [245, 196, 81]
-const RARITY_ORDER = ['comum', 'rara', 'epica', 'lendaria']
+const RARITY_ORDER = ['comum', 'rara', 'epica', 'lendaria', 'mitica', 'ultimate']
 
 function ItemCard({ it, rar, selected, children, className = '' }) {
   const rc = rar.color
+  const art = it.type === 'wskin' ? (it.preview ? `./img/wskins/${it.preview}` : it.texture ? `./img/wskins/${it.texture}` : null) : null
   return (
-    <div className={`item ${selected ? 'is-selected' : ''} ${className}`} style={{ '--c': rgb(rc) }}>
-      <div className="item__art">
-        {it.type === 'wskin' && it.texture ? <img src={`./img/wskins/${it.texture}`} alt="" />
-          : <img className="item__icon" src={`./img/${it.type === 'skin' ? 'shield.png' : 'coin.png'}`} alt="" />}
+    <div className={`item item--${it.rarity} ${selected ? 'is-selected' : ''} ${className}`} style={{ '--c': rgb(rc) }}>
+      <div className={`item__art ${it.preview ? 'item__art--icon' : ''}`}>
+        {art ? <img src={art} alt="" /> : <img className="item__icon" src={`./img/${it.type === 'skin' ? 'shield.png' : 'coin.png'}`} alt="" />}
       </div>
       <b>{it.name}</b>
-      <small>{rar.name.toUpperCase()}</small>
+      <small>{rar.name.toUpperCase()}{it.weaponLabel && it.weapon !== 'all' ? ` · ${it.weaponLabel}` : ''}</small>
       {children}
     </div>
   )
@@ -27,7 +27,8 @@ export default function Crates({ st, reel }) {
   const rar = (it) => rarities[it.rarity] || rarities.comum || { name: 'Comum', color: [150, 165, 155] }
   const [tab, setTab] = useState('boxes')
   const bal = d.money || 0
-  const inv = items.filter((i) => i.type !== 'money' && owned.includes(i.key))
+  const inv = items.filter((i) => i.type !== 'money' && owned.includes(i.key)).sort((a, b) => RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity))
+  const eqW = asObj(d.equippedW)
 
   return (
     <Frame title="CAIXAS" subtitle="Abra caixas com $ e ganhe skins exclusivas, skins de arma e dinheiro. Itens repetidos devolvem metade do valor." icon="trophy.png"
@@ -59,17 +60,18 @@ export default function Crates({ st, reel }) {
           {inv.length === 0 && <Empty>Você ainda não tem itens. Abra uma caixa!</Empty>}
           <div className="inv__grid">
             {inv.map((it) => {
-              const eq = (it.type === 'skin' && d.equippedSkin === it.model) || (it.type === 'wskin' && d.equippedW === it.key)
+              const eq = (it.type === 'skin' && d.equippedSkin === it.model) || (it.type === 'wskin' && eqW[it.weapon || 'all'] === it.key)
               return (
                 <ItemCard key={it.key} it={it} rar={rar(it)} selected={eq}>
-                  <Btn kind={eq ? 'ghost' : 'outline'} disabled={eq} onClick={() => toLua('crates', 'equip', { key: it.key })}>{eq ? 'EQUIPADO' : 'EQUIPAR'}</Btn>
+                  <Btn kind={eq ? 'ghost' : 'outline'} onClick={() => toLua('crates', 'equip', { key: it.key })}>{eq ? 'EQUIPADA ✓' : 'EQUIPAR'}</Btn>
                 </ItemCard>
               )
             })}
           </div>
           <div className="hrow">
             <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'skin:none' })}>SKIN PADRÃO</Btn>
-            <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'wskin:none' })}>ARMA PADRÃO</Btn>
+            <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'wskin:none' })}>ARMAS PADRÃO</Btn>
+            <span className="hint">Uma skin por arma (AK-47, M4, outras). Clique na skin equipada para remover.</span>
           </div>
         </div>
       )}

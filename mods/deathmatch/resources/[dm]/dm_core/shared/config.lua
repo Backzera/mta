@@ -174,6 +174,7 @@ DM.clans = {
 
 -- CAIXAS (F7): raridades, itens e caixas. Skins de arma = texturas (textures/*.png) aplicadas por jogador.
 -- Skins exclusivas = modelos do GTA pouco usados; com models/skins/<model>.dff/.txd no dm_crates viram personalizadas.
+-- CAIXAS: raridades, itens e caixas são SOBRESCRITOS por shared/skins_generated.lua (tools/build_skins.py)
 DM.crates = {
     rarities = {
         comum    = { name = "Comum",    color = { 150, 165, 155 } },

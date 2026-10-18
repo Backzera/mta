@@ -1,8 +1,8 @@
 --[[
     Caixas: abrir com $, sorteio ponderado por raridade, inventário (perks "item:<key>"),
-    equipar skin (pele) e skin de arma. Itens repetidos devolvem 50% do preço da caixa.
+    equipar skin (pele) e skins de arma POR ARMA (uma por tipo: ak47, m4, all). Repetidos devolvem 50% do preço.
+    dm:wskin = { ak47 = key, m4 = key, all = key } (salvo em equip_wskin como JSON).
 ]]
-
 local core = exports.dm_core
 local CRATES
 
@@ -17,6 +17,7 @@ local function box(key)
     for _, b in ipairs(cfg().boxes) do if b.key == key then return b end end
 end
 local function nick(p) return (getPlayerName(p):gsub("#%x%x%x%x%x%x", "")) end
+local RARITY_RANK = { comum = 1, rara = 2, epica = 3, lendaria = 4, mitica = 5, ultimate = 6 }
 
 local function pick(b)
     local total = 0
@@ -27,6 +28,19 @@ local function pick(b)
         if r <= 0 then return item(d.item) end
     end
     return item(b.pool[#b.pool].item)
+end
+
+-- equipados por arma
+local function getEquipped(player)
+    local e = getElementData(player, "dm:wskin")
+    if type(e) == "string" then return { all = e } end
+    return type(e) == "table" and e or {}
+end
+local function saveEquipped(player, e)
+    local n = 0
+    for _ in pairs(e) do n = n + 1 end
+    setElementData(player, "dm:wskin", n > 0 and e or false)
+    core:setPlayerStat(player, "equip_wskin", n > 0 and toJSON(e) or "")
 end
 
 addEvent("crates:open", true)
@@ -53,8 +67,12 @@ addEventHandler("crates:open", root, function(boxKey)
         end
     end
     triggerClientEvent(player, "crates:result", resourceRoot, boxKey, it.key, duplicate)
-    if it.rarity == "lendaria" or it.rarity == "epica" then
-        core:sendServerMessage(root, ("#F5C451✦ CAIXAS #8FA39A» #FFFFFF%s #969BB4abriu uma %s e tirou #FFFFFF%s #969BB4(%s)!"):format(nick(player), b.name, it.name, it.rarity:upper()))
+    local rank = RARITY_RANK[it.rarity] or 0
+    local rname = (cfg().rarities[it.rarity] and cfg().rarities[it.rarity].name or it.rarity):upper()
+    if rank >= 6 then
+        core:sendServerMessage(root, ("#7CFFB2✦✦✦ ULTIMATE #8FA39A» #FFFFFF%s #969BB4abriu uma %s e tirou a #7CFFB2%s#969BB4! Uma das skins mais raras do servidor!"):format(nick(player), b.name, it.name))
+    elseif rank >= 4 then
+        core:sendServerMessage(root, ("#F5C451✦ CAIXAS #8FA39A» #FFFFFF%s #969BB4abriu uma %s e tirou #FFFFFF%s #969BB4(%s)!"):format(nick(player), b.name, it.name, rname))
     end
 end)
 
@@ -69,9 +87,16 @@ addEventHandler("crates:equip", root, function(key)
         return
     end
     if key == "wskin:none" then
-        core:setPlayerStat(player, "equip_wskin", "")
-        setElementData(player, "dm:wskin", false)
-        core:notifyPlayer(player, "Skin de arma removida.", "info", "Caixas")
+        saveEquipped(player, {})
+        core:notifyPlayer(player, "Skins de arma removidas.", "info", "Caixas")
+        return
+    end
+    local slot = key:match("^wskin:none:(%w+)$")
+    if slot then
+        local e = getEquipped(player)
+        e[slot] = nil
+        saveEquipped(player, e)
+        core:notifyPlayer(player, "Skin removida.", "info", "Caixas")
         return
     end
     local it = item(key)
@@ -82,9 +107,17 @@ addEventHandler("crates:equip", root, function(key)
         if not isPedDead(player) then setElementModel(player, it.model) end
         core:notifyPlayer(player, ("Skin equipada: %s"):format(it.name), "success", "Caixas")
     elseif it.type == "wskin" then
-        core:setPlayerStat(player, "equip_wskin", it.key)
-        setElementData(player, "dm:wskin", it.key)
-        core:notifyPlayer(player, ("Skin de arma equipada: %s"):format(it.name), "success", "Caixas")
+        local e = getEquipped(player)
+        local w = it.weapon or "all"
+        if e[w] == it.key then
+            e[w] = nil
+            saveEquipped(player, e)
+            core:notifyPlayer(player, ("Skin removida: %s"):format(it.name), "info", "Caixas")
+        else
+            e[w] = it.key
+            saveEquipped(player, e)
+            core:notifyPlayer(player, ("Skin equipada: %s"):format(it.name), "success", "Caixas")
+        end
     end
 end)
 
@@ -94,7 +127,17 @@ addEventHandler("dm:onStatsLoaded", root, function()
     local row = core:getPlayerStats(source)
     if not row then return end
     if (tonumber(row.equip_skin) or 0) > 0 then setElementData(source, "dm:skin", tonumber(row.equip_skin)) end
-    if row.equip_wskin and row.equip_wskin ~= "" then setElementData(source, "dm:wskin", row.equip_wskin) else setElementData(source, "dm:wskin", false) end
+    local saved = row.equip_wskin
+    if saved and saved ~= "" then
+        local e = saved:sub(1, 1) == "[" and fromJSON(saved) or { all = saved }
+        local clean = {}
+        for w, k in pairs(type(e) == "table" and e or {}) do if item(k) then clean[w] = k end end
+        local n = 0
+        for _ in pairs(clean) do n = n + 1 end
+        setElementData(source, "dm:wskin", n > 0 and clean or false)
+    else
+        setElementData(source, "dm:wskin", false)
+    end
 end)
 
 addCommandHandler("caixas", function(player) triggerClientEvent(player, "crates:openPanel", resourceRoot) end)

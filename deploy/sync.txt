@@ -3,5 +3,5 @@
 option batch abort
 option confirm off
 include deploy\ftp.local.txt
-synchronize remote -delete -criteria=size -filemask="|node_modules/;web/;*.md;.gitignore" "mods\deathmatch\resources\[dm]" "/mods/deathmatch/resources/[dm]"
+synchronize remote -delete -criteria=size -filemask="|node_modules/;web/;models/weapons/;*.md;.gitignore" "mods\deathmatch\resources\[dm]" "/mods/deathmatch/resources/[dm]"
 exit
