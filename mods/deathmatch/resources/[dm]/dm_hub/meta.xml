@@ -1,0 +1,17 @@
+<meta>
+    <info author="UTG" name="UTG Hub (CEF)" description="Seleção de arenas em HTML/CSS/React renderizada via CEF" type="script" version="1.0" />
+    <include resource="dm_core" />
+    <min_mta_version client="1.5.9" />
+
+    <!-- UI compartilhada (cursor/chat/controles) e integração Lua <-> CEF -->
+    <script src="client/c_ui.lua" type="client" />
+    <script src="client/c_hub.lua" type="client" />
+
+    <!-- Build estático do Vite (http://mta/local/dist/index.html) -->
+    <file src="dist/index.html" />
+    <file src="dist/assets/hub.js" />
+    <file src="dist/assets/index.css" />
+    <file src="dist/fonts/Oswald.ttf" />
+    <file src="dist/fonts/Poppins-Regular.ttf" />
+    <file src="dist/fonts/Poppins-SemiBold.ttf" />
+</meta>

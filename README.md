@@ -142,3 +142,25 @@ moldura padrão de painel (`UI.panelFrame`). Paleta verde (`#22E68A` / `#7CFFB2`
 fonte Poppins, logo em `dm_core/assets/img/logo.png` (canto inferior esquerdo, com nick/elo/$/vida
 empilhados em cima — substitua pela sua, 640x200 PNG). Se a placa de vídeo não compilar os shaders, tudo
 cai para primitivas dx automaticamente. Guia para novos painéis: `docs/UI_SPEC.md`.
+
+### Hub de arenas em CEF (`dm_hub`)
+
+A seleção de arenas (F2) agora é uma página HTML/CSS/React renderizada dentro do MTA via CEF
+(`createBrowser` local + `dxDrawImage`), com transparência real sobre a cena do GTA. O Lua
+(`dm_hub/client/c_hub.lua`) cuida do browser, F2/ESC, cursor, chat, câmera no local escolhido e dos
+eventos de entrada já existentes (`dm:requestArena` / `ranked:requestJoin`). Ponte: JS → Lua com
+`mta.triggerEvent("hub:select|hub:enter|hub:close", ...)`; Lua → JS com `executeBrowserJavascript`
+(`window.hub.setState/counts/open/close`). Os arquivos servidos são estáticos (`dm_hub/dist/`,
+`http://mta/local/dist/index.html`), sem CDN nem servidor de desenvolvimento — o `dist/` já vem
+compilado no repositório. Para alterar o visual:
+
+```
+cd "mods/deathmatch/resources/[dm]/dm_hub/web"
+npm install
+npm run build        # gera ../dist (listado no meta.xml)
+```
+
+Pré-visualização fora do jogo com dados de exemplo: abra `dist/index.html?demo` servido por qualquer
+servidor HTTP local. Enquanto `dm_hub` está ligado, o hub dx antigo do `dm_core` fica desativado
+(`dm:hubCEF`); parando o `dm_hub`, o F2 volta a abrir a versão dx. A loja e os outros painéis seguem
+em dx por enquanto.

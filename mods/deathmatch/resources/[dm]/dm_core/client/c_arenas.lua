@@ -220,6 +220,8 @@ end
 
 function openArenaPanel()
     if hub.open then return end
+    -- dm_hub (CEF) ativo: o F2/ranked:openPanel são tratados lá; este hub dx fica como fallback
+    if getElementData(localPlayer, "dm:hubCEF") then return end
     if not getElementData(localPlayer, "dm:ready") then return end
     if not UI.setPanelOpen(PANEL, true) then return end
     hub.open = true
