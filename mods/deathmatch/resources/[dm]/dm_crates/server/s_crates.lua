@@ -166,8 +166,11 @@ addCommandHandler("skins", function(player, _, filter)
     for _, it in ipairs(cfg().items) do
         if it.type == "wskin" and (not filter or it.weapon == filter) then out[#out + 1] = it.key end
     end
-    outputChatBox("#7CFFB2[skins] #FFFFFF" .. table.concat(out, ", "), player, 255, 255, 255, true)
-    outputChatBox("#7CFFB2[skins] #FFFFFFUse /darskin <chave> para equipar (admin).", player, 255, 255, 255, true)
+    -- o chat do MTA descarta mensagens longas: 4 chaves por linha
+    outputChatBox(("#7CFFB2[skins] #FFFFFF%d skins%s · use /darskin <chave> (admin)"):format(#out, filter and (" de " .. filter) or ""), player, 255, 255, 255, true)
+    for i = 1, #out, 4 do
+        outputChatBox("#7CFFB2» #FFFFFF" .. table.concat(out, "  ", i, math.min(i + 3, #out)), player, 255, 255, 255, true)
+    end
 end)
 addCommandHandler("darskin", function(player, _, key)
     if not core:isPlayerAdmin(player) then core:notifyPlayer(player, "Só admin.", "error", "Skins") return end
