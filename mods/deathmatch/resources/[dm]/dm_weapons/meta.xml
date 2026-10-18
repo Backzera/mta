@@ -1,0 +1,26 @@
+<meta>
+    <info author="UTG" name="DM Weapons" description="Sistema de dano (headshot x2.2, peito reduzido), sons de arma customizados, skins de arma" type="script" version="1.0.0" />
+    <include resource="dm_core" />
+    <script src="server/s_damage.lua" type="server" />
+    <script src="server/s_pvp.lua" type="server" />
+    <script src="client/c_damage.lua" type="client" />
+    <script src="client/c_pvp.lua" type="client" />
+    <script src="client/c_sounds.lua" type="client" />
+    <script src="client/c_skins.lua" type="client" />
+
+    <!-- Sons de tiro (substituem os do GTA) -->
+    <file src="sounds/22.wav" /> <file src="sounds/23.wav" /> <file src="sounds/24.wav" /> <file src="sounds/25.wav" />
+    <file src="sounds/26.wav" /> <file src="sounds/27.wav" /> <file src="sounds/28.wav" /> <file src="sounds/29.wav" />
+    <file src="sounds/30.wav" /> <file src="sounds/31.wav" /> <file src="sounds/32.wav" /> <file src="sounds/33.wav" />
+    <file src="sounds/34.wav" /> <file src="sounds/38.wav" />
+
+    <!--
+        SKINS DE ARMA: coloque models/<idDaArma>.dff e models/<idDaArma>.txd e descomente a linha correspondente.
+        Ex.: Deagle = 24, Shotgun = 25, MP5 = 29, AK-47 = 30, M4 = 31, Sniper = 34.
+        <file src="models/24.dff" /> <file src="models/24.txd" />
+        <file src="models/30.dff" /> <file src="models/30.txd" />
+        <file src="models/31.dff" /> <file src="models/31.txd" />
+        <file src="models/34.dff" /> <file src="models/34.txd" />
+    -->
+    <min_mta_version server="1.5.9" client="1.5.9" />
+</meta>
