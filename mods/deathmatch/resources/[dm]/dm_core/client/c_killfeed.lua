@@ -48,7 +48,9 @@ addEventHandler("onClientRender", root, function()
     end
     local w, h = s(360), s(34)
     local x, y = UI.sw - w - s(24), s(24)
+    local panelOpen = UI.getOpenPanel() ~= nil
     for _, e in ipairs(KillFeed.entries) do
+        if panelOpen then break end
         local age = now - e.tick
         local a = 1
         if age > KillFeed.LIFE - 500 then a = math.max(0, (KillFeed.LIFE - age) / 500) end

@@ -933,22 +933,37 @@ function UI.canOpenPanel(name)
     local open = UI.getOpenPanel()
     return not open or open == name
 end
+-- Abrir um painel: cursor, controles travados e CHAT OCULTO (showChat). Fechar restaura tudo.
+-- Só um painel por vez em todo o cliente (elementData dm:panel), então ao alternar menus o estado
+-- nunca fica "preso": quem abriu é quem fecha, e o fechamento devolve chat e HUD.
 function UI.setPanelOpen(name, open)
     local current = UI.getOpenPanel()
     if open then
         if current and current ~= name then return false end
         setElementData(localPlayer, "dm:panel", name, false)
         showCursor(true)
+        showChat(false)
         toggleAllControls(false, true, false)
         return true
     else
         if current == name then
             setElementData(localPlayer, "dm:panel", false, false)
             showCursor(false)
+            showChat(true)
             toggleAllControls(true, true, true)
         end
         return true
     end
+end
+-- Se este recurso parar com o painel dele aberto, devolve o estado
+addEventHandler("onClientResourceStop", resourceRoot, function()
+    if UI._ownedPanel and UI.getOpenPanel() == UI._ownedPanel then UI.setPanelOpen(UI._ownedPanel, false) end
+end)
+local _setPanelOpen = UI.setPanelOpen
+UI.setPanelOpen = function(name, open)
+    local ok = _setPanelOpen(name, open)
+    if ok and open then UI._ownedPanel = name elseif ok and not open and UI._ownedPanel == name then UI._ownedPanel = nil end
+    return ok
 end
 UI.escapeHandlers = UI.escapeHandlers or {}
 function UI.registerEscape(panelName, fn) UI.escapeHandlers[panelName] = fn end

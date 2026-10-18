@@ -11,7 +11,7 @@ end)
 addEventHandler("onClientPlayerJoin", root, function() setPlayerNametagShowing(source, false) end)
 
 addEventHandler("onClientRender", root, function()
-    if not getElementData(localPlayer, "dm:ready") then return end
+    if not getElementData(localPlayer, "dm:ready") or UI.getOpenPanel() then return end
     local s = UI.s
     local cx, cy, cz = getCameraMatrix()
     local myTeam = getPlayerTeam(localPlayer)

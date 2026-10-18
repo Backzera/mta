@@ -1,11 +1,15 @@
 --[[
-    HUB de jogo (F2) — tela cheia estilo moderno: o mundo do jogo é o fundo (a câmera voa até o
-    local da arena/modo selecionado), abas de modo no topo (ARENAS / RANQUEADAS), lista à esquerda,
-    destaque grande do selecionado e botão ENTRAR embaixo à direita.
+    SELEÇÃO DE ARENAS / MODOS (F2) — composição em tela cheia:
+      · barra superior: logo · seletor de modo (ARENAS | RANQUEADAS) · chip do jogador · fechar
+      · painel lateral esquerdo (translúcido): lista de arenas com cor, nome, armas e ocupação
+      · cena do jogo ao fundo: a câmera voa e orbita o local do item selecionado
+      · dock inferior (translúcido): nome grande, tipo, descrição, tiles de informação e ENTRAR
+    Protocolo preservado: dm:requestArena, ranked:requestJoin, F2, ESC, openArenaPanel/closeArenaPanel/
+    toggleArenaPanel/isPanelOpen, addEvent("ranked:openPanel").
 ]]
 
 local PANEL = "arenas"
-local hub = { open = false, tick = 0, rendering = false, tab = "arenas", selected = 1, origDim = 0, camStart = 0 }
+local hub = { open = false, tick = 0, rendering = false, tab = "arenas", selected = 1, origDim = 0, camStart = 0, scroll = 0 }
 
 local function items()
     if hub.tab == "ranked" then return DM.rankedModes end
@@ -28,6 +32,13 @@ local function countPlayers()
     return counts
 end
 
+local function typeLabel(item)
+    if item.type == "ranked" then return "RANQUEADA" end
+    if item.type == "lobby" then return "ZONA SEGURA" end
+    if item.type == "duel" then return "DUELOS 1v1" end
+    return "TODOS CONTRA TODOS"
+end
+
 local function enter(item)
     closeArenaPanel()
     if item.type == "ranked" then
@@ -37,15 +48,23 @@ local function enter(item)
     end
 end
 
-local function updateCamera(item, a)
+local function updateCamera(item)
     local px, py, pz, dim = previewPoint(item)
     if getElementDimension(localPlayer) ~= dim then setElementDimension(localPlayer, dim) end
     local t = (getTickCount() - hub.camStart) / 1000
-    local radius = 42
-    local cx = UI.tween("hub:cam:x", px, 900, "outCubic")
-    local cy = UI.tween("hub:cam:y", py, 900, "outCubic")
-    local cz = UI.tween("hub:cam:z", pz, 900, "outCubic")
-    setCameraMatrix(cx + math.cos(t * 0.22) * radius, cy + math.sin(t * 0.22) * radius, cz + 16 + math.sin(t * 0.5) * 2, cx, cy, cz + 2)
+    local cx = UI.tween("hub:cam:x", px, 1000, "outCubic")
+    local cy = UI.tween("hub:cam:y", py, 1000, "outCubic")
+    local cz = UI.tween("hub:cam:z", pz, 1000, "outCubic")
+    local radius = 40
+    setCameraMatrix(cx + math.cos(t * 0.2) * radius, cy + math.sin(t * 0.2) * radius, cz + 15 + math.sin(t * 0.45) * 1.5, cx, cy, cz + 2)
+end
+
+-- painel translúcido padrão desta tela (sem brilho exagerado)
+local function surface(x, y, w, h, a, radius)
+    UI.rrect(x, y, w, h, tocolor(8, 12, 10, 205 * a), radius or UI.s(14), {
+        border = 1, borderColor = tocolor(255, 255, 255, 26 * a),
+        gradient = tocolor(14, 20, 16, 205 * a), gradientMode = 1,
+    })
 end
 
 local function render()
@@ -65,101 +84,138 @@ local function render()
     local list = items()
     hub.selected = UI.clamp(hub.selected, 1, #list)
     local sel = list[hub.selected]
-    if hub.open then updateCamera(sel, a) end
-
-    -- gradientes de cena (esquerda escura, topo e rodapé)
-    UI.gradientH(0, 0, UI.sw * 0.5, UI.sh, { 6, 10, 8, 235 * a }, { 6, 10, 8, 0 }, 28)
-    UI.gradientV(0, 0, UI.sw, s(120), { 6, 10, 8, 220 * a }, { 6, 10, 8, 0 }, 16)
-    UI.gradientV(0, UI.sh - s(220), UI.sw, s(220), { 6, 10, 8, 0 }, { 6, 10, 8, 230 * a }, 16)
-
-    -- topo: logo, abas, online, fechar
-    UI.image("logo.png", s(40), s(22), s(150), s(47), tocolor(255, 255, 255, 255 * a))
-    local tabs = { { "arenas", "ARENAS" }, { "ranked", "RANQUEADAS" } }
-    local tx = UI.sw / 2 - s(170)
-    for _, t in ipairs(tabs) do
-        local tw = s(170)
-        local isSel = hub.tab == t[1]
-        local hv = UI.hover("hub:tab:" .. t[1], UI.isMouseIn(tx, s(24), tw, s(44)))
-        UI.textGlow(t[2], tx, s(24), tw, s(44), isSel and UI.color("text", 255 * a) or UI.color("muted", (160 + 95 * hv) * a), isSel and UI.color("accent", 120 * a) or tocolor(0, 0, 0, 0), "bold", 16, "center", "center")
-        if isSel then
-            local ix = UI.tween("hub:tabline", tx, 220, "outCubic")
-            UI.rrect(ix + s(40), s(66), tw - s(80), s(3), UI.color("accent", 255 * a), s(2), { glow = s(10), glowColor = UI.color("accent", 140 * a) })
-        end
-        local key = t[1]
-        UI.addClick(tx, s(24), tw, s(44), function() if hub.tab ~= key then hub.tab = key hub.selected = 1 end end, "hub:tab:" .. key)
-        tx = tx + tw
-    end
-    local online = ("%d ONLINE"):format(#getElementsByType("player"))
-    UI.pill(online, UI.sw - s(40) - UI.textWidth(online, "bold", 10) - s(28) - s(48), s(30), s(30), UI.color("accent", 40 * a), UI.color("accent2", 255 * a), "bold", 10, s(14))
-    UI.closeButton("hub:close", UI.sw - s(40) - s(32), s(29), closeArenaPanel, a)
-
-    -- lista à esquerda
+    if hub.open then updateCamera(sel) end
     local counts = countPlayers()
-    local lx, ly, lw = s(40), s(112), s(400)
-    UI.text(hub.tab == "ranked" and "ESCOLHA O MODO" or "ESCOLHA A ARENA", lx, ly, lw, s(16), UI.color("accent", 255 * a), "semibold", 9, "left", "center")
-    local rowH = s(66)
-    local y = ly + s(26)
-    for i, item in ipairs(list) do
-        local p = UI.stagger(a, i, #list, 0.5)
-        local ox = (1 - p) * s(-30)
-        local isSel = i == hub.selected
-        local hv = UI.hover("hub:row:" .. item.id, UI.isMouseIn(lx, y, lw, rowH - s(6)))
-        local c = item.color
-        local rx = lx + ox + s(6) * hv
-        UI.rrect(rx, y, lw, rowH - s(6), isSel and tocolor(c[1], c[2], c[3], 36 * a * p) or tocolor(255, 255, 255, (8 + 12 * hv) * a * p), s(10), {
-            border = 1, borderColor = isSel and tocolor(c[1], c[2], c[3], 190 * a * p) or tocolor(255, 255, 255, (20 + 40 * hv) * a * p),
-            glow = isSel and s(12) or 0, glowColor = tocolor(c[1], c[2], c[3], 70 * a * p),
-        })
-        UI.rrect(rx, y + s(12), s(4), rowH - s(30), tocolor(c[1], c[2], c[3], 255 * a * p), s(2))
-        UI.text(item.name:upper(), rx + s(18), y + s(8), lw - s(120), s(22), UI.color(isSel and "text" or "muted", 255 * a * p), "bold", 12, "left", "center")
-        local sub = item.type == "ranked" and ("%s · %dx%d"):format(item.place, item.teamSize, item.teamSize) or DM.arenaWeaponList(item)
-        UI.text(UI.truncate(sub, "regular", 9, lw - s(130)), rx + s(18), y + s(32), lw - s(120), s(16), UI.color("muted", 230 * a * p), "regular", 9, "left", "center")
-        local n = counts[item.id] or 0
-        local pulse = n > 0 and UI.pulse(1200, 0.5, 1) or 0.3
-        UI.rrect(rx + lw - s(16) - s(8), y + (rowH - s(6)) / 2 - s(4), s(8), s(8), tocolor(c[1], c[2], c[3], 255 * a * p * pulse), s(4))
-        UI.text(tostring(n), rx + lw - s(60), y, s(30), rowH - s(6), UI.color("text", 230 * a * p), "semibold", 11, "right", "center")
-        local idx = i
-        UI.addClick(lx, y, lw, rowH - s(6), function() if hub.selected == idx then enter(item) else hub.selected = idx end end, "hub:row:" .. item.id)
-        y = y + rowH
-    end
+    local G = s(24)                      -- gutter da grade
+    local topH = s(72)
 
-    -- destaque do selecionado (direita/baixo)
-    local c = sel.color
-    local dx, dw = UI.sw - s(40) - s(560), s(560)
-    local dy = UI.sh - s(236)
-    local isCurrent = getElementData(localPlayer, "dm:arena") == sel.id
-    UI.text(sel.type == "ranked" and "PARTIDA RANQUEADA" or (sel.type == "lobby" and "ZONA SEGURA" or (sel.type == "duel" and "DUELOS 1v1" or "TODOS CONTRA TODOS")), dx, dy - s(40), dw, s(16), tocolor(c[1], c[2], c[3], 255 * a), "semibold", 10, "right", "center")
-    UI.textGlow(sel.name:upper(), dx - s(300), dy - s(26), dw + s(300), s(60), UI.color("text", 255 * a), tocolor(c[1], c[2], c[3], 150 * a), "bold", 38, "right", "center")
-    UI.text(sel.desc or "", dx, dy + s(34), dw, s(20), UI.color("muted", 255 * a), "regular", 11, "right", "center")
-    -- tiles de estatística
-    local n = counts[sel.id] or 0
-    local tiles = sel.type == "ranked"
-        and { { "JOGADORES", ("%d / %d"):format(n, sel.teamSize * 2) }, { "META", ("%d kills · %d min"):format(sel.killTarget, math.floor(sel.duration / 60)) }, { "ARMAS", DM.arenaWeaponList(sel) } }
-        or { { "JOGADORES", tostring(n) }, { "ARMAS", DM.arenaWeaponList(sel) }, { "LOCAL", sel.id == "lobby" and "Los Santos" or (sel.native and "GTA" or "Mapa próprio") } }
-    local tw = s(176)
-    local tx2 = dx + dw - tw * 3 - s(24)
-    for i, t in ipairs(tiles) do
-        local p = UI.stagger(a, i, 3, 0.4)
-        local x = tx2 + (i - 1) * (tw + s(12))
-        UI.rrect(x, dy + s(64) + (1 - p) * s(10), tw, s(58), tocolor(255, 255, 255, 10 * a * p), s(10), { border = 1, borderColor = tocolor(255, 255, 255, 22 * a * p) })
-        UI.text(t[1], x + s(14), dy + s(70), tw, s(14), UI.color("muted", 230 * a * p), "semibold", 8, "left", "center")
-        UI.text(UI.truncate(t[2], "bold", 12, tw - s(28)), x + s(14), dy + s(88), tw - s(28), s(26), UI.color("text", 255 * a * p), "bold", 12, "left", "center")
+    -- tratamento da cena: escurece bordas e mantém o centro visível
+    UI.vignette(tocolor(4, 8, 6, 255), 0.9 * a, 0.3, 1.5)
+    UI.gradientV(0, 0, UI.sw, topH + s(40), { 4, 8, 6, 230 * a }, { 4, 8, 6, 0 }, 14)
+
+    -- ===== barra superior =====
+    UI.image("logo.png", G, s(14), s(140), s(44), tocolor(255, 255, 255, 255 * a))
+    local segW, segH = s(180), s(40)
+    local segX, segY = UI.sw / 2 - segW, s(16)
+    UI.rrect(segX - s(4), segY - s(4), segW * 2 + s(8), segH + s(8), tocolor(8, 12, 10, 200 * a), (segH + s(8)) / 2, { border = 1, borderColor = tocolor(255, 255, 255, 26 * a) })
+    local selIdx = hub.tab == "ranked" and 1 or 0
+    local ix = UI.tween("hub:seg", segX + selIdx * segW, 220, "outCubic")
+    UI.rrect(ix, segY, segW, segH, UI.color("accent", 230 * a), segH / 2, { glow = s(8), glowColor = UI.color("accent", 90 * a) })
+    for i, t in ipairs({ { "arenas", "ARENAS" }, { "ranked", "RANQUEADAS" } }) do
+        local x = segX + (i - 1) * segW
+        local isSel = hub.tab == t[1]
+        UI.text(t[2], x, segY, segW, segH, isSel and tocolor(8, 14, 10, 255 * a) or UI.color("muted", 255 * a), "bold", 11, "center", "center")
+        local key = t[1]
+        UI.addClick(x, segY, segW, segH, function() if hub.tab ~= key then hub.tab = key hub.selected = 1 hub.scroll = 0 end end, "hub:tab:" .. key)
     end
-    -- ações
-    local bw, bh = s(220), s(50)
-    local bx, by = dx + dw - bw, dy + s(140)
+    -- chip do jogador
+    local rp = tonumber(getElementData(localPlayer, "dm:rp")) or 0
+    local tier = DM.tierForRP(rp)
+    local chipTxt = ("%s  ·  %s  ·  %s"):format(DM.stripColors(getPlayerName(localPlayer)), tier.name:upper(), DM.formatMoney(getElementData(localPlayer, "dm:money") or 0))
+    local chipW = UI.textWidth(chipTxt, "semibold", 10) + s(40)
+    local chipX = UI.sw - G - s(32) - s(12) - chipW
+    UI.rrect(chipX, segY, chipW, segH, tocolor(8, 12, 10, 200 * a), segH / 2, { border = 1, borderColor = tocolor(255, 255, 255, 26 * a) })
+    UI.rrect(chipX + s(14), segY + segH / 2 - s(5), s(10), s(10), UI.rgb(tier.color, 255 * a), s(5))
+    UI.text(chipTxt, chipX + s(32), segY, chipW - s(40), segH, UI.color("text", 255 * a), "semibold", 10, "left", "center")
+    UI.closeButton("hub:close", UI.sw - G - s(32), segY + s(4), closeArenaPanel, a)
+
+    -- ===== painel lateral (lista) =====
+    local sideX, sideY, sideW = G, topH + s(8), s(420)
+    local dockH = s(200)
+    local sideH = UI.sh - sideY - dockH - G * 2
+    surface(sideX, sideY, sideW, sideH, a)
+    UI.text(hub.tab == "ranked" and "MODOS RANQUEADOS" or "ARENAS", sideX + s(22), sideY + s(18), sideW, s(18), UI.color("text", 255 * a), "bold", 13, "left", "center")
+    UI.text(("%d disponíveis"):format(#list), sideX + s(22), sideY + s(18), sideW - s(44), s(18), UI.color("muted", 255 * a), "regular", 9, "right", "center")
+    UI.divider(sideX + s(22), sideY + s(46), sideW - s(44), 22 * a)
+    local rowH = s(74)
+    local listY = sideY + s(58)
+    local listH = sideH - s(70)
+    local maxRows = math.floor(listH / rowH)
+    hub.scroll = UI.clamp(hub.scroll, 0, math.max(0, #list - maxRows))
+    hub.listBounds = { sideX, listY, sideW, listH }
+    local off = UI.scroll("hub:list", hub.scroll)
+    for i, item in ipairs(list) do
+        local y = listY + (i - 1 - off) * rowH
+        if y >= listY - s(1) and y + rowH <= listY + listH + s(1) then
+            local p = UI.stagger(a, i, #list, 0.5)
+            local x, w, h = sideX + s(14), sideW - s(28), rowH - s(8)
+            local isSel = i == hub.selected
+            local hv = UI.hover("hub:row:" .. item.id, UI.isMouseIn(x, y, w, h))
+            local c = item.color
+            UI.rrect(x, y, w, h, isSel and tocolor(c[1], c[2], c[3], 34 * a * p) or tocolor(255, 255, 255, (6 + 12 * hv) * a * p), s(10), {
+                border = 1, borderColor = isSel and tocolor(c[1], c[2], c[3], 200 * a * p) or tocolor(255, 255, 255, (14 + 40 * hv) * a * p),
+            })
+            -- bloco de cor (miniatura)
+            UI.rrect(x + s(10), y + s(10), s(46), h - s(20), tocolor(c[1], c[2], c[3], (isSel and 230 or 150) * a * p), s(8), { gradient = tocolor(c[1], c[2], c[3], 60 * a * p), gradientMode = 1 })
+            UI.text(item.short or item.name, x + s(10), y + s(10), s(46), h - s(20), tocolor(8, 14, 10, 255 * a * p), "bold", 7, "center", "center", true)
+            UI.text(item.name:upper(), x + s(68), y + s(10), w - s(150), s(20), UI.color(isSel and "text" or "muted", 255 * a * p), "bold", 11, "left", "center", true)
+            local sub = item.type == "ranked" and ("%s · %dx%d"):format(item.place, item.teamSize, item.teamSize) or DM.arenaWeaponList(item)
+            UI.text(UI.truncate(sub, "regular", 9, w - s(160)), x + s(68), y + s(32), w - s(150), s(16), UI.color("muted", 230 * a * p), "regular", 9, "left", "center")
+            -- ocupação
+            local n = counts[item.id] or 0
+            local cap = item.type == "ranked" and item.teamSize * 2 or 32
+            UI.bar(x + s(68), y + h - s(14), w - s(150), s(3), n / cap, tocolor(c[1], c[2], c[3], 220 * a * p), tocolor(255, 255, 255, 14 * a * p), 1)
+            UI.text(tostring(n), x + w - s(70), y, s(60), h, UI.color("text", 255 * a * p), "bold", 14, "right", "center")
+            UI.text("ONLINE", x + w - s(70), y + h / 2 + s(8), s(60), s(12), UI.color("muted", 200 * a * p), "semibold", 6, "right", "center")
+            local idx = i
+            UI.addClick(x, y, w, h, function() if hub.selected == idx then enter(item) else hub.selected = idx UI.sound("hover", 0.3) end end, "hub:row:" .. item.id)
+        end
+    end
+    UI.scrollbar(sideX + sideW - s(8), listY, listH, #list, maxRows, off, a)
+
+    -- ===== dock inferior (detalhes + ação) =====
+    local dockX, dockY, dockW = G, UI.sh - dockH - G, UI.sw - G * 2
+    surface(dockX, dockY, dockW, dockH, a)
+    local c = sel.color
+    UI.rrect(dockX, dockY + s(18), s(5), dockH - s(36), tocolor(c[1], c[2], c[3], 255 * a), s(2))
+    local dx = dockX + s(30)
+    UI.pill(typeLabel(sel), dx, dockY + s(22), s(22), tocolor(c[1], c[2], c[3], 40 * a), tocolor(c[1], c[2], c[3], 255 * a), "bold", 8, s(10))
+    UI.textGlow(sel.name:upper(), dx, dockY + s(46), s(620), s(50), UI.color("text", 255 * a), tocolor(c[1], c[2], c[3], 110 * a), "bold", 30, "left", "center")
+    UI.text(sel.desc or "", dx, dockY + s(100), s(620), s(40), UI.color("muted", 255 * a), "regular", 11, "left", "top", false, true)
+    -- tiles
+    local n = counts[sel.id] or 0
+    local tiles
+    if sel.type == "ranked" then
+        tiles = { { "JOGADORES", ("%d / %d"):format(n, sel.teamSize * 2) }, { "META", ("%d kills"):format(sel.killTarget) }, { "TEMPO", ("%d min"):format(math.floor(sel.duration / 60)) }, { "ARMAS", DM.arenaWeaponList(sel) } }
+    else
+        tiles = { { "JOGADORES", tostring(n) }, { "ARMAS", DM.arenaWeaponList(sel) }, { "MAPA", sel.id == "lobby" and "Los Santos" or (sel.native and "GTA" or "Mapa próprio") }, { "REGRAS", sel.cbug and "C-Bug liberado" or (sel.safe and "Sem dano" or "Headshot x2.2") } }
+    end
+    local tw, th = s(170), s(64)
+    local tilesX = dockX + dockW - s(30) - s(250) - G - tw * 4 - s(12) * 3
+    for i, t in ipairs(tiles) do
+        local p = UI.stagger(a, i, 4, 0.4)
+        local x = tilesX + (i - 1) * (tw + s(12))
+        local y = dockY + (dockH - th) / 2 + (1 - p) * s(8)
+        UI.rrect(x, y, tw, th, tocolor(255, 255, 255, 8 * a * p), s(10), { border = 1, borderColor = tocolor(255, 255, 255, 22 * a * p) })
+        UI.text(t[1], x + s(14), y + s(10), tw, s(14), UI.color("muted", 230 * a * p), "semibold", 8, "left", "center")
+        UI.text(UI.truncate(t[2], "bold", 12, tw - s(28)), x + s(14), y + s(28), tw - s(28), s(24), UI.color("text", 255 * a * p), "bold", 12, "left", "center")
+    end
+    -- ação
+    local bw, bh = s(250), s(54)
+    local bx, by = dockX + dockW - s(30) - bw, dockY + (dockH - bh) / 2 - s(12)
+    local isCurrent = getElementData(localPlayer, "dm:arena") == sel.id
     if isCurrent then
-        UI.rrect(bx, by, bw, bh, tocolor(c[1], c[2], c[3], 40 * a), s(12), { border = 1, borderColor = tocolor(c[1], c[2], c[3], 160 * a) })
+        UI.rrect(bx, by, bw, bh, tocolor(c[1], c[2], c[3], 36 * a), s(12), { border = 1, borderColor = tocolor(c[1], c[2], c[3], 170 * a) })
         UI.text("VOCÊ ESTÁ AQUI", bx, by, bw, bh, tocolor(c[1], c[2], c[3], 255 * a), "bold", 12, "center", "center")
     else
         UI.button("hub:enter", sel.type == "ranked" and "ENTRAR NA PARTIDA" or "ENTRAR NA ARENA", bx, by, bw, bh, { kind = "primary", color = sel.type == "ranked" and "gold" or "accent", size = 12, alpha = a, onClick = function() enter(sel) end })
     end
-    UI.text("ESC voltar   ·   clique duas vezes na lista para entrar   ·   a câmera mostra o local antes de entrar", dx - s(200), by + s(56), dw + s(200), s(18), UI.color("muted", 180 * a), "regular", 9, "right", "center")
+    UI.text("ESC voltar   ·   duplo clique na lista entra", bx, by + bh + s(8), bw, s(16), UI.color("muted", 180 * a), "regular", 8, "center", "center")
     UI.endFrame()
 end
 
 local function onClick(button, state)
     if hub.open then UI.processClick(button, state) end
+end
+
+local function onWheel(key, press)
+    if not hub.open or not press then return end
+    if key == "mouse_wheel_up" or key == "mouse_wheel_down" then
+        local b = hub.listBounds
+        if b and UI.isMouseIn(b[1], b[2], b[3], b[4]) then
+            hub.scroll = math.max(0, hub.scroll + (key == "mouse_wheel_down" and 1 or -1))
+        end
+    end
 end
 
 function openArenaPanel()
@@ -172,11 +228,10 @@ function openArenaPanel()
     hub.origDim = getElementDimension(localPlayer)
     local list = items()
     for i, it in ipairs(list) do if it.id == getElementData(localPlayer, "dm:arena") then hub.selected = i end end
-    local px, py, pz = previewPoint(list[hub.selected])
     UI.resetTween("hub:cam:x") UI.resetTween("hub:cam:y") UI.resetTween("hub:cam:z")
-    if setHudVisible then setHudVisible(false) end
     if not hub.rendering then hub.rendering = true addEventHandler("onClientRender", root, render) end
     addEventHandler("onClientClick", root, onClick)
+    addEventHandler("onClientKey", root, onWheel)
     UI.sound("click", 0.4)
 end
 
@@ -186,7 +241,7 @@ function closeArenaPanel()
     hub.tick = getTickCount()
     UI.setPanelOpen(PANEL, false)
     removeEventHandler("onClientClick", root, onClick)
-    if setHudVisible then setHudVisible(true) end
+    removeEventHandler("onClientKey", root, onWheel)
 end
 
 function toggleArenaPanel()

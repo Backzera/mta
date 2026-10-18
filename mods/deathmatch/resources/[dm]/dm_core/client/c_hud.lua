@@ -204,7 +204,7 @@ addEventHandler("onClientRender", root, function()
         HUD.frames = 0
         HUD.fpsTick = now
     end
-    if not HUD.visible then return end
+    if not HUD.visible or UI.getOpenPanel() then return end
     if not getElementData(localPlayer, "dm:ready") then return end
     if not getArenaOf(localPlayer) then return end
     drawTop()
