@@ -1,7 +1,7 @@
 /* UTG MATA-MATA #Return2k26 — tema verde, vidro escuro, Oswald para títulos. Tudo em vw para escalar com a resolução. */
-@font-face { font-family: 'Poppins'; src: url(../fonts/Poppins-Regular.ttf); font-weight: 400; }
-@font-face { font-family: 'Poppins'; src: url(../fonts/Poppins-SemiBold.ttf); font-weight: 600; }
-@font-face { font-family: 'Oswald'; src: url(../fonts/Oswald.ttf); font-weight: 300 700; }
+@font-face { font-family: 'Poppins'; src: url(./fonts/Poppins-Regular.ttf); font-weight: 400; }
+@font-face { font-family: 'Poppins'; src: url(./fonts/Poppins-SemiBold.ttf); font-weight: 600; }
+@font-face { font-family: 'Oswald'; src: url(./fonts/Oswald.ttf); font-weight: 300 700; }
 
 :root {
   --g: 34, 230, 138;        /* verde UTG */
