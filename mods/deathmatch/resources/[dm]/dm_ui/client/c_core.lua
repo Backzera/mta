@@ -21,7 +21,10 @@ setElementData(localPlayer, "dm:hubCEF", true, false)
 -- ---------- JS ----------
 local function js(code)
     if browser and ready then executeBrowserJavascript(browser, code)
-    else queue[#queue + 1] = code end
+    else
+        queue[#queue + 1] = code
+        if #queue > 60 then table.remove(queue, 1) end
+    end
 end
 function UI.set(key, value) js(("window.ui.set(%q,%s)"):format(key, toJSON(value or {}))) end
 function UI.merge(key, value) js(("window.ui.merge(%q,%s)"):format(key, toJSON(value or {}))) end
@@ -118,21 +121,46 @@ local function render()
     if browser then dxDrawImage(0, 0, sw, sh, browser) end
 end
 
+local URL = "http://mta/local/dist/index.html"
+local created = false
+local function diag(msg, level)
+    outputDebugString("[dm_ui] " .. msg, level or 3)
+end
 local function createUIBrowser()
     if browser then return end
+    diag("criando browser " .. sw .. "x" .. sh)
     browser = createBrowser(sw, sh, true, true)   -- local, transparente
-    if not browser then outputDebugString("[dm_ui] createBrowser falhou (CEF desativado nas opções do MTA?)", 1) return end
+    if not browser then
+        diag("createBrowser falhou: ative o navegador em Configurações > Navegador (CEF) e reconecte", 1)
+        outputChatBox("#FF4D6D[UTG] A interface não pôde ser criada: ative o navegador interno em Configurações > Navegador e reconecte.", 255, 77, 109, true)
+        return
+    end
     addEventHandler("onClientBrowserCreated", browser, function()
-        loadBrowserURL(browser, "http://mta/local/dist/index.html")
+        created = true
+        diag("browser criado, carregando " .. URL)
+        loadBrowserURL(browser, URL)
     end)
-    addEventHandler("onClientBrowserDocumentReady", browser, function()
+    addEventHandler("onClientBrowserDocumentReady", browser, function(url)
+        if ready then return end
         ready = true
+        diag("documento pronto: " .. tostring(url))
         for _, code in ipairs(queue) do executeBrowserJavascript(browser, code) end
         queue = {}
         addEventHandler("onClientRender", root, render, true, "low-5")
         triggerEvent("ui:ready", localPlayer)
     end)
+    -- diagnóstico: se em 12 s nada carregou, avisa no chat (sem travar o jogador)
+    setTimer(function()
+        if ready then return end
+        local why = not created and "o navegador não foi criado (CEF desativado ou bloqueado?)" or ("a página não carregou: " .. URL)
+        diag("interface não carregou em 12 s: " .. why, 1)
+        outputChatBox("#FF4D6D[UTG] Interface não carregou: " .. why .. ". Use /uidebug e me mande o resultado.", 255, 77, 109, true)
+    end, 12000, 1)
 end
+addCommandHandler("uidebug", function()
+    outputChatBox(("#7CFFB2[dm_ui] browser=%s criado=%s pronto=%s url=%s res=%dx%d"):format(tostring(browser ~= nil), tostring(created), tostring(ready), browser and tostring(getBrowserURL(browser)) or "-", sw, sh), 255, 255, 255, true)
+    if browser then outputChatBox(("#7CFFB2[dm_ui] carregando=%s titulo=%s"):format(tostring(isBrowserLoading(browser)), tostring(getBrowserTitle(browser))), 255, 255, 255, true) end
+end)
 
 addEvent("ui:ready")
 addEventHandler("onClientResourceStart", resourceRoot, function()

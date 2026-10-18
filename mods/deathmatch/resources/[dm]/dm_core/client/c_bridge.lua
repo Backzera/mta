@@ -17,5 +17,12 @@ function notify(text, ntype, title)
     triggerEvent("ui:notify", localPlayer, text, ntype, title)
 end
 addEvent("ui:notify")
-addEvent("dm:toggleHelp", true)
+-- O servidor pode disparar estes eventos antes de o dm_ui terminar de carregar; registrá-los aqui evita
+-- "event is not added clientside" (os handlers do dm_ui recebem normalmente quando ele sobe).
+for _, ev in ipairs({ "dm:notify", "dm:toggleHelp", "dm:onMoney", "dm:onKill", "dm:onKillReward", "dm:onStreak", "dm:tierChange",
+    "shop:open", "shop:result", "duel:openPanel", "duel:incoming", "duel:requestRemoved", "duel:outgoing", "duel:outgoingRemoved",
+    "duel:start", "duel:round", "duel:fight", "duel:score", "duel:end", "ranked:info", "ranked:state", "ranked:spectate", "ranked:start", "ranked:end",
+    "clans:info", "crates:result", "crates:openPanel", "login:show", "login:result" }) do
+    addEvent(ev, true)
+end
 function isPanelOpen() return UI.getOpenPanel() ~= nil end

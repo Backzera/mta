@@ -529,4 +529,7 @@ addEventHandler("login:result", root, function(ok, message, passToSave)
         if message and message:find("Senha incorreta") then clearCredentials() end
     end
 end)
-addEventHandler("ui:ready", root, function() triggerServerEvent("login:ready", localPlayer) end)
+addEventHandler("onClientResourceStart", resourceRoot, function()
+    -- a câmera abre e a tela de login é enfileirada até a página do CEF carregar
+    triggerServerEvent("login:ready", localPlayer)
+end)
