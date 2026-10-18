@@ -1,76 +1,69 @@
 --[[
-    Notificações (toasts) no canto superior direito, com animação.
+    Notificações (toasts) no topo direito, abaixo do killfeed: deslizam com overshoot, barra de tempo,
+    ícone por tipo e brilho na cor do tipo.
 ]]
 
 local toasts = {}
-local MAX = 5
-local LIFE = 5000
+local MAX, LIFE = 5, 5000
 local TYPES = {
-    info    = { color = "info",   icon = "i" },
-    success = { color = "accent", icon = "+" },
+    info    = { color = "accent2", icon = "i" },
+    success = { color = "success", icon = "+" },
     error   = { color = "danger", icon = "x" },
-    warn    = { color = "warn",   icon = "!" },
+    warn    = { color = "warn", icon = "!" },
 }
 
 function notify(text, ntype, title)
     ntype = TYPES[ntype] and ntype or "info"
-    table.insert(toasts, 1, { text = tostring(text), type = ntype, title = title, tick = getTickCount() })
+    table.insert(toasts, 1, { text = tostring(text), type = ntype, title = title, tick = getTickCount(), id = getTickCount() + math.random(1000) })
     if #toasts > MAX then table.remove(toasts) end
     playUISound(ntype == "error" and "error" or "notify", 0.5)
 end
 
 addEvent("dm:notify", true)
-addEventHandler("dm:notify", root, function(text, ntype, title)
-    notify(text, ntype, title)
-end)
+addEventHandler("dm:notify", root, function(text, ntype, title) notify(text, ntype, title) end)
 
 addEventHandler("onClientRender", root, function()
     if #toasts == 0 then return end
     local now = getTickCount()
-    local w = UI.s(340)
-    local x = UI.sw - w - UI.s(24)
-    local y = UI.s(24)
-    -- Empurra para baixo se o killfeed estiver visível
-    if KillFeed and KillFeed.height and KillFeed.height() > 0 then
-        y = y + KillFeed.height() + UI.s(12)
-    end
+    local s = UI.s
+    local w = s(340)
+    local x = UI.sw - w - s(24)
+    local y = s(24)
+    if KillFeed and KillFeed.height and KillFeed.height() > 0 then y = y + KillFeed.height() + s(12) end
     for i = #toasts, 1, -1 do
-        local t = toasts[i]
-        local age = now - t.tick
-        if age > LIFE then
-            table.remove(toasts, i)
-        end
+        if now - toasts[i].tick > LIFE then table.remove(toasts, i) end
     end
     for _, t in ipairs(toasts) do
         local age = now - t.tick
         local a = 1
-        if age < 200 then a = UI.ease(age / 200) end
+        if age < 320 then a = UI.ease(age / 320, "outCubic") end
         if age > LIFE - 400 then a = math.max(0, (LIFE - age) / 400) end
-        local slide = (1 - a) * UI.s(40)
+        local slide = (1 - UI.ease(math.min(1, age / 420), "outBack")) * s(60)
+        if age > LIFE - 400 then slide = (1 - a) * s(30) end
         local info = TYPES[t.type]
-        local pad = UI.s(14)
-        local textW = w - pad * 3 - UI.s(30)
+        local c = UI.palette[info.color]
+        local pad = s(14)
+        local textW = w - pad * 3 - s(30)
         local lines = math.max(1, math.ceil(UI.textWidth(t.text, "regular", 11) / textW))
-        local h = pad * 2 + (t.title and UI.s(18) or 0) + lines * UI.s(17)
+        local h = pad * 2 + (t.title and s(18) or 0) + lines * s(17)
         local tx = x + slide
-        UI.rect(tx + UI.s(2), y + UI.s(3), w, h, tocolor(0, 0, 0, 90 * a), UI.s(12))
-        UI.rect(tx, y, w, h, UI.color("card", 240 * a), UI.s(12))
-        UI.border(tx, y, w, h, tocolor(255, 255, 255, 24 * a), UI.s(12))
-        -- faixa colorida à esquerda
-        UI.rect(tx, y + UI.s(10), UI.s(4), h - UI.s(20), UI.color(info.color, 255 * a), UI.s(2))
-        -- ícone
-        local ix = tx + pad + UI.s(4)
-        UI.rect(ix, y + pad, UI.s(26), UI.s(26), UI.color(info.color, 40 * a), UI.s(8))
-        UI.text(info.icon, ix, y + pad, UI.s(26), UI.s(26), UI.color(info.color, 255 * a), "bold", 13, "center", "center")
-        local cx = ix + UI.s(26) + pad
-        local cy = y + pad
+        local ty = UI.tween("toast:y:" .. t.id, y, 220, "outCubic")
+        UI.rrect(tx, ty, w, h, UI.color("card", 235 * a), s(12), {
+            border = 1, borderColor = tocolor(255, 255, 255, 24 * a),
+            glow = s(12), glowColor = tocolor(c[1], c[2], c[3], 70 * a),
+            gradient = UI.color("card2", 235 * a), gradientMode = 3,
+        })
+        UI.rrect(tx, ty + s(10), s(4), h - s(20), tocolor(c[1], c[2], c[3], 255 * a), s(2), { glow = s(5), glowColor = tocolor(c[1], c[2], c[3], 140 * a) })
+        local ix = tx + pad + s(4)
+        UI.rrect(ix, ty + pad, s(26), s(26), tocolor(c[1], c[2], c[3], 40 * a), s(8))
+        UI.text(info.icon, ix, ty + pad, s(26), s(26), tocolor(c[1], c[2], c[3], 255 * a), "bold", 13, "center", "center")
+        local cx, cy = ix + s(26) + pad, ty + pad
         if t.title then
-            UI.text(t.title, cx, cy - UI.s(2), textW, UI.s(18), UI.color("text", 255 * a), "semibold", 12, "left", "top")
-            cy = cy + UI.s(18)
+            UI.text(t.title, cx, cy - s(2), textW, s(18), UI.color("text", 255 * a), "semibold", 12, "left", "top")
+            cy = cy + s(18)
         end
-        UI.text(t.text, cx, cy, textW, lines * UI.s(17), UI.color(t.title and "muted" or "text", 255 * a), "regular", 11, "left", "top", false, true)
-        -- barra de tempo
-        UI.rect(tx + UI.s(12), y + h - UI.s(3), (w - UI.s(24)) * (1 - age / LIFE), UI.s(2), UI.color(info.color, 120 * a), 1)
-        y = y + h + UI.s(8)
+        UI.text(t.text, cx, cy, textW, lines * s(17), UI.color(t.title and "muted" or "text", 255 * a), "regular", 11, "left", "top", false, true)
+        UI.rrect(tx + s(12), ty + h - s(4), (w - s(24)) * (1 - age / LIFE), s(2), tocolor(c[1], c[2], c[3], 150 * a), 1)
+        y = y + h + s(8)
     end
 end)

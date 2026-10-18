@@ -1,9 +1,20 @@
 --[[
-    Painel de arenas (F2): cards com nome, armas, jogadores online e botão de entrar.
+    Painel de arenas (F2) — UI v2: moldura com fundo desfocado, cards em cascata com hover
+    que levanta o card, ponto pulsante de jogadores, card dourado "Ranqueadas" (abre o F5).
 ]]
 
-local panel = { open = false, tick = 0, hoverCard = nil }
 local PANEL = "arenas"
+local panel = { open = false, tick = 0, rendering = false }
+local CARDS
+
+local function cards()
+    if CARDS then return CARDS end
+    CARDS = {}
+    for _, a in ipairs(DM.arenas) do CARDS[#CARDS + 1] = a end
+    CARDS[#CARDS + 1] = { id = "__ranked", name = "Partidas Ranqueadas", type = "ranked", color = { 245, 196, 81 },
+        desc = "5x5 e 10x10 com aquecimento. Ganhe RP e suba de elo.", weapons = {} }
+    return CARDS
+end
 
 local function countPlayers()
     local counts = {}
@@ -14,126 +25,95 @@ local function countPlayers()
     return counts
 end
 
-local CARDS
-local function cards()
-    if CARDS then return CARDS end
-    CARDS = {}
-    for _, a in ipairs(DM.arenas) do CARDS[#CARDS + 1] = a end
-    CARDS[#CARDS + 1] = { id = "__ranked", name = "Partidas Ranqueadas", type = "ranked", color = { 245, 196, 81 },
-        desc = "5x5 e 10x10 com aquecimento. Ganhe RP e suba de elo.", weapons = {} }
-    return CARDS
+local function enterArena(id)
+    closeArenaPanel()
+    if id == "__ranked" then
+        setTimer(function() triggerEvent("ranked:openPanel", localPlayer) end, 60, 1)
+    else
+        triggerServerEvent("dm:requestArena", localPlayer, id)
+    end
 end
 
-local function layout()
-    local s = UI.s
-    local cols = 3
-    local cardW, cardH, gap = s(300), s(150), s(16)
-    local pad = s(28)
-    local rows = math.ceil(#cards() / cols)
-    local w = pad * 2 + cols * cardW + (cols - 1) * gap
-    local h = pad + s(80) + rows * cardH + (rows - 1) * gap + s(70)
-    local x, y = (UI.sw - w) / 2, (UI.sh - h) / 2
-    return x, y, w, h, cols, cardW, cardH, gap, pad
-end
-
-local RENDER_ON = false
 local function render()
-    local progress = UI.openProgress(panel)
-    if progress <= 0 then
-        if not panel.open then removeEventHandler("onClientRender", root, render) RENDER_ON = false end
+    local s = UI.s
+    local list = cards()
+    local cols = 3
+    local cardW, cardH, gap = s(292), s(154), s(14)
+    local rows = math.ceil(#list / cols)
+    local pad = s(28)
+    local w = pad * 2 + cols * cardW + (cols - 1) * gap
+    local h = s(86) + s(18) + rows * cardH + (rows - 1) * gap + s(74)
+
+    local f = UI.panelFrame(panel, {
+        w = w, h = h, title = "ARENAS", subtitle = "Escolha onde lutar. Cada arena tem suas próprias armas e regras.",
+        icon = "target.png", accent = "accent", onClose = closeArenaPanel,
+        badge = ("%d ONLINE"):format(#getElementsByType("player")),
+    })
+    if not f then
+        if not panel.open then
+            removeEventHandler("onClientRender", root, render)
+            panel.rendering = false
+        end
         return
     end
-    local s = UI.s
-    local a = progress
-    local x, y, w, h, cols, cardW, cardH, gap, pad = layout()
-    y = y + (1 - a) * s(20)
-
-    dxDrawRectangle(0, 0, UI.sw, UI.sh, tocolor(5, 7, 12, 160 * a))
-    UI.card(x, y, w, h, s(20), a)
-
-    -- Cabeçalho
-    UI.text("ARENAS", x + pad, y + pad - s(4), w, s(30), UI.color("text", 255 * a), "bold", 24, "left", "center")
-    UI.text("Escolha onde quer lutar. Cada arena tem suas próprias armas.", x + pad, y + pad + s(28), w, s(20), UI.color("muted", 255 * a), "regular", 11, "left", "center")
-    local current = getElementData(localPlayer, "dm:arena")
-    local total = #getElementsByType("player")
-    local tt = ("%d online"):format(total)
-    UI.pill(tt, x + w - pad - UI.textWidth(tt, "semibold", 10) - s(20), y + pad + s(2), s(24), UI.color("accent", 40 * a), UI.color("accent", 255 * a), "semibold", 10)
-
-    -- Fechar
-    local cx, cy = x + w - pad - s(32), y + pad - s(6)
-    if UI.button("arena_close", "×", cx, cy, s(32), s(32), { kind = "ghost", size = 12, alpha = a }) then end
-    panel.closeBounds = { cx, cy, s(32), s(32) }
-
+    local a = f.a
     local counts = countPlayers()
-    local startY = y + pad + s(70)
-    panel.cards = {}
-    panel.hoverCard = nil
-    for i, arena in ipairs(cards()) do
+    local current = getElementData(localPlayer, "dm:arena")
+    local n = #list
+    for i, arena in ipairs(list) do
         local col = (i - 1) % cols
         local row = math.floor((i - 1) / cols)
-        local cxp = x + pad + col * (cardW + gap)
-        local cyp = startY + row * (cardH + gap)
-        local hover = UI.isMouseIn(cxp, cyp, cardW, cardH)
+        local p = UI.stagger(a, i, n, 0.55)
+        local cx = f.cx + col * (cardW + gap)
+        local cy = f.cy + row * (cardH + gap) + (1 - p) * s(22)
+        local ca = a * p
+        local hovering = UI.isMouseIn(cx, cy, cardW, cardH)
+        local t = UI.hover("arena:" .. arena.id, hovering)
+        local lift = s(4) * t
+        local x, y = cx - lift / 2, cy - lift
+        local cw, ch = cardW + lift, cardH + lift
         local isCurrent = current == arena.id
-        if hover then panel.hoverCard = arena.id end
-        panel.cards[#panel.cards + 1] = { arena.id, cxp, cyp, cardW, cardH }
-
-        UI.rect(cxp, cyp, cardW, cardH, UI.color("card2", (hover and 255 or 220) * a), s(14))
-        UI.border(cxp, cyp, cardW, cardH, isCurrent and UI.rgb(arena.color, 200 * a) or tocolor(255, 255, 255, (hover and 50 or 20) * a), s(14))
-        -- faixa de cor
-        UI.rect(cxp, cyp + s(16), s(5), cardH - s(32), UI.rgb(arena.color, 255 * a), s(3))
-        -- título
-        UI.text(arena.name, cxp + s(22), cyp + s(16), cardW - s(44), s(22), UI.color("text", 255 * a), "bold", 14, "left", "center")
-        -- tipo
-        local typeLabel = arena.type == "lobby" and "SEGURO" or (arena.type == "duel" and "1v1" or (arena.type == "ranked" and "RANQUEADO · F5" or "TODOS CONTRA TODOS"))
-        if arena.cbug then typeLabel = typeLabel .. " · C-BUG" end
-        UI.text(typeLabel, cxp + s(22), cyp + s(38), cardW - s(44), s(14), UI.rgb(arena.color, 230 * a), "semibold", 8, "left", "center")
-        -- armas
-        UI.text(arena.type == "ranked" and arena.desc or DM.arenaWeaponList(arena), cxp + s(22), cyp + s(56), cardW - s(44), s(34), UI.color("muted", 255 * a), "regular", 10, "left", "top", false, true)
+        local ranked = arena.type == "ranked"
+        local c = arena.color
+        UI.rrect(x, y, cw, ch, UI.color("card2", (215 + 30 * t) * ca), s(12), {
+            border = 1, borderColor = isCurrent and tocolor(c[1], c[2], c[3], 200 * ca) or tocolor(255, 255, 255, (22 + 60 * t) * ca),
+            glow = s(6) + s(16) * t + (isCurrent and s(8) or 0), glowColor = tocolor(c[1], c[2], c[3], (40 + 90 * t + (isCurrent and 40 or 0)) * ca),
+            gradient = tocolor(c[1], c[2], c[3], (12 + 16 * t) * ca), gradientMode = 3, shine = 0.1 + 0.15 * t,
+        })
+        UI.rrect(x, y + s(16), s(4), ch - s(32), tocolor(c[1], c[2], c[3], 255 * ca), s(2), { glow = s(6), glowColor = tocolor(c[1], c[2], c[3], 120 * ca) })
+        UI.text(arena.name, x + s(20), y + s(14), cw - s(40), s(24), UI.color("text", 255 * ca), "bold", 14, "left", "center")
+        local typeLabel = arena.type == "lobby" and "ZONA SEGURA" or (arena.type == "duel" and "DUELOS 1v1" or (ranked and "RANQUEADO · F5" or "TODOS CONTRA TODOS"))
+        if arena.cbug then typeLabel = typeLabel .. "  ·  C-BUG" end
+        UI.text(typeLabel, x + s(20), y + s(38), cw - s(40), s(14), tocolor(c[1], c[2], c[3], 230 * ca), "semibold", 8, "left", "center")
+        UI.text(ranked and arena.desc or DM.arenaWeaponList(arena), x + s(20), y + s(58), cw - s(40), s(36), UI.color("muted", 255 * ca), "regular", 10, "left", "top", false, true)
         -- jogadores
-        local n = counts[arena.id] or 0
-        if arena.type == "ranked" then
-            n = 0
-            for _, m in ipairs(DM.rankedModes) do n = n + (counts[m.id] or 0) end
+        local count = counts[arena.id] or 0
+        if ranked then
+            count = 0
+            for _, m in ipairs(DM.rankedModes) do count = count + (counts[m.id] or 0) end
         end
-        local pTxt = ("%d %s"):format(n, n == 1 and "jogador" or "jogadores")
-        UI.rect(cxp + s(22), cyp + cardH - s(40), s(8), s(8), n > 0 and UI.color("accent", 255 * a) or UI.color("muted", 120 * a), s(4))
-        UI.text(pTxt, cxp + s(36), cyp + cardH - s(46), cardW, s(20), UI.color("muted", 255 * a), "medium", 10, "left", "center")
+        local dotA = count > 0 and UI.pulse(1200, 0.55, 1) or 0.35
+        UI.rrect(x + s(20), y + ch - s(36), s(8), s(8), count > 0 and tocolor(c[1], c[2], c[3], 255 * ca * dotA) or UI.color("muted", 120 * ca), s(4), count > 0 and { glow = s(5), glowColor = tocolor(c[1], c[2], c[3], 160 * ca * dotA) } or nil)
+        UI.text(("%d %s"):format(count, count == 1 and "jogador" or "jogadores"), x + s(34), y + ch - s(42), cw, s(20), UI.color("muted", 255 * ca), "medium", 10, "left", "center")
         -- botão
         local bw, bh = s(92), s(30)
-        local bx, by = cxp + cardW - bw - s(16), cyp + cardH - bh - s(14)
+        local bx, by = x + cw - bw - s(16), y + ch - bh - s(14)
         if isCurrent then
-            UI.rect(bx, by, bw, bh, UI.rgb(arena.color, 30 * a), s(8))
-            UI.text("ATUAL", bx, by, bw, bh, UI.rgb(arena.color, 255 * a), "semibold", 10, "center", "center")
+            UI.rrect(bx, by, bw, bh, tocolor(c[1], c[2], c[3], 36 * ca), s(8), { border = 1, borderColor = tocolor(c[1], c[2], c[3], 120 * ca) })
+            UI.text("VOCÊ ESTÁ AQUI", bx, by, bw, bh, tocolor(c[1], c[2], c[3], 255 * ca), "semibold", 8, "center", "center")
         else
-            UI.button("arena_btn_" .. arena.id, arena.type == "ranked" and "ABRIR" or "ENTRAR", bx, by, bw, bh, { kind = hover and "primary" or "outline", size = 10, alpha = a })
+            UI.button("arena_btn_" .. arena.id, ranked and "ABRIR" or "ENTRAR", bx, by, bw, bh,
+                { kind = t > 0.5 and "primary" or "outline", color = ranked and "gold" or "accent", size = 10, alpha = ca })
         end
+        local id = arena.id
+        if not isCurrent then UI.addClick(x, y, cw, ch, function() enterArena(id) end, "arena_card_" .. id) end
     end
-
-    -- Rodapé
-    UI.divider(x + pad, y + h - s(52), w - pad * 2, 18 * a)
-    UI.text("F2 ou ESC para fechar  ·  /arena <nome>  ·  /lobby", x + pad, y + h - s(44), w - pad * 2, s(30), UI.color("muted", 200 * a), "regular", 10, "left", "center")
-    UI.text("Clique em um card para entrar", x + pad, y + h - s(44), w - pad * 2, s(30), UI.color("muted", 140 * a), "regular", 10, "right", "center")
+    UI.panelFooter(f, "F2 ou ESC fecha  ·  clique no card para entrar  ·  /arena <nome>  ·  /lobby")
+    UI.endFrame()
 end
 
 local function onClick(button, state)
-    if button ~= "left" or state ~= "down" or not panel.open then return end
-    if panel.closeBounds and UI.isMouseIn(unpack(panel.closeBounds)) then
-        closeArenaPanel()
-        return
-    end
-    for _, c in ipairs(panel.cards or {}) do
-        if UI.isMouseIn(c[2], c[3], c[4], c[5]) then
-            playUISound("click")
-            closeArenaPanel()
-            if c[1] == "__ranked" then
-                setTimer(function() triggerEvent("ranked:openPanel", localPlayer) end, 50, 1)
-            else
-                triggerServerEvent("dm:requestArena", localPlayer, c[1])
-            end
-            return
-        end
-    end
+    if panel.open then UI.processClick(button, state) end
 end
 
 function openArenaPanel()
@@ -142,9 +122,12 @@ function openArenaPanel()
     if not UI.setPanelOpen(PANEL, true) then return end
     panel.open = true
     panel.tick = getTickCount()
-    if not RENDER_ON then RENDER_ON = true addEventHandler("onClientRender", root, render) end
+    if not panel.rendering then
+        panel.rendering = true
+        addEventHandler("onClientRender", root, render)
+    end
     addEventHandler("onClientClick", root, onClick)
-    playUISound("click", 0.4)
+    UI.sound("click", 0.4)
 end
 
 function closeArenaPanel()

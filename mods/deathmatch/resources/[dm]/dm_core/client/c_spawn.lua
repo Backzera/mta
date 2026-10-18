@@ -1,17 +1,18 @@
 --[[
-    Spawn: ajuste ao chão (apenas em arenas sem mapa), tela de morte,
-    indicador de proteção de spawn, zonas seguras.
+    Spawn: ajuste ao chão, rede de segurança contra queda no vazio, zonas seguras / proteção,
+    tela de morte (backdrop + vinheta + anel de contagem) e indicador de proteção.
 ]]
 
-local death = nil        -- { killer, weapon, headshot, until }
+local death = nil
 local spawnTick = 0
+local badSpawnReported = false
 
 local function arenaOf(player)
     local id = getElementData(player, "dm:arena")
     return id and DM.getArena(id) or nil
 end
 
--- Ajusta ao chão (correções pequenas apenas; mapas flutuantes não são afetados)
+-- Ajusta ao chão (correções pequenas; chão nativo do GTA aceita correções maiores)
 local function snapToGround()
     local arena = arenaOf(localPlayer)
     if not arena or getElementData(localPlayer, "dm:inDuel") then return end
@@ -26,8 +27,7 @@ local function snapToGround()
     end
 end
 
--- Caiu no vazio logo após nascer (mapa não carregou / spawn fora do chão) -> pede reposicionamento
-local badSpawnReported = false
+-- Caiu no vazio logo após nascer -> pede reposicionamento ao servidor
 local function checkFalling()
     if badSpawnReported or isPedDead(localPlayer) then return end
     if getElementData(localPlayer, "dm:inDuel") then return end
@@ -44,6 +44,7 @@ addEventHandler("dm:onSpawn", root, function(arenaId)
     death = nil
     spawnTick = getTickCount()
     badSpawnReported = false
+    UI.resetTween("bar:hud:hp")
     setTimer(snapToGround, 400, 1)
     setTimer(snapToGround, 1300, 1)
     setTimer(checkFalling, 1900, 1)
@@ -53,14 +54,13 @@ end)
 
 addEvent("dm:onEnterArena", true)
 addEventHandler("dm:onEnterArena", root, function(arenaId, prevId)
-    local arena = DM.getArena(arenaId)
-    if not arena then return end
-    playUISound("click", 0.4)
+    if DM.getArena(arenaId) then playUISound("click", 0.4) end
 end)
 
 addEvent("dm:onDeath", true)
 addEventHandler("dm:onDeath", root, function(killerName, weapon, headshot, respawnDelay)
-    death = { killer = killerName, weapon = DM.weaponName(weapon), headshot = headshot, until_ = getTickCount() + (respawnDelay or 3000), tick = getTickCount() }
+    death = { killer = killerName, weapon = DM.weaponName(weapon), headshot = headshot, total = respawnDelay or 3000,
+        until_ = getTickCount() + (respawnDelay or 3000), tick = getTickCount() }
     playUISound("death", 0.6)
 end)
 
@@ -75,7 +75,6 @@ addEventHandler("onClientPlayerDamage", localPlayer, function(attacker, weapon, 
         cancelEvent()
         return
     end
-    -- Dano de jogador em outra dimensão/arena não é permitido
     if attacker and getElementType(attacker) == "player" and attacker ~= localPlayer then
         if getElementData(attacker, "dm:arena") ~= getElementData(localPlayer, "dm:arena") then
             cancelEvent()
@@ -103,38 +102,37 @@ addEventHandler("onClientRender", root, function()
             death = nil
         else
             local age = now - death.tick
-            local a = math.min(1, age / 300)
-            dxDrawRectangle(0, 0, UI.sw, UI.sh, tocolor(10, 5, 8, 150 * a))
-            UI.gradientH(0, UI.sh / 2 - s(1), UI.sw, s(2), { 255, 77, 109, 0 }, { 255, 77, 109, 200 * a }, 30)
-            UI.gradientH(UI.sw / 2, UI.sh / 2 - s(1), UI.sw / 2, s(2), { 255, 77, 109, 200 * a }, { 255, 77, 109, 0 }, 30)
-            UI.textShadow("VOCÊ MORREU", 0, UI.sh / 2 - s(110), UI.sw, s(60), UI.color("danger", 255 * a), "bold", 40, "center", "center")
-            local sub
-            if death.killer then
-                sub = ("Eliminado por %s com %s%s"):format(death.killer, death.weapon, death.headshot and " (Headshot)" or "")
-            else
-                sub = ("Causa: %s"):format(death.weapon)
-            end
-            UI.textShadow(sub, 0, UI.sh / 2 - s(50), UI.sw, s(30), tocolor(255, 255, 255, 220 * a), "medium", 14, "center", "center")
+            local a = UI.ease(math.min(1, age / 350), "outCubic")
+            UI.backdrop(a * 0.9, 110)
+            UI.vignette(UI.color("danger", 230), a * UI.pulse(1600, 0.6, 1), 0.35, 1.3)
+            local scale = 0.9 + 0.1 * UI.ease(math.min(1, age / 500), "outBack")
+            UI.textGlow("VOCÊ MORREU", 0, UI.sh / 2 - s(150) * scale, UI.sw, s(70) * scale, UI.color("danger", 255 * a), UI.color("danger", 160 * a), "bold", math.floor(42 * scale), "center", "center")
+            local sub = death.killer and ("Eliminado por %s  ·  %s%s"):format(death.killer, death.weapon, death.headshot and "  ·  HEADSHOT" or "") or ("Causa: %s"):format(death.weapon)
+            UI.textShadow(sub, 0, UI.sh / 2 - s(76), UI.sw, s(26), tocolor(255, 255, 255, 220 * a), "medium", 13, "center", "center")
             local remaining = math.max(0, (death.until_ - now) / 1000)
             if remaining > 0 then
-                UI.textShadow("RENASCENDO EM", 0, UI.sh / 2 + s(20), UI.sw, s(20), UI.color("muted", 255 * a), "semibold", 11, "center", "center")
-                UI.textShadow(("%d"):format(math.ceil(remaining)), 0, UI.sh / 2 + s(40), UI.sw, s(70), tocolor(255, 255, 255, 255 * a), "bold", 48, "center", "center")
+                local total = math.max(0.001, death.total / 1000)
+                local cx, cy, r = UI.sw / 2, UI.sh / 2 + s(30), s(44)
+                UI.ring(cx, cy, r, s(5), remaining / total, UI.color("accent", 255 * a), tocolor(255, 255, 255, 20 * a))
+                local frac = remaining % 1
+                local pop = 1 + (1 - UI.ease(1 - frac, "outCubic")) * 0.25
+                UI.textGlow(("%d"):format(math.ceil(remaining)), cx - r, cy - r * pop, r * 2, r * 2 * pop, tocolor(255, 255, 255, 255 * a), UI.color("accent", 120 * a), "bold", math.floor(30 * pop), "center", "center")
+                UI.text("RENASCENDO", cx - s(100), cy + r + s(10), s(200), s(18), UI.color("muted", 255 * a), "semibold", 9, "center", "center")
             end
         end
     end
 
-    -- Indicador de proteção de spawn
+    -- Indicador de proteção de spawn (acima do bloco de status)
     local arena = arenaOf(localPlayer)
     if arena and not arena.safe and getElementData(localPlayer, "dm:protected") and not isPedDead(localPlayer) then
         local total = DM.server.spawnProtection
         local remaining = total - (now - spawnTick)
         if remaining > 0 and remaining <= total then
-            local w, h = s(220), s(40)
-            local x, y = (UI.sw - w) / 2, UI.sh - s(160)
-            UI.rect(x, y, w, h, UI.color("card", 220), h / 2)
-            UI.border(x, y, w, h, UI.color("accent", 120), h / 2)
-            UI.text(("PROTEÇÃO  %.1fs"):format(remaining / 1000), x, y, w, h, UI.color("accent"), "semibold", 11, "center", "center")
-            UI.rect(x + s(16), y + h - s(6), (w - s(32)) * math.min(1, remaining / total), s(3), UI.color("accent", 200), 1)
+            local w, h = s(150), s(26)
+            local x, y = s(20), UI.sh - s(14) - s(236) * 200 / 640 - s(8) - s(128) - h - s(8)
+            UI.rrect(x, y, w, h, UI.color("card", 200), h / 2, { border = 1, borderColor = UI.color("accent", 150), glow = s(8), glowColor = UI.color("accent", 90) })
+            UI.ring(x + s(14), y + h / 2, s(7), s(3), remaining / total, UI.color("accent"), tocolor(255, 255, 255, 25))
+            UI.text(("PROTEGIDO  %.1fs"):format(remaining / 1000), x + s(28), y, w - s(32), h, UI.color("accent"), "semibold", 9, "left", "center")
         end
     end
 end)
