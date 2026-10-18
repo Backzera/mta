@@ -52,7 +52,7 @@ addEventHandler("onPlayerWasted", root, function(ammo, killer, weapon, bodypart)
         -- Kill chat (só para quem está na mesma arena/dimensão)
         local hs = headshot and " #FFB547[HEADSHOT]" or ""
         for _, p in ipairs(arenaPlayers) do
-            outputChatBox(("#FF4D6D[KILL] #FFFFFF%s #969BB4matou #FFFFFF%s #969BB4com #22D3EE%s%s"):format(
+            outputChatBox(("#FF4D6D[KILL] #FFFFFF%s #969BB4matou #FFFFFF%s #969BB4com #7CFFB2%s%s"):format(
                 killerName, victimName, weaponName, hs), p, 255, 255, 255, true)
         end
 

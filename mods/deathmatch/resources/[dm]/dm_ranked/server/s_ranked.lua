@@ -13,7 +13,7 @@ local pendingClan = {} -- player -> inst (entrada direcionada para partida de cl
 local nextInstance = 0
 local instanceCounter = {} -- modeId -> n
 
-local TEAM_COLORS = { A = { 34, 211, 238 }, B = { 139, 92, 246 } }
+local TEAM_COLORS = { A = { 34, 230, 138 }, B = { 255, 181, 71 } }
 
 local function cfg()
     if not MODES then
@@ -64,7 +64,7 @@ local function createInstance(mode, fixedTeams)
         id = nextInstance, mode = mode, dim = mode.dimension + instanceCounter[mode.id],
         state = "warmup", players = {}, teamOf = {}, teams = { A = {}, B = {} }, score = { A = 0, B = 0 },
         kills = {}, deaths = {}, fixedTeams = fixedTeams or false, respawnTimers = {},
-        teamNames = { A = "Time Ciano", B = "Time Roxo" },
+        teamNames = { A = "Time Verde", B = "Time Laranja" },
         teamElems = { A = createTeam("Ranked " .. nextInstance .. " A", unpack(TEAM_COLORS.A)), B = createTeam("Ranked " .. nextInstance .. " B", unpack(TEAM_COLORS.B)) },
     }
     for _, t in pairs(inst.teamElems) do setTeamFriendlyFire(t, false) end

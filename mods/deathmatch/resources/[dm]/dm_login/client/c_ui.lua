@@ -20,10 +20,10 @@ function UI.s(v) return v * UI.scale end
 
 -- Paleta: reutiliza DM.colors quando disponível
 local palette = (DM and DM.colors) or {
-    bg = { 8, 8, 16 }, card = { 16, 16, 30 }, card2 = { 24, 24, 44 }, border = { 255, 255, 255 },
-    accent = { 139, 92, 246 }, accent2 = { 34, 211, 238 }, gold = { 245, 196, 81 }, success = { 34, 230, 138 },
-    danger = { 255, 77, 109 }, warn = { 255, 181, 71 }, info = { 86, 180, 255 }, text = { 245, 245, 250 },
-    muted = { 150, 155, 180 }, health = { 34, 230, 138 }, armor = { 34, 211, 238 }, money = { 245, 196, 81 },
+    bg = { 6, 10, 8 }, card = { 12, 18, 14 }, card2 = { 18, 27, 21 }, border = { 255, 255, 255 },
+    accent = { 34, 230, 138 }, accent2 = { 120, 255, 180 }, gold = { 245, 196, 81 }, success = { 34, 230, 138 },
+    danger = { 255, 77, 109 }, warn = { 255, 181, 71 }, info = { 120, 255, 180 }, text = { 240, 245, 242 },
+    muted = { 140, 160, 150 }, health = { 34, 230, 138 }, armor = { 120, 210, 255 }, money = { 245, 196, 81 },
 }
 UI.IMG = ":dm_core/assets/img/"
 UI.palette = palette

@@ -2,9 +2,11 @@
     <info author="UTG" name="DM Weapons" description="Sistema de dano (headshot x2.2, peito reduzido), sons de arma customizados, skins de arma" type="script" version="1.0.0" />
     <include resource="dm_core" />
     <script src="server/s_damage.lua" type="server" />
-    <script src="client/c_damage.lua" type="client" cache="false" />
-    <script src="client/c_sounds.lua" type="client" cache="false" />
-    <script src="client/c_skins.lua" type="client" cache="false" />
+    <script src="server/s_pvp.lua" type="server" />
+    <script src="client/c_damage.lua" type="client" />
+    <script src="client/c_pvp.lua" type="client" />
+    <script src="client/c_sounds.lua" type="client" />
+    <script src="client/c_skins.lua" type="client" />
 
     <!-- Sons de tiro (substituem os do GTA) -->
     <file src="sounds/22.wav" /> <file src="sounds/23.wav" /> <file src="sounds/24.wav" /> <file src="sounds/25.wav" />

@@ -55,10 +55,11 @@ local function itemCard(x, y, w, h, a, title, subtitle, price, color, state, onC
     end
 end
 
+local RENDER_ON = false
 local function render()
     local progress = UI.openProgress(panel)
     if progress <= 0 then
-        if not panel.open then removeEventHandler("onClientRender", root, render) end
+        if not panel.open then removeEventHandler("onClientRender", root, render) RENDER_ON = false end
         return
     end
     cfg()
@@ -152,7 +153,7 @@ local function render()
     elseif panel.tab == "extras" then
         for _, item in ipairs(SHOP.extras) do
             place(function(ix, iy, iw, ih)
-                itemCard(ix, iy, iw, ih, a, item.name:upper(), item.desc, item.price, { 34, 211, 238 }, hasPerk(item.key) and "equipped" or nil,
+                itemCard(ix, iy, iw, ih, a, item.name:upper(), item.desc, item.price, { 120, 255, 180 }, hasPerk(item.key) and "equipped" or nil,
                     function() triggerServerEvent("shop:buy", localPlayer, "extras", item.key) end)
             end)
         end
@@ -176,7 +177,7 @@ function openShop()
     panel.open = true
     panel.tick = getTickCount()
     panel.confirm = nil
-    addEventHandler("onClientRender", root, render)
+    if not RENDER_ON then RENDER_ON = true addEventHandler("onClientRender", root, render) end
     addEventHandler("onClientClick", root, onClick)
     sound("click", 0.4)
 end

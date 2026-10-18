@@ -63,8 +63,8 @@ addEventHandler("onClientRender", root, function()
         UI.image(e.headshot and "headshot.png" or "skull.png", ex + s(10), y + s(7), s(20), s(20), tocolor(255, 255, 255, 230 * a))
         local line
         if e.killer then
-            line = ("%s%s #969BB4» %s%s #969BB4· #22D3EE%s%s"):format(
-                e.mine and "#22D3EE" or "#FFFFFF", e.killer,
+            line = ("%s%s #969BB4» %s%s #969BB4· #7CFFB2%s%s"):format(
+                e.mine and "#7CFFB2" or "#FFFFFF", e.killer,
                 e.me and "#FF4D6D" or "#FFFFFF", e.victim, e.weapon, e.headshot and " #FFB547HS" or "")
         else
             line = ("#FFFFFF%s #969BB4morreu · %s"):format(e.victim, e.weapon)

@@ -12,7 +12,7 @@ DM.server = {
     tagline         = "#Return2k26",
     fullName        = "UTG MATA-MATA #Return2k26",
     discord         = "discord.gg/utg",            -- mostrado nas mensagens automáticas (edite)
-    chatPrefix      = "#8B5CF6[UTG]#FFFFFF",
+    chatPrefix      = "#22E68A[UTG]#FFFFFF",
     respawnDelay    = 3000,                        -- ms até renascer após morrer
     respawnDelayVip = 2000,                        -- ms para VIP
     spawnProtection = 3000,                        -- ms de proteção ao nascer
@@ -89,12 +89,13 @@ DM.shop = {
         { key = "assassino", text = "ASSASSINO", price = 40000,  color = { 255, 77, 109 } },
         { key = "sniper",    text = "SNIPER",    price = 40000,  color = { 200, 110, 255 } },
         { key = "lenda",     text = "LENDA",     price = 100000, color = { 245, 196, 81 } },
-        { key = "custom",    text = "PERSONALIZADA", price = 150000, color = { 34, 211, 238 }, custom = true }, -- /tag <texto>
+        { key = "custom",    text = "PERSONALIZADA", price = 150000, color = { 120, 255, 180 }, custom = true }, -- /tag <texto>
     },
     nameColors = {
-        { key = "roxo",    name = "Roxo",    price = 30000, color = { 139, 92, 246 } },
-        { key = "ciano",   name = "Ciano",   price = 30000, color = { 34, 211, 238 } },
         { key = "verde",   name = "Verde",   price = 30000, color = { 34, 230, 138 } },
+        { key = "menta",   name = "Menta",   price = 30000, color = { 120, 255, 180 } },
+        { key = "ciano",   name = "Ciano",   price = 30000, color = { 86, 210, 255 } },
+        { key = "roxo",    name = "Roxo",    price = 30000, color = { 170, 120, 255 } },
         { key = "dourado", name = "Dourado", price = 45000, color = { 245, 196, 81 } },
         { key = "rosa",    name = "Rosa",    price = 45000, color = { 255, 105, 180 } },
     },
@@ -109,7 +110,7 @@ DM.shop = {
 DM.rankedModes = {
     {
         id = "m4_10x10", name = "10x10 M4", place = "Las Payasadas", teamSize = 10,
-        weapons = { { 31, 600 } }, armor = 100, killTarget = 80, duration = 600, color = { 86, 180, 255 },
+        weapons = { { 31, 600 } }, armor = 100, killTarget = 80, duration = 600, color = { 34, 230, 138 },
         center = { -250.0, 2620.0, 63.0 }, native = true,
         teamSpawns = {
             A = { { -205.0, 2592.0, 63.0, 90 }, { -208.0, 2598.0, 63.0, 90 }, { -211.0, 2604.0, 63.0, 90 }, { -205.0, 2610.0, 63.0, 90 }, { -209.0, 2616.0, 63.0, 90 },
@@ -131,7 +132,7 @@ DM.rankedModes = {
     },
     {
         id = "m4_5x5", name = "5x5 M4", place = "Bayside Trailer Park", teamSize = 5,
-        weapons = { { 31, 600 } }, armor = 100, killTarget = 40, duration = 480, color = { 34, 211, 238 },
+        weapons = { { 31, 600 } }, armor = 100, killTarget = 40, duration = 480, color = { 120, 255, 180 },
         center = { -2480.0, 2320.0, 5.0 }, native = true,
         teamSpawns = {
             A = { { -2530.0, 2360.0, 5.0, 135 }, { -2526.0, 2354.0, 5.0, 135 }, { -2534.0, 2354.0, 5.0, 135 }, { -2522.0, 2362.0, 5.0, 135 }, { -2538.0, 2362.0, 5.0, 135 } },
@@ -157,34 +158,35 @@ DM.clans = {
 
 -- Mensagens automáticas do servidor ({online} e {discord} são substituídos)
 DM.broadcasts = {
-    "#8B5CF6[UTG] #FFFFFF{online} jogadores online agora. Chame seus amigos!",
-    "#8B5CF6[UTG] #FFFFFFPressione #22D3EEF5 #FFFFFFpara entrar nas partidas ranqueadas 5x5 e 10x10 e subir de elo.",
-    "#8B5CF6[UTG] #FFFFFFKills dão #22E68A$ #FFFFFF— use na loja (#22D3EEF4#FFFFFF) para tags, VIP e cores de nick.",
-    "#8B5CF6[UTG] #FFFFFFDesafie alguém no X1 com #22D3EEF3#FFFFFF. Vitórias no X1 dão RP.",
-    "#8B5CF6[UTG] #FFFFFFCrie ou entre em um clã (#22D3EEF6#FFFFFF) e dispute clã x clã.",
-    "#8B5CF6[UTG] #FFFFFFHeadshot vale mais: dano no peito é reduzido, mire na cabeça.",
-    "#8B5CF6[UTG] #FFFFFFFique online: a cada 10 minutos você ganha bônus em $. Bônus diário no primeiro login do dia.",
-    "#8B5CF6[UTG] #FFFFFFDiscord: #22D3EE{discord}",
+    "#22E68A[UTG] #FFFFFF{online} jogadores online agora. Chame seus amigos!",
+    "#22E68A[UTG] #FFFFFFPressione #7CFFB2F5 #FFFFFFpara entrar nas partidas ranqueadas 5x5 e 10x10 e subir de elo.",
+    "#22E68A[UTG] #FFFFFFKills dão #22E68A$ #FFFFFF— use na loja (#7CFFB2F4#FFFFFF) para tags, VIP e cores de nick.",
+    "#22E68A[UTG] #FFFFFFDesafie alguém no X1 com #7CFFB2F3#FFFFFF. Vitórias no X1 dão RP.",
+    "#22E68A[UTG] #FFFFFFCrie ou entre em um clã (#7CFFB2F6#FFFFFF) e dispute clã x clã.",
+    "#22E68A[UTG] #FFFFFFHeadshot vale mais: dano no peito é reduzido, mire na cabeça.",
+    "#22E68A[UTG] #FFFFFFFique online: a cada 10 minutos você ganha bônus em $. Bônus diário no primeiro login do dia.",
+    "#22E68A[UTG] #FFFFFFDiscord: #7CFFB2{discord}",
 }
 
 -- Paleta de cores da interface (RGB). O cliente converte com tocolor().
 DM.colors = {
-    bg      = { 8, 8, 16 },
-    card    = { 16, 16, 30 },
-    card2   = { 24, 24, 44 },
+    bg      = { 6, 10, 8 },
+    card    = { 12, 18, 14 },
+    card2   = { 18, 27, 21 },
     border  = { 255, 255, 255 },
-    accent  = { 139, 92, 246 },  -- violeta UTG
-    accent2 = { 34, 211, 238 },  -- ciano
+    accent  = { 34, 230, 138 },  -- verde UTG
+    accent2 = { 120, 255, 180 }, -- menta
     gold    = { 245, 196, 81 },  -- VIP
     success = { 34, 230, 138 },
     danger  = { 255, 77, 109 },
     warn    = { 255, 181, 71 },
-    info    = { 86, 180, 255 },
-    text    = { 245, 245, 250 },
-    muted   = { 150, 155, 180 },
+    info    = { 120, 255, 180 },
+    text    = { 240, 245, 242 },
+    muted   = { 140, 160, 150 },
     health  = { 34, 230, 138 },
-    armor   = { 34, 211, 238 },
+    armor   = { 120, 210, 255 },
     money   = { 245, 196, 81 },
+},
 }
 
 -- Skins aleatórias ao nascer (o jogador pode trocar com /skin <id>)

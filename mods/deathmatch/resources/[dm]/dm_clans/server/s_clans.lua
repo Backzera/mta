@@ -9,7 +9,7 @@ local db
 local clans = {}         -- id -> { id, name, tag, color, leader_key, points, wins, losses, created }
 local invites = {}       -- player -> { clanId, from, expires }
 local challenges = {}    -- targetClanId -> { fromClanId, modeId, from, expires }
-local COLORS = { { 139, 92, 246 }, { 34, 211, 238 }, { 34, 230, 138 }, { 245, 196, 81 }, { 255, 77, 109 }, { 255, 140, 66 }, { 255, 105, 180 }, { 120, 220, 255 } }
+local COLORS = { { 34, 230, 138 }, { 120, 255, 180 }, { 34, 230, 138 }, { 245, 196, 81 }, { 255, 77, 109 }, { 255, 140, 66 }, { 255, 105, 180 }, { 120, 220, 255 } }
 
 local function cfg()
     if not CFG then CFG = core:getClanConfig() ECO = core:getEconomyConfig() MODES = core:getRankedModes() end

@@ -47,10 +47,11 @@ end
 
 local clicks = {}
 
+local RENDER_ON = false
 local function render()
     local progress = UI.openProgress(panel)
     if progress <= 0 then
-        if not panel.open then removeEventHandler("onClientRender", root, render) end
+        if not panel.open then removeEventHandler("onClientRender", root, render) RENDER_ON = false end
         return
     end
     local a = progress
@@ -227,7 +228,7 @@ function openDuelPanel(target)
     panel.tick = getTickCount()
     if isElement(target) then panel.selected = target end
     search.text = ""
-    addEventHandler("onClientRender", root, render)
+    if not RENDER_ON then RENDER_ON = true addEventHandler("onClientRender", root, render) end
     addEventHandler("onClientClick", root, onClick)
     addEventHandler("onClientKey", root, onWheel)
     inputState = UI.bindInputs({ search })

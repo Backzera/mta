@@ -18,10 +18,11 @@ local COMMANDS = {
     { "/kill", "Suicídio" }, { "/admins", "Admins online" },
 }
 
+local RENDER_ON = false
 local function render()
     local progress = UI.openProgress(help)
     if progress <= 0 then
-        if not help.open then removeEventHandler("onClientRender", root, render) end
+        if not help.open then removeEventHandler("onClientRender", root, render) RENDER_ON = false end
         return
     end
     local a = progress
@@ -73,7 +74,7 @@ function openHelp()
     if not UI.setPanelOpen(PANEL, true) then return end
     help.open = true
     help.tick = getTickCount()
-    addEventHandler("onClientRender", root, render)
+    if not RENDER_ON then RENDER_ON = true addEventHandler("onClientRender", root, render) end
     addEventHandler("onClientClick", root, onClick)
     playUISound("click", 0.4)
 end

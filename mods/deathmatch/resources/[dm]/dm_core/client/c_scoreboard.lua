@@ -2,7 +2,7 @@
     Placar (TAB): tag, jogador, clã, elo/RP, kills, mortes, K/D, arena, ping.
 ]]
 
-local board = { open = false, tick = 0 }
+local board = { open = false, tick = 0, rendering = false }
 
 local function collect()
     local list = {}
@@ -33,7 +33,10 @@ end
 local function render()
     local progress = UI.openProgress(board, 140)
     if progress <= 0 then
-        if not board.open then removeEventHandler("onClientRender", root, render) end
+        if not board.open then
+            removeEventHandler("onClientRender", root, render)
+            board.rendering = false
+        end
         return
     end
     local a = progress
@@ -123,7 +126,10 @@ bindKey("tab", "down", function()
     if UI.getOpenPanel() then return end
     board.open = true
     board.tick = getTickCount()
-    addEventHandler("onClientRender", root, render)
+    if not board.rendering then
+        board.rendering = true
+        addEventHandler("onClientRender", root, render)
+    end
 end)
 
 bindKey("tab", "up", function()

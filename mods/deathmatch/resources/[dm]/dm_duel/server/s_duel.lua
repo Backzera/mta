@@ -212,7 +212,7 @@ local function endDuel(duel, winner, reason, skipReturn)
     end
 
     if winner then
-        local msg = ("#7C5CFF[X1] #FFFFFF%s #8B93A7venceu #FFFFFF%s #8B93A7por #FFFFFF%d x %d #8B93A7(%s)%s"):format(
+        local msg = ("#22E68A[X1] #FFFFFF%s #8B93A7venceu #FFFFFF%s #8B93A7por #FFFFFF%d x %d #8B93A7(%s)%s"):format(
             winName, loseName, duel.score[winner] or 0, duel.score[loser] or 0, set and set.name or "?",
             reason == "forfeit" and " #FFB547— W.O." or "")
         outputChatBox(msg, root, 255, 255, 255, true)

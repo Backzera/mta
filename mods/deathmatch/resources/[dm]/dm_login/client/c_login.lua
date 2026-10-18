@@ -78,11 +78,12 @@ local function guest()
 end
 
 -- ---------- render ----------
+local RENDER_ON = false
 local function render()
     local progress = UI.openProgress(login, 300)
     if progress <= 0 then
         if not login.open then
-            removeEventHandler("onClientRender", root, render)
+            removeEventHandler("onClientRender", root, render) RENDER_ON = false
             setCameraTarget(localPlayer)
         end
         return
@@ -186,7 +187,7 @@ local function show()
     login.busy = false
     UI.setPanelOpen(PANEL, true)
     showCursor(true)
-    addEventHandler("onClientRender", root, render)
+    if not RENDER_ON then RENDER_ON = true addEventHandler("onClientRender", root, render) end
     addEventHandler("onClientClick", root, onClick)
     inputState = UI.bindInputs({ fUser, fPass, fPass2 }, function() submit() end)
     fUser.focus = true

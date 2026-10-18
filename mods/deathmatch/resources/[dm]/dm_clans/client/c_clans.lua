@@ -201,7 +201,7 @@ local function renderClan(x, y, w, h, a)
         local cxp = rx
         local cy = y + h - s(66)
         UI.text("COR DA TAG", rx, cy - s(18), rw, s(14), UI.color("muted", 255 * a), "semibold", 8, "left", "center")
-        local palette = { { 139, 92, 246 }, { 34, 211, 238 }, { 34, 230, 138 }, { 245, 196, 81 }, { 255, 77, 109 }, { 255, 140, 66 }, { 255, 105, 180 }, { 120, 220, 255 } }
+        local palette = { { 34, 230, 138 }, { 120, 255, 180 }, { 34, 230, 138 }, { 245, 196, 81 }, { 255, 77, 109 }, { 255, 140, 66 }, { 255, 105, 180 }, { 120, 220, 255 } }
         for i, col in ipairs(palette) do
             UI.rect(cxp, cy, s(24), s(24), UI.rgb(col, 255 * a), s(6))
             local idx = i
@@ -212,10 +212,11 @@ local function renderClan(x, y, w, h, a)
     renderRanking(x, y + s(10), w, h, a, rx, rw)
 end
 
+local RENDER_ON = false
 local function render()
     local progress = UI.openProgress(panel)
     if progress <= 0 then
-        if not panel.open then removeEventHandler("onClientRender", root, render) end
+        if not panel.open then removeEventHandler("onClientRender", root, render) RENDER_ON = false end
         return
     end
     local a = progress
@@ -264,7 +265,7 @@ function openClanPanel()
     panel.tick = getTickCount()
     data = nil
     triggerServerEvent("clans:requestInfo", localPlayer)
-    addEventHandler("onClientRender", root, render)
+    if not RENDER_ON then RENDER_ON = true addEventHandler("onClientRender", root, render) end
     addEventHandler("onClientClick", root, onClick)
     addEventHandler("onClientKey", root, onWheel)
     inputState = UI.bindInputs({ fTag, fName })

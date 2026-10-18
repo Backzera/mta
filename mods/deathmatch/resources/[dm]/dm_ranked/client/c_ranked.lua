@@ -29,10 +29,11 @@ local function weaponList(mode)
 end
 
 -- ---------------- Painel ----------------
+local RENDER_ON = false
 local function render()
     local progress = UI.openProgress(panel)
     if progress <= 0 then
-        if not panel.open then removeEventHandler("onClientRender", root, render) end
+        if not panel.open then removeEventHandler("onClientRender", root, render) RENDER_ON = false end
         return
     end
     local a = progress
@@ -108,7 +109,7 @@ function openRankedPanel()
     panel.tick = getTickCount()
     triggerServerEvent("ranked:requestInfo", localPlayer)
     panel.infoTimer = setTimer(function() if panel.open then triggerServerEvent("ranked:requestInfo", localPlayer) end end, 3000, 0)
-    addEventHandler("onClientRender", root, render)
+    if not RENDER_ON then RENDER_ON = true addEventHandler("onClientRender", root, render) end
     addEventHandler("onClientClick", root, onClick)
     sound("click", 0.4)
 end
@@ -172,7 +173,7 @@ addEventHandler("onClientRender", root, function()
             if lastTick ~= secondsLeft and secondsLeft <= 5 and secondsLeft > 0 then lastTick = secondsLeft sound("tick", 0.5) end
         elseif state.state == "match" then
             UI.card(x, y, w, h, s(12), 1, false)
-            local ca, cb = tocolor(34, 211, 238), tocolor(139, 92, 246)
+            local ca, cb = tocolor(34, 230, 138), tocolor(255, 181, 71)
             local mine = state.myTeam
             UI.text(state.nameA, x + s(16), y + s(8), s(170), s(20), ca, "semibold", 11, "left", "center", true)
             UI.text(state.nameB, x + w - s(186), y + s(8), s(170), s(20), cb, "semibold", 11, "right", "center", true)
@@ -182,7 +183,7 @@ addEventHandler("onClientRender", root, function()
             UI.text(("%02d:%02d"):format(m, sec), x, y + s(8), w, s(22), UI.color("text"), "bold", 14, "center", "center")
             UI.text(("meta %d  ·  você: %d K / %d M"):format(state.killTarget, state.kills or 0, state.deaths or 0), x, y + s(32), w, s(16), UI.color("muted"), "medium", 9, "center", "center")
             if mine then
-                UI.pill(mine == "A" and "SEU TIME" or "SEU TIME", mine == "A" and x + s(16) or x + w - s(16) - s(70), y + h - s(20), s(16), mine == "A" and tocolor(34, 211, 238, 50) or tocolor(139, 92, 246, 60), mine == "A" and ca or cb, "bold", 7)
+                UI.pill(mine == "A" and "SEU TIME" or "SEU TIME", mine == "A" and x + s(16) or x + w - s(16) - s(70), y + h - s(20), s(16), mine == "A" and tocolor(34, 230, 138, 50) or tocolor(255, 181, 71, 60), mine == "A" and ca or cb, "bold", 7)
             end
             UI.bar(x + s(24), y + h - s(6), w - s(48), s(3), secondsLeft / math.max(1, state.duration or 600), UI.color("gold", 200), tocolor(255, 255, 255, 12), 1)
         end
@@ -210,7 +211,7 @@ addEventHandler("onClientRender", root, function()
             table.sort(rows, function(p, q) return (p.kills or 0) > (q.kills or 0) end)
             for i = 1, math.min(10, #rows) do
                 local r = rows[i]
-                local tc = r.team == "A" and tocolor(34, 211, 238, 255 * a) or tocolor(139, 92, 246, 255 * a)
+                local tc = r.team == "A" and tocolor(34, 230, 138, 255 * a) or tocolor(255, 181, 71, 255 * a)
                 UI.text(r.name, x + s(40), ry, s(300), s(20), tc, "medium", 10, "left", "center")
                 UI.text(("%d K  %d M   %s%d RP"):format(r.kills or 0, r.deaths or 0, (r.rp or 0) >= 0 and "+" or "", r.rp or 0), x + w - s(300), ry, s(260), s(20), UI.color("text", 220 * a), "medium", 10, "right", "center")
                 ry = ry + s(22)

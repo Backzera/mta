@@ -14,27 +14,33 @@ local function countPlayers()
     return counts
 end
 
-local CARDS = {}
-for _, a in ipairs(DM.arenas) do CARDS[#CARDS + 1] = a end
-CARDS[#CARDS + 1] = { id = "__ranked", name = "Partidas Ranqueadas", type = "ranked", color = { 245, 196, 81 },
-    desc = "5x5 e 10x10 com aquecimento. Ganhe RP e suba de elo.", weapons = {} }
+local CARDS
+local function cards()
+    if CARDS then return CARDS end
+    CARDS = {}
+    for _, a in ipairs(DM.arenas) do CARDS[#CARDS + 1] = a end
+    CARDS[#CARDS + 1] = { id = "__ranked", name = "Partidas Ranqueadas", type = "ranked", color = { 245, 196, 81 },
+        desc = "5x5 e 10x10 com aquecimento. Ganhe RP e suba de elo.", weapons = {} }
+    return CARDS
+end
 
 local function layout()
     local s = UI.s
     local cols = 3
     local cardW, cardH, gap = s(300), s(150), s(16)
     local pad = s(28)
-    local rows = math.ceil(#CARDS / cols)
+    local rows = math.ceil(#cards() / cols)
     local w = pad * 2 + cols * cardW + (cols - 1) * gap
     local h = pad + s(80) + rows * cardH + (rows - 1) * gap + s(70)
     local x, y = (UI.sw - w) / 2, (UI.sh - h) / 2
     return x, y, w, h, cols, cardW, cardH, gap, pad
 end
 
+local RENDER_ON = false
 local function render()
     local progress = UI.openProgress(panel)
     if progress <= 0 then
-        if not panel.open then removeEventHandler("onClientRender", root, render) end
+        if not panel.open then removeEventHandler("onClientRender", root, render) RENDER_ON = false end
         return
     end
     local s = UI.s
@@ -62,7 +68,7 @@ local function render()
     local startY = y + pad + s(70)
     panel.cards = {}
     panel.hoverCard = nil
-    for i, arena in ipairs(CARDS) do
+    for i, arena in ipairs(cards()) do
         local col = (i - 1) % cols
         local row = math.floor((i - 1) / cols)
         local cxp = x + pad + col * (cardW + gap)
@@ -136,7 +142,7 @@ function openArenaPanel()
     if not UI.setPanelOpen(PANEL, true) then return end
     panel.open = true
     panel.tick = getTickCount()
-    addEventHandler("onClientRender", root, render)
+    if not RENDER_ON then RENDER_ON = true addEventHandler("onClientRender", root, render) end
     addEventHandler("onClientClick", root, onClick)
     playUISound("click", 0.4)
 end
