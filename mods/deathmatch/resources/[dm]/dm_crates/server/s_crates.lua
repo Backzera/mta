@@ -141,3 +141,46 @@ addEventHandler("dm:onStatsLoaded", root, function()
 end)
 
 addCommandHandler("caixas", function(player) triggerClientEvent(player, "crates:openPanel", resourceRoot) end)
+
+-- ---------- comandos de admin para testar ----------
+-- /skins [ak47|m4]        lista as chaves das skins
+-- /darskin <chave>        dá a skin e já equipa (admin)
+-- /darskin todas          dá todas as skins (admin)
+local function equipKey(player, key)
+    local it = item(key)
+    if not it then return false end
+    if not core:playerHasPerk(player, "item:" .. key) then core:givePlayerPerk(player, "item:" .. key) end
+    if it.type == "wskin" then
+        local e = getEquipped(player)
+        e[it.weapon or "all"] = key
+        saveEquipped(player, e)
+    elseif it.type == "skin" then
+        core:setPlayerStat(player, "equip_skin", it.model)
+        setElementData(player, "dm:skin", it.model)
+        if not isPedDead(player) then setElementModel(player, it.model) end
+    end
+    return it
+end
+addCommandHandler("skins", function(player, _, filter)
+    local out = {}
+    for _, it in ipairs(cfg().items) do
+        if it.type == "wskin" and (not filter or it.weapon == filter) then out[#out + 1] = it.key end
+    end
+    outputChatBox("#7CFFB2[skins] #FFFFFF" .. table.concat(out, ", "), player, 255, 255, 255, true)
+    outputChatBox("#7CFFB2[skins] #FFFFFFUse /darskin <chave> para equipar (admin).", player, 255, 255, 255, true)
+end)
+addCommandHandler("darskin", function(player, _, key)
+    if not core:isPlayerAdmin(player) then core:notifyPlayer(player, "Só admin.", "error", "Skins") return end
+    if not key then core:notifyPlayer(player, "Use /darskin <chave> ou /darskin todas. Veja /skins.", "warn", "Skins") return end
+    if key == "todas" then
+        local n = 0
+        for _, it in ipairs(cfg().items) do
+            if it.type ~= "money" and not core:playerHasPerk(player, "item:" .. it.key) then core:givePlayerPerk(player, "item:" .. it.key) n = n + 1 end
+        end
+        core:notifyPlayer(player, ("%d itens adicionados ao inventário (F7)."):format(n), "success", "Skins")
+        return
+    end
+    local it = equipKey(player, key)
+    if it then core:notifyPlayer(player, ("Equipada: %s (%s)"):format(it.name, it.rarity), "success", "Skins")
+    else core:notifyPlayer(player, "Chave inválida. Veja /skins.", "error", "Skins") end
+end)
