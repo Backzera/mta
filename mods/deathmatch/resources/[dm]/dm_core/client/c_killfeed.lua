@@ -1,9 +1,10 @@
 --[[
-    Killfeed no canto superior direito + feedback de kill no centro.
+    Killfeed (canto superior direito, por arena/dimensão) + feedback de kill no centro
+    (ícone de caveira / headshot, $ ganho) + banner de sequência.
 ]]
 
 KillFeed = { entries = {}, LIFE = 6500, MAX = 6 }
-local rewards = {}  -- textos de recompensa no centro
+local rewards = {}
 local streakBanner
 
 function KillFeed.height()
@@ -21,9 +22,9 @@ addEventHandler("dm:onKill", root, function(killerName, victimName, weapon, head
 end)
 
 addEvent("dm:onKillReward", true)
-addEventHandler("dm:onKillReward", root, function(victimName, xp, headshot, streak)
-    playUISound(headshot and "headshot" or "kill", 0.7)
-    table.insert(rewards, 1, { text = ("Você eliminou %s"):format(victimName), xp = xp, headshot = headshot, tick = getTickCount() })
+addEventHandler("dm:onKillReward", root, function(victimName, money, headshot, streak)
+    playUISound(headshot and "headshot" or "kill", 0.8)
+    table.insert(rewards, 1, { text = ("Você eliminou %s"):format(victimName), money = money or 0, headshot = headshot, tick = getTickCount() })
     if #rewards > 3 then table.remove(rewards) end
 end)
 
@@ -33,20 +34,19 @@ addEventHandler("dm:onStreak", root, function(name, streak, text)
     playUISound("streak", 0.6)
 end)
 
-addEvent("dm:levelUp", true)
-addEventHandler("dm:levelUp", root, function(level, rankName)
-    playUISound("levelup", 0.7)
-    notify(("Você alcançou o nível %d (%s)!"):format(level, rankName), "success", "Subiu de nível")
+addEvent("dm:tierChange", true)
+addEventHandler("dm:tierChange", root, function(tierName, up)
+    playUISound(up and "levelup" or "lose", 0.7)
+    notify(up and ("Você subiu para o elo %s!"):format(tierName) or ("Você caiu para o elo %s."):format(tierName), up and "success" or "warn", "Elo")
 end)
 
 addEventHandler("onClientRender", root, function()
     local now = getTickCount()
     local s = UI.s
-    -- Killfeed
     for i = #KillFeed.entries, 1, -1 do
         if now - KillFeed.entries[i].tick > KillFeed.LIFE then table.remove(KillFeed.entries, i) end
     end
-    local w = s(340)
+    local w = s(360)
     local x = UI.sw - w - s(24)
     local y = s(24)
     for _, e in ipairs(KillFeed.entries) do
@@ -56,24 +56,24 @@ addEventHandler("onClientRender", root, function()
         if age > KillFeed.LIFE - 500 then a = math.max(0, (KillFeed.LIFE - age) / 500) end
         local h = s(34)
         local ex = x + (1 - a) * s(30)
-        local bg = (e.mine or e.me) and UI.color(e.mine and "accent" or "danger", 50 * a) or UI.color("card", 215 * a)
-        UI.rect(ex, y, w, h, UI.color("card", 215 * a), h / 2)
-        if e.mine or e.me then UI.rect(ex, y, w, h, bg, h / 2) end
-        UI.border(ex, y, w, h, tocolor(255, 255, 255, 18 * a), h / 2)
-        local padX = s(16)
+        UI.rect(ex, y, w, h, UI.color("card", 220 * a), s(8))
+        if e.mine then UI.rect(ex, y, w, h, UI.color("accent", 60 * a), s(8)) end
+        if e.me then UI.rect(ex, y, w, h, UI.color("danger", 60 * a), s(8)) end
+        UI.border(ex, y, w, h, tocolor(255, 255, 255, 18 * a), s(8))
+        UI.image(e.headshot and "headshot.png" or "skull.png", ex + s(10), y + s(7), s(20), s(20), tocolor(255, 255, 255, 230 * a))
         local line
         if e.killer then
-            line = ("%s%s #8B93A7» %s%s #8B93A7· #00E5A8%s%s"):format(
-                e.mine and "#00E5A8" or "#FFFFFF", e.killer,
-                e.me and "#FF4D6D" or "#FFFFFF", e.victim, e.weapon, e.headshot and " #FFB547(HS)" or "")
+            line = ("%s%s #969BB4» %s%s #969BB4· #22D3EE%s%s"):format(
+                e.mine and "#22D3EE" or "#FFFFFF", e.killer,
+                e.me and "#FF4D6D" or "#FFFFFF", e.victim, e.weapon, e.headshot and " #FFB547HS" or "")
         else
-            line = ("#FFFFFF%s #8B93A7morreu · %s"):format(e.victim, e.weapon)
+            line = ("#FFFFFF%s #969BB4morreu · %s"):format(e.victim, e.weapon)
         end
-        UI.text(line, ex + padX, y, w - padX * 2, h, tocolor(255, 255, 255, 255 * a), "medium", 10, "right", "center", true, false, true)
+        UI.text(line, ex + s(36), y, w - s(50), h, tocolor(255, 255, 255, 255 * a), "medium", 10, "right", "center", true, false, true)
         y = y + h + s(6)
     end
 
-    -- Recompensas (centro, abaixo da mira)
+    -- Feedback de kill no centro
     for i = #rewards, 1, -1 do
         if now - rewards[i].tick > 2600 then table.remove(rewards, i) end
     end
@@ -82,13 +82,14 @@ addEventHandler("onClientRender", root, function()
         local age = now - r.tick
         local a = age < 150 and UI.ease(age / 150) or (age > 2000 and math.max(0, (2600 - age) / 600) or 1)
         local rise = UI.ease(math.min(1, age / 2600)) * s(30)
-        UI.textShadow(r.text, 0, ry - rise, UI.sw, s(22), tocolor(255, 255, 255, 230 * a), "semibold", 13, "center", "center")
-        UI.textShadow(("+%d XP%s"):format(r.xp, r.headshot and "  ·  HEADSHOT" or ""), 0, ry - rise + s(22), UI.sw, s(20),
-            UI.color(r.headshot and "warn" or "accent", 255 * a), "bold", 12, "center", "center")
-        ry = ry + s(46)
+        local pop = age < 250 and (1 + (1 - age / 250) * 0.5) or 1
+        local iconSize = s(44) * pop
+        UI.image(r.headshot and "headshot.png" or "skull.png", UI.sw / 2 - iconSize / 2, ry - rise - s(50) - (iconSize - s(44)) / 2, iconSize, iconSize, tocolor(255, 255, 255, 255 * a))
+        UI.textShadow(r.headshot and "HEADSHOT!" or "ELIMINADO", 0, ry - rise, UI.sw, s(22), r.headshot and UI.color("warn", 255 * a) or UI.color("text", 255 * a), "bold", 14, "center", "center")
+        UI.textShadow(r.text .. (r.money > 0 and ("   +" .. DM.formatMoney(r.money)) or ""), 0, ry - rise + s(22), UI.sw, s(20), r.money > 0 and UI.color("money", 255 * a) or UI.color("muted", 255 * a), "semibold", 12, "center", "center")
+        ry = ry + s(64)
     end
 
-    -- Banner de sequência
     if streakBanner then
         local age = now - streakBanner.tick
         if age > 3500 then
@@ -96,13 +97,13 @@ addEventHandler("onClientRender", root, function()
         else
             local a = age < 200 and UI.ease(age / 200) or (age > 3000 and math.max(0, (3500 - age) / 500) or 1)
             local text = ("%s %s"):format(streakBanner.name, streakBanner.text)
-            local tw = UI.textWidth(text, "bold", 15) + s(60)
+            local tw = UI.textWidth(text, "bold", 15) + s(80)
             local bx, by = (UI.sw - tw) / 2, s(92)
-            UI.rect(bx, by, tw, s(44), UI.color("card", 230 * a), s(22))
-            UI.border(bx, by, tw, s(44), UI.color("danger", 160 * a), s(22))
-            UI.text(("%d"):format(streakBanner.streak), bx + s(12), by + s(8), s(28), s(28), UI.color("danger", 255 * a), "bold", 14, "center", "center")
-            UI.rect(bx + s(12), by + s(8), s(28), s(28), UI.color("danger", 40 * a), s(8))
-            UI.text(text, bx + s(44), by, tw - s(56), s(44), tocolor(255, 255, 255, 255 * a), "bold", 15, "center", "center")
+            UI.rect(bx, by, tw, s(44), UI.color("card", 235 * a), s(10))
+            UI.border(bx, by, tw, s(44), UI.color("danger", 160 * a), s(10))
+            UI.image("flame.png", bx + s(10), by + s(8), s(28), s(28), tocolor(255, 255, 255, 255 * a))
+            UI.text(("%d"):format(streakBanner.streak), bx + s(40), by, s(28), s(44), UI.color("danger", 255 * a), "bold", 16, "center", "center")
+            UI.text(text, bx + s(70), by, tw - s(82), s(44), tocolor(255, 255, 255, 255 * a), "bold", 15, "left", "center")
         end
     end
 end)

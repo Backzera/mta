@@ -355,8 +355,8 @@ addEventHandler("duel:score", root, function(scoreMe, scoreOpp, lastKiller)
 end)
 
 addEvent("duel:end", true)
-addEventHandler("duel:end", root, function(won, scoreMe, scoreOpp, xp, reason)
-    result = { won = won, me = scoreMe, opp = scoreOpp, xp = xp, reason = reason, tick = getTickCount(), opponent = duel and duel.opponent or "?" }
+addEventHandler("duel:end", root, function(won, scoreMe, scoreOpp, rpDelta, reason, money)
+    result = { won = won, me = scoreMe, opp = scoreOpp, rp = rpDelta or 0, money = money or 0, reason = reason, tick = getTickCount(), opponent = duel and duel.opponent or "?" }
     duel = nil
     sound(won and "win" or "lose", 0.7)
 end)
@@ -412,7 +412,14 @@ addEventHandler("onClientRender", root, function()
             UI.rect(x + s(24), y + s(24), w - s(48), s(4), UI.color(col, 255 * a), 2)
             UI.text(result.won and "VITÓRIA" or "DERROTA", x, y + s(36), w, s(50), UI.color(col, 255 * a), "bold", 36, "center", "center")
             UI.text(("%d  x  %d   contra %s"):format(result.me, result.opp, result.opponent), x, y + s(90), w, s(26), UI.color("text", 255 * a), "semibold", 14, "center", "center")
-            local sub = result.reason == "forfeit" and (result.won and "O oponente abandonou o duelo (W.O.)" or "Você abandonou o duelo") or (result.won and ("+%d XP"):format(result.xp) or "Mais sorte na próxima!")
+            local sub
+            if result.reason == "forfeit" then
+                sub = result.won and "O oponente abandonou o duelo (W.O.)" or "Você abandonou o duelo"
+            elseif result.won then
+                sub = ("+%d RP   ·   +$%d"):format(result.rp, result.money)
+            else
+                sub = ("%d RP · mais sorte na próxima!"):format(result.rp)
+            end
             UI.text(sub, x, y + s(122), w, s(24), UI.color(result.won and "accent" or "muted", 255 * a), "medium", 12, "center", "center")
             UI.text("Voltando para a arena...", x, y + h - s(40), w, s(20), UI.color("muted", 200 * a), "regular", 10, "center", "center")
         end

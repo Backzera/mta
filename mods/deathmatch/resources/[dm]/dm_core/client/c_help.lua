@@ -6,13 +6,14 @@ local help = { open = false, tick = 0 }
 local PANEL = "help"
 
 local KEYS = {
-    { "F1", "Esta ajuda" }, { "F2", "Painel de arenas" }, { "F3", "Painel de duelo X1" },
-    { "TAB", "Placar" }, { "T", "Chat" }, { "ESC", "Fechar painéis" },
+    { "F1", "Esta ajuda" }, { "F2", "Arenas" }, { "F3", "Duelo X1" }, { "F4", "Loja (tags, VIP, cores)" },
+    { "F5", "Partidas ranqueadas" }, { "F6", "Clã" }, { "TAB", "Placar" }, { "ESC", "Fechar painéis" },
 }
 local COMMANDS = {
-    { "/arena <nome>", "Entrar em uma arena" }, { "/arenas", "Listar arenas" }, { "/lobby", "Voltar ao lobby" },
-    { "/x1", "Ir para a arena X1" }, { "/duelo <jogador>", "Desafiar rapidamente" },
-    { "/stats [jogador]", "Ver estatísticas" }, { "/top", "Top 10 kills" },
+    { "/arena <nome>", "Entrar em uma arena" }, { "/lobby", "Voltar ao lobby" },
+    { "/duelo <jogador>", "Desafiar no X1" }, { "/stats [jogador]", "Estatísticas" },
+    { "/top rp|kills|money", "Rankings" }, { "/saldo  /pagar", "Dinheiro" },
+    { "/tag <texto>", "Tag personalizada (loja)" }, { "/cla", "Comandos de clã" },
     { "/skin <id>", "Trocar skin" }, { "/pm <jogador> <msg>", "Mensagem privada" },
     { "/kill", "Suicídio" }, { "/admins", "Admins online" },
 }
@@ -25,7 +26,7 @@ local function render()
     end
     local a = progress
     local s = UI.s
-    local w, h = s(640), s(460)
+    local w, h = s(680), s(500)
     local x, y = (UI.sw - w) / 2, (UI.sh - h) / 2 + (1 - a) * s(20)
     local pad = s(28)
     dxDrawRectangle(0, 0, UI.sw, UI.sh, tocolor(5, 7, 12, 160 * a))
@@ -59,7 +60,7 @@ local function render()
     end
 
     UI.divider(x + pad, y + h - s(52), w - pad * 2, 18 * a)
-    UI.text("Dica: na Arena C-Bug o C-Bug é liberado; nas outras ele é bloqueado automaticamente.", x + pad, y + h - s(44), w - pad * 2, s(30), UI.color("muted", 200 * a), "regular", 10, "left", "center")
+    UI.text("Kills dão $ (loja). RP e elo só em ranqueadas (F5) e duelos (F3). Headshot x2.2, peito reduzido.", x + pad, y + h - s(44), w - pad * 2, s(30), UI.color("muted", 200 * a), "regular", 10, "left", "center")
 end
 
 local function onClick(button, state)

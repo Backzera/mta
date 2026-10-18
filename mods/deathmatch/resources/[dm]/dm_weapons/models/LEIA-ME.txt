@@ -1,0 +1,11 @@
+SKINS DE ARMA
+=============
+O MTA só troca o modelo de uma arma com arquivos .dff (modelo) e .txd (textura) — arquivos
+binários que precisam vir de um pack de skins (ex.: GTAinside, MTA community, packs de servidores).
+
+1. Copie para esta pasta:  <id>.dff e <id>.txd   (ex.: 24.dff + 24.txd para a Deagle)
+2. No meta.xml do dm_weapons, descomente/adicione:  <file src="models/24.dff" /> <file src="models/24.txd" />
+3. Reinicie o recurso (restart dm_weapons). O c_skins.lua aplica automaticamente tudo que existir.
+
+IDs: 22 Pistola · 23 Silenciada · 24 Deagle · 25 Shotgun · 26 Sawn-off · 27 Combat Shotgun
+     28 Uzi · 29 MP5 · 30 AK-47 · 31 M4 · 32 Tec-9 · 33 Rifle · 34 Sniper · 8 Katana · 4 Faca

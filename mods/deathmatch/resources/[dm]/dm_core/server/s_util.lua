@@ -4,6 +4,14 @@ function getArenas() return DM.arenas end
 function getArena(id) return DM.getArena(id) end
 function getDuelWeaponSets() return DM.duelWeapons end
 function getConfig() return DM.server end
+function getRpConfig() return DM.rp end
+function getEconomyConfig() return DM.economy end
+function getRankedConfig() return DM.ranked end
+function getShopConfig() return DM.shop end
+function getVipConfig() return DM.vip end
+function getClanConfig() return DM.clans end
+function formatMoney(v) return DM.formatMoney(v) end
+function getTierForRP(rp) return DM.tierForRP(rp) end
 
 function getPlayerArena(player)
     if not isElement(player) then return nil end
@@ -58,13 +66,17 @@ function isPlayerAdmin(player)
 end
 
 -- Jogadores de uma arena
-function getArenaPlayers(arenaId)
+function getArenaPlayers(arenaId, dimension)
     local list = {}
     for _, p in ipairs(getElementsByType("player")) do
-        if getElementData(p, "dm:arena") == arenaId then list[#list + 1] = p end
+        if getElementData(p, "dm:arena") == arenaId and (not dimension or getElementDimension(p) == dimension) then
+            list[#list + 1] = p
+        end
     end
     return list
 end
+
+function getRankedModes() return DM.rankedModes end
 
 function tableCount(t)
     local n = 0

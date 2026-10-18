@@ -7,6 +7,8 @@
     <!-- Servidor -->
     <script src="server/s_util.lua" type="server" />
     <script src="server/s_stats.lua" type="server" />
+    <script src="server/s_tags.lua" type="server" />
+    <script src="server/s_economy.lua" type="server" />
     <script src="server/s_arenas.lua" type="server" />
     <script src="server/s_kills.lua" type="server" />
     <script src="server/s_chat.lua" type="server" />
@@ -32,6 +34,17 @@
     <file src="assets/fonts/Poppins-Medium.ttf" />
     <file src="assets/fonts/Poppins-SemiBold.ttf" />
     <file src="assets/fonts/Poppins-Bold.ttf" />
+    <file src="assets/img/logo.png" />
+    <file src="assets/img/skull.png" />
+    <file src="assets/img/headshot.png" />
+    <file src="assets/img/coin.png" />
+    <file src="assets/img/crown.png" />
+    <file src="assets/img/shield.png" />
+    <file src="assets/img/swords.png" />
+    <file src="assets/img/trophy.png" />
+    <file src="assets/img/target.png" />
+    <file src="assets/img/tag.png" />
+    <file src="assets/img/flame.png" />
     <file src="assets/sounds/click.wav" />
     <file src="assets/sounds/hover.wav" />
     <file src="assets/sounds/hit.wav" />
@@ -56,12 +69,36 @@
     <export function="setArenaSpawns" type="server" />
     <export function="giveArenaWeapons" type="server" />
     <export function="addPlayerStat" type="server" />
+    <export function="setPlayerStat" type="server" />
+    <export function="addMoney" type="server" />
+    <export function="takeMoney" type="server" />
+    <export function="getPlayerMoney" type="server" />
+    <export function="setPlayerVip" type="server" />
+    <export function="isPlayerVip" type="server" />
+    <export function="givePlayerPerk" type="server" />
+    <export function="playerHasPerk" type="server" />
+    <export function="refreshPlayerTag" type="server" />
+    <export function="formatPlayerName" type="server" />
+    <export function="getPlayerVisibleName" type="server" />
+    <export function="refillPlayerWeapons" type="server" />
+    <export function="getDB" type="server" />
+    <export function="getRankedModes" type="shared" />
+    <export function="getArenaPlayers" type="server" />
+    <export function="sendServerMessage" type="server" />
     <export function="getPlayerStats" type="server" />
     <export function="notifyPlayer" type="server" />
     <export function="isPlayerAdmin" type="server" />
     <export function="findPlayer" type="server" />
     <export function="getDuelWeaponSets" type="shared" />
     <export function="getConfig" type="shared" />
+    <export function="getRpConfig" type="shared" />
+    <export function="getEconomyConfig" type="shared" />
+    <export function="getRankedConfig" type="shared" />
+    <export function="getShopConfig" type="shared" />
+    <export function="getVipConfig" type="shared" />
+    <export function="getClanConfig" type="shared" />
+    <export function="formatMoney" type="shared" />
+    <export function="getTierForRP" type="shared" />
     <export function="getArenaSpawns" type="server" />
     <export function="notify" type="client" />
     <export function="playUISound" type="client" />

@@ -14,12 +14,17 @@ local function countPlayers()
     return counts
 end
 
+local CARDS = {}
+for _, a in ipairs(DM.arenas) do CARDS[#CARDS + 1] = a end
+CARDS[#CARDS + 1] = { id = "__ranked", name = "Partidas Ranqueadas", type = "ranked", color = { 245, 196, 81 },
+    desc = "5x5 e 10x10 com aquecimento. Ganhe RP e suba de elo.", weapons = {} }
+
 local function layout()
     local s = UI.s
     local cols = 3
     local cardW, cardH, gap = s(300), s(150), s(16)
     local pad = s(28)
-    local rows = math.ceil(#DM.arenas / cols)
+    local rows = math.ceil(#CARDS / cols)
     local w = pad * 2 + cols * cardW + (cols - 1) * gap
     local h = pad + s(80) + rows * cardH + (rows - 1) * gap + s(70)
     local x, y = (UI.sw - w) / 2, (UI.sh - h) / 2
@@ -57,7 +62,7 @@ local function render()
     local startY = y + pad + s(70)
     panel.cards = {}
     panel.hoverCard = nil
-    for i, arena in ipairs(DM.arenas) do
+    for i, arena in ipairs(CARDS) do
         local col = (i - 1) % cols
         local row = math.floor((i - 1) / cols)
         local cxp = x + pad + col * (cardW + gap)
@@ -74,13 +79,17 @@ local function render()
         -- título
         UI.text(arena.name, cxp + s(22), cyp + s(16), cardW - s(44), s(22), UI.color("text", 255 * a), "bold", 14, "left", "center")
         -- tipo
-        local typeLabel = arena.type == "lobby" and "SEGURO" or (arena.type == "duel" and "1v1" or "TODOS CONTRA TODOS")
+        local typeLabel = arena.type == "lobby" and "SEGURO" or (arena.type == "duel" and "1v1" or (arena.type == "ranked" and "RANQUEADO · F5" or "TODOS CONTRA TODOS"))
         if arena.cbug then typeLabel = typeLabel .. " · C-BUG" end
         UI.text(typeLabel, cxp + s(22), cyp + s(38), cardW - s(44), s(14), UI.rgb(arena.color, 230 * a), "semibold", 8, "left", "center")
         -- armas
-        UI.text(DM.arenaWeaponList(arena), cxp + s(22), cyp + s(56), cardW - s(44), s(34), UI.color("muted", 255 * a), "regular", 10, "left", "top", false, true)
+        UI.text(arena.type == "ranked" and arena.desc or DM.arenaWeaponList(arena), cxp + s(22), cyp + s(56), cardW - s(44), s(34), UI.color("muted", 255 * a), "regular", 10, "left", "top", false, true)
         -- jogadores
         local n = counts[arena.id] or 0
+        if arena.type == "ranked" then
+            n = 0
+            for _, m in ipairs(DM.rankedModes) do n = n + (counts[m.id] or 0) end
+        end
         local pTxt = ("%d %s"):format(n, n == 1 and "jogador" or "jogadores")
         UI.rect(cxp + s(22), cyp + cardH - s(40), s(8), s(8), n > 0 and UI.color("accent", 255 * a) or UI.color("muted", 120 * a), s(4))
         UI.text(pTxt, cxp + s(36), cyp + cardH - s(46), cardW, s(20), UI.color("muted", 255 * a), "medium", 10, "left", "center")
@@ -91,7 +100,7 @@ local function render()
             UI.rect(bx, by, bw, bh, UI.rgb(arena.color, 30 * a), s(8))
             UI.text("ATUAL", bx, by, bw, bh, UI.rgb(arena.color, 255 * a), "semibold", 10, "center", "center")
         else
-            UI.button("arena_btn_" .. arena.id, "ENTRAR", bx, by, bw, bh, { kind = hover and "primary" or "outline", size = 10, alpha = a })
+            UI.button("arena_btn_" .. arena.id, arena.type == "ranked" and "ABRIR" or "ENTRAR", bx, by, bw, bh, { kind = hover and "primary" or "outline", size = 10, alpha = a })
         end
     end
 
@@ -110,8 +119,12 @@ local function onClick(button, state)
     for _, c in ipairs(panel.cards or {}) do
         if UI.isMouseIn(c[2], c[3], c[4], c[5]) then
             playUISound("click")
-            triggerServerEvent("dm:requestArena", localPlayer, c[1])
             closeArenaPanel()
+            if c[1] == "__ranked" then
+                setTimer(function() triggerEvent("ranked:openPanel", localPlayer) end, 50, 1)
+            else
+                triggerServerEvent("dm:requestArena", localPlayer, c[1])
+            end
             return
         end
     end
@@ -140,6 +153,7 @@ function toggleArenaPanel()
     if panel.open then closeArenaPanel() else openArenaPanel() end
 end
 
+addEvent("ranked:openPanel")
 bindKey("F2", "down", toggleArenaPanel)
 UI.registerEscape(PANEL, closeArenaPanel)
 

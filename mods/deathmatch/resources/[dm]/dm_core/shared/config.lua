@@ -8,42 +8,183 @@
 DM = DM or {}
 
 DM.server = {
-    name            = "ARENA PVP",            -- nome exibido no HUD e no login
-    tagline         = "Mata-mata · 2026",
-    chatPrefix      = "#00E5A8[ARENA]#FFFFFF",
-    respawnDelay    = 3000,                   -- ms até renascer após morrer
-    spawnProtection = 3000,                   -- ms de proteção ao nascer
-    spawnFreeze     = 900,                    -- ms congelado ao nascer (carregar mapa)
-    healOnKill      = 25,                     -- vida recuperada ao matar
-    refillOnKill    = true,                   -- recarrega munição ao matar
-    xpKill          = 20,
-    xpHeadshot      = 10,
-    xpDuelWin       = 60,
-    xpStreakBonus   = 5,                      -- xp extra por kill em sequência (x streak)
-    saveInterval    = 60000,                  -- ms entre salvamentos de stats
-    chatCooldown    = 800,                    -- ms anti-flood
-    duelRequestTTL  = 25000,                  -- ms até um pedido de duelo expirar
-    duelArmor       = 0,                      -- colete inicial nos duelos
-    duelCountdown   = 3,                      -- segundos de contagem no duelo
+    name            = "UTG MATA-MATA",
+    tagline         = "#Return2k26",
+    fullName        = "UTG MATA-MATA #Return2k26",
+    discord         = "discord.gg/utg",            -- mostrado nas mensagens automáticas (edite)
+    chatPrefix      = "#8B5CF6[UTG]#FFFFFF",
+    respawnDelay    = 3000,                        -- ms até renascer após morrer
+    respawnDelayVip = 2000,                        -- ms para VIP
+    spawnProtection = 3000,                        -- ms de proteção ao nascer
+    spawnFreeze     = 900,                         -- ms congelado ao nascer (carregar mapa)
+    healOnKill      = 25,                          -- vida recuperada ao matar
+    refillOnKill    = true,                        -- recarrega munição ao matar
+    refillOnSwitch  = true,                        -- arma volta cheia ao trocar e pegar de novo
+    saveInterval    = 60000,
+    chatCooldown    = 800,
+    broadcastEvery  = 180000,                      -- ms entre mensagens automáticas do servidor
+    duelRequestTTL  = 25000,
+    duelArmor       = 0,
+    duelCountdown   = 3,
     weather         = 10,
-    time            = { 20, 0 },              -- hora, minuto fixos
+    time            = { 20, 0 },
+}
+
+-- ECONOMIA (kills dão dinheiro, nunca pontos de rank)
+DM.economy = {
+    kill            = 120,     -- $ por kill em arena
+    headshotBonus   = 60,      -- $ extra em headshot
+    streakBonusEach = 15,      -- $ extra por kill de sequência (x streak, até 10)
+    duelWin         = 500,
+    rankedWin       = 1500,    -- $ ao vencer partida ranqueada
+    rankedLoss      = 400,
+    rankedKill      = 60,      -- $ por kill em partida ranqueada
+    playtimeEvery   = 600000,  -- ms (10 min) online -> bônus
+    playtimeBonus   = 300,
+    dailyBonus      = 1000,    -- bônus diário no primeiro login do dia
+    clanCreate      = 50000,   -- custo para criar um clã
+    vipMultiplier   = { [1] = 1.25, [2] = 1.5, [3] = 2.0 },  -- multiplicador de $ por nível de VIP
+}
+
+-- PONTOS DE RANK (RP): só em partidas ranqueadas e duelos
+DM.rp = {
+    rankedWin   = 20,   -- + por vitória
+    rankedLoss  = -10,  -- por derrota
+    rankedKill  = 1,    -- + por kill na partida
+    rankedMvp   = 5,    -- + para o melhor da partida
+    duelWin     = 5,
+    duelLoss    = -3,
+}
+
+-- Níveis (elo) por RP
+DM.tiers = {
+    { min = 0,    name = "Bronze",   short = "BRZ", color = { 205, 127, 50 } },
+    { min = 200,  name = "Prata",    short = "PRT", color = { 192, 198, 210 } },
+    { min = 500,  name = "Ouro",     short = "OUR", color = { 245, 196, 81 } },
+    { min = 900,  name = "Platina",  short = "PLT", color = { 120, 220, 255 } },
+    { min = 1400, name = "Diamante", short = "DIA", color = { 110, 160, 255 } },
+    { min = 2000, name = "Mestre",   short = "MST", color = { 200, 110, 255 } },
+    { min = 3000, name = "Lenda",    short = "LND", color = { 255, 77, 109 } },
+}
+
+-- TAGS de staff (grupo da ACL -> tag). Prioridade: staff > VIP > tag comprada > elo
+DM.staffTags = {
+    { group = "Admin",          text = "ADMIN",      color = { 255, 77, 109 } },
+    { group = "SuperModerator", text = "SUPERVISOR", color = { 255, 140, 66 } },
+    { group = "Moderator",      text = "MODERADOR",  color = { 86, 180, 255 } },
+    { group = "Helper",         text = "AJUDANTE",   color = { 34, 230, 138 } },
+}
+
+-- VIP (30 dias). advantages: multiplicador de $, respawn mais rápido, cor de nick, skins extras, bônus diário maior
+DM.vip = {
+    [1] = { name = "VIP Bronze", price = 60000,  days = 30, color = { 205, 127, 50 }, tag = "VIP",       daily = 2000, armor = 0 },
+    [2] = { name = "VIP Prata",  price = 150000, days = 30, color = { 192, 198, 210 }, tag = "VIP+",     daily = 3500, armor = 0 },
+    [3] = { name = "VIP Ouro",   price = 300000, days = 30, color = { 245, 196, 81 }, tag = "VIP OURO", daily = 6000, armor = 0 },
+}
+
+-- LOJA (F4)
+DM.shop = {
+    tags = {
+        { key = "veterano",  text = "VETERANO",  price = 15000,  color = { 120, 220, 255 } },
+        { key = "assassino", text = "ASSASSINO", price = 40000,  color = { 255, 77, 109 } },
+        { key = "sniper",    text = "SNIPER",    price = 40000,  color = { 200, 110, 255 } },
+        { key = "lenda",     text = "LENDA",     price = 100000, color = { 245, 196, 81 } },
+        { key = "custom",    text = "PERSONALIZADA", price = 150000, color = { 34, 211, 238 }, custom = true }, -- /tag <texto>
+    },
+    nameColors = {
+        { key = "roxo",    name = "Roxo",    price = 30000, color = { 139, 92, 246 } },
+        { key = "ciano",   name = "Ciano",   price = 30000, color = { 34, 211, 238 } },
+        { key = "verde",   name = "Verde",   price = 30000, color = { 34, 230, 138 } },
+        { key = "dourado", name = "Dourado", price = 45000, color = { 245, 196, 81 } },
+        { key = "rosa",    name = "Rosa",    price = 45000, color = { 255, 105, 180 } },
+    },
+    extras = {
+        { key = "skins",  name = "Pacote de skins",   desc = "Libera /skin com qualquer id",      price = 25000 },
+        { key = "fastrespawn", name = "Respawn rápido", desc = "Renasce em 2s em vez de 3s",     price = 50000 },
+    },
+}
+
+-- MODOS RANQUEADOS (partidas em dimensões próprias; aquecimento até completar os jogadores)
+-- Spawns: edite à vontade (ou me mande as posições marcadas). native = chão do GTA (ajuste automático ao solo).
+DM.rankedModes = {
+    {
+        id = "m4_10x10", name = "10x10 M4", place = "Las Payasadas", teamSize = 10,
+        weapons = { { 31, 600 } }, armor = 100, killTarget = 80, duration = 600, color = { 86, 180, 255 },
+        center = { -250.0, 2620.0, 63.0 }, native = true,
+        teamSpawns = {
+            A = { { -205.0, 2592.0, 63.0, 90 }, { -208.0, 2598.0, 63.0, 90 }, { -211.0, 2604.0, 63.0, 90 }, { -205.0, 2610.0, 63.0, 90 }, { -209.0, 2616.0, 63.0, 90 },
+                  { -202.0, 2586.0, 63.0, 90 }, { -214.0, 2590.0, 63.0, 90 }, { -214.0, 2610.0, 63.0, 90 }, { -200.0, 2602.0, 63.0, 90 }, { -206.0, 2622.0, 63.0, 90 } },
+            B = { { -295.0, 2648.0, 63.0, 270 }, { -292.0, 2642.0, 63.0, 270 }, { -289.0, 2636.0, 63.0, 270 }, { -295.0, 2630.0, 63.0, 270 }, { -291.0, 2624.0, 63.0, 270 },
+                  { -298.0, 2654.0, 63.0, 270 }, { -286.0, 2650.0, 63.0, 270 }, { -286.0, 2630.0, 63.0, 270 }, { -300.0, 2638.0, 63.0, 270 }, { -294.0, 2618.0, 63.0, 270 } },
+        },
+        warmupSpawns = { { -250.0, 2620.0, 63.0, 0 }, { -230.0, 2600.0, 63.0, 90 }, { -270.0, 2640.0, 63.0, 270 }, { -240.0, 2650.0, 63.0, 180 }, { -265.0, 2595.0, 63.0, 45 } },
+    },
+    {
+        id = "sniper_5x5", name = "5x5 Sniper", place = "Bayside Trailer Park", teamSize = 5,
+        weapons = { { 34, 150 } }, armor = 0, killTarget = 30, duration = 480, color = { 200, 110, 255 },
+        center = { -2480.0, 2320.0, 5.0 }, native = true,
+        teamSpawns = {
+            A = { { -2530.0, 2360.0, 5.0, 135 }, { -2526.0, 2354.0, 5.0, 135 }, { -2534.0, 2354.0, 5.0, 135 }, { -2522.0, 2362.0, 5.0, 135 }, { -2538.0, 2362.0, 5.0, 135 } },
+            B = { { -2430.0, 2280.0, 5.0, 315 }, { -2426.0, 2286.0, 5.0, 315 }, { -2434.0, 2286.0, 5.0, 315 }, { -2422.0, 2278.0, 5.0, 315 }, { -2438.0, 2278.0, 5.0, 315 } },
+        },
+        warmupSpawns = { { -2480.0, 2320.0, 5.0, 0 }, { -2500.0, 2340.0, 5.0, 90 }, { -2460.0, 2300.0, 5.0, 270 }, { -2470.0, 2345.0, 5.0, 180 } },
+    },
+    {
+        id = "m4_5x5", name = "5x5 M4", place = "Bayside Trailer Park", teamSize = 5,
+        weapons = { { 31, 600 } }, armor = 100, killTarget = 40, duration = 480, color = { 34, 211, 238 },
+        center = { -2480.0, 2320.0, 5.0 }, native = true,
+        teamSpawns = {
+            A = { { -2530.0, 2360.0, 5.0, 135 }, { -2526.0, 2354.0, 5.0, 135 }, { -2534.0, 2354.0, 5.0, 135 }, { -2522.0, 2362.0, 5.0, 135 }, { -2538.0, 2362.0, 5.0, 135 } },
+            B = { { -2430.0, 2280.0, 5.0, 315 }, { -2426.0, 2286.0, 5.0, 315 }, { -2434.0, 2286.0, 5.0, 315 }, { -2422.0, 2278.0, 5.0, 315 }, { -2438.0, 2278.0, 5.0, 315 } },
+        },
+        warmupSpawns = { { -2480.0, 2320.0, 5.0, 0 }, { -2500.0, 2340.0, 5.0, 90 }, { -2460.0, 2300.0, 5.0, 270 }, { -2470.0, 2345.0, 5.0, 180 } },
+    },
+}
+DM.ranked = {
+    countdown     = 15,    -- s entre completar os jogadores e começar
+    resultsTime   = 12,    -- s mostrando o resultado
+    respawn       = 4000,  -- ms respawn durante a partida
+    protection    = 2000,  -- ms proteção ao nascer na partida
+    dimensionBase = 2000,  -- cada instância usa dimensionBase + (índice do modo * 100) + nº da instância
+    minClanMatch  = 2,     -- mínimo de jogadores por lado em clã x clã
+}
+
+-- CLÃS
+DM.clans = {
+    tagMin = 2, tagMax = 5, nameMin = 3, nameMax = 20, maxMembers = 30,
+    pointsWin = 30, pointsLoss = -15,
+}
+
+-- Mensagens automáticas do servidor ({online} e {discord} são substituídos)
+DM.broadcasts = {
+    "#8B5CF6[UTG] #FFFFFF{online} jogadores online agora. Chame seus amigos!",
+    "#8B5CF6[UTG] #FFFFFFPressione #22D3EEF5 #FFFFFFpara entrar nas partidas ranqueadas 5x5 e 10x10 e subir de elo.",
+    "#8B5CF6[UTG] #FFFFFFKills dão #22E68A$ #FFFFFF— use na loja (#22D3EEF4#FFFFFF) para tags, VIP e cores de nick.",
+    "#8B5CF6[UTG] #FFFFFFDesafie alguém no X1 com #22D3EEF3#FFFFFF. Vitórias no X1 dão RP.",
+    "#8B5CF6[UTG] #FFFFFFCrie ou entre em um clã (#22D3EEF6#FFFFFF) e dispute clã x clã.",
+    "#8B5CF6[UTG] #FFFFFFHeadshot vale mais: dano no peito é reduzido, mire na cabeça.",
+    "#8B5CF6[UTG] #FFFFFFFique online: a cada 10 minutos você ganha bônus em $. Bônus diário no primeiro login do dia.",
+    "#8B5CF6[UTG] #FFFFFFDiscord: #22D3EE{discord}",
 }
 
 -- Paleta de cores da interface (RGB). O cliente converte com tocolor().
 DM.colors = {
-    bg      = { 10, 13, 20 },
-    card    = { 18, 22, 32 },
-    card2   = { 26, 31, 44 },
+    bg      = { 8, 8, 16 },
+    card    = { 16, 16, 30 },
+    card2   = { 24, 24, 44 },
     border  = { 255, 255, 255 },
-    accent  = { 0, 229, 168 },   -- verde-menta
-    accent2 = { 124, 92, 255 },  -- violeta
+    accent  = { 139, 92, 246 },  -- violeta UTG
+    accent2 = { 34, 211, 238 },  -- ciano
+    gold    = { 245, 196, 81 },  -- VIP
+    success = { 34, 230, 138 },
     danger  = { 255, 77, 109 },
     warn    = { 255, 181, 71 },
     info    = { 86, 180, 255 },
-    text    = { 242, 244, 248 },
-    muted   = { 139, 147, 167 },
-    health  = { 0, 229, 168 },
-    armor   = { 86, 180, 255 },
+    text    = { 245, 245, 250 },
+    muted   = { 150, 155, 180 },
+    health  = { 34, 230, 138 },
+    armor   = { 34, 211, 238 },
+    money   = { 245, 196, 81 },
 }
 
 -- Skins aleatórias ao nascer (o jogador pode trocar com /skin <id>)
@@ -71,33 +212,42 @@ function DM.weaponName(id)
     return n or "Desconhecido"
 end
 
--- Ranks por nível
-DM.ranks = {
-    { min = 1,  name = "Bronze",   color = { 205, 127, 50 } },
-    { min = 10, name = "Prata",    color = { 192, 198, 210 } },
-    { min = 20, name = "Ouro",     color = { 255, 196, 48 } },
-    { min = 35, name = "Platina",  color = { 120, 220, 255 } },
-    { min = 50, name = "Diamante", color = { 110, 160, 255 } },
-    { min = 70, name = "Mestre",   color = { 200, 110, 255 } },
-    { min = 90, name = "Lenda",    color = { 255, 77, 109 } },
-}
-
-function DM.levelFromXP(xp)
-    xp = math.max(0, tonumber(xp) or 0)
-    return math.floor(math.sqrt(xp / 25)) + 1
-end
-
-function DM.xpForLevel(level)
-    level = math.max(1, tonumber(level) or 1)
-    return ((level - 1) ^ 2) * 25
-end
-
-function DM.rankForLevel(level)
-    local rank = DM.ranks[1]
-    for _, r in ipairs(DM.ranks) do
-        if level >= r.min then rank = r end
+function DM.tierForRP(rp)
+    rp = tonumber(rp) or 0
+    local tier = DM.tiers[1]
+    for _, t in ipairs(DM.tiers) do
+        if rp >= t.min then tier = t end
     end
-    return rank
+    return tier
+end
+
+function DM.nextTier(rp)
+    for _, t in ipairs(DM.tiers) do
+        if (tonumber(rp) or 0) < t.min then return t end
+    end
+    return nil
+end
+
+-- compatibilidade: "nível" exibido = índice do elo
+function DM.levelFromXP(rp)
+    local tier = DM.tierForRP(rp)
+    for i, t in ipairs(DM.tiers) do if t == tier then return i end end
+    return 1
+end
+function DM.rankForLevel(level)
+    return DM.tiers[math.max(1, math.min(#DM.tiers, tonumber(level) or 1))]
+end
+
+function DM.formatMoney(v)
+    v = math.floor(tonumber(v) or 0)
+    local s = tostring(v)
+    local out = s:reverse():gsub("(%d%d%d)", "%1."):reverse()
+    return "$" .. (out:gsub("^%.", ""))
+end
+
+function DM.vipName(level)
+    local v = DM.vip[tonumber(level) or 0]
+    return v and v.name or nil
 end
 
 -- Mensagens de sequência de kills
@@ -124,7 +274,7 @@ DM.streaks = {
 DM.arenas = {
     {
         id = "lobby", name = "Lobby", short = "LOBBY",
-        desc = "Zona segura. Pressione F2 para escolher uma arena.",
+        desc = "Zona segura. F2 arenas · F3 duelo · F4 loja · F5 ranqueadas · F6 clã.",
         type = "lobby", safe = true, dimension = 0,
         color = { 0, 229, 168 }, weapons = {},
         spawns = {
@@ -274,7 +424,22 @@ DM.duelRounds = { 1, 3, 5 }   -- "primeiro a N"
 DM.arenaById = {}
 for i, arena in ipairs(DM.arenas) do
     arena.index = i
+    arena.native = arena.native ~= false and (arena.id == "lobby" or arena.id == "ak47" or arena.id == "m4" or arena.id == "deagle" or arena.id == "sniper" or arena.id == "shotgun" or arena.id == "melee" or arena.id == "livre")
     DM.arenaById[arena.id] = arena
+end
+
+-- Modos ranqueados também são "arenas" (type = "ranked"), geridas pelo dm_ranked
+DM.rankedById = {}
+for i, mode in ipairs(DM.rankedModes) do
+    mode.index = i
+    mode.type = "ranked"
+    mode.short = mode.name:upper()
+    mode.desc = ("%s · %s · partida ranqueada"):format(mode.name, mode.place)
+    mode.dimension = DM.ranked.dimensionBase + i * 100
+    mode.spawns = mode.warmupSpawns
+    mode.safe = false
+    DM.rankedById[mode.id] = mode
+    DM.arenaById[mode.id] = mode
 end
 
 function DM.getArena(id)
@@ -290,7 +455,7 @@ end
 
 -- Lista legível das armas de uma arena
 function DM.arenaWeaponList(arena)
-    if not arena or #arena.weapons == 0 then
+    if not arena or #(arena.weapons or {}) == 0 then
         if arena and arena.type == "duel" then return "Arma escolhida no duelo" end
         return "Sem armas"
     end

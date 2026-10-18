@@ -4,17 +4,6 @@
 
 local lastChat = {}
 
-local function levelTag(player)
-    local level = tonumber(getElementData(player, "dm:level")) or 1
-    local rank = DM.rankForLevel(level)
-    return ("%s[%d]"):format(DM.rgbToHex(unpack(rank.color)), level)
-end
-
-local function arenaTag(player)
-    local arena = getPlayerArena(player)
-    if not arena then return "" end
-    return ("%s[%s] "):format(DM.rgbToHex(unpack(arena.color)), arena.short)
-end
 
 addEventHandler("onPlayerChat", root, function(message, messageType)
     if messageType == 2 then return end -- team chat (não usado)
@@ -36,7 +25,6 @@ addEventHandler("onPlayerChat", root, function(message, messageType)
     if #message > 160 then message = message:sub(1, 160) end
 
     local name = getPlayerVisibleName(source)
-    local adminTag = isPlayerAdmin(source) and "#FF4D6D[ADM] " or ""
 
     if messageType == 1 then
         -- /me
@@ -45,7 +33,7 @@ addEventHandler("onPlayerChat", root, function(message, messageType)
         return
     end
 
-    local line = ("%s%s%s #FFFFFF%s: #E6E9F0%s"):format(arenaTag(source), adminTag, levelTag(source), name, message)
+    local line = ("%s#FFFFFF: #E6E9F0%s"):format(formatPlayerName(source), message)
     outputChatBox(line, root, 255, 255, 255, true)
     outputServerLog(("CHAT: %s: %s"):format(name, message))
 end)

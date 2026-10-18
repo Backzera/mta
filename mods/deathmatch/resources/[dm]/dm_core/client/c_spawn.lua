@@ -16,10 +16,11 @@ local function snapToGround()
     local arena = arenaOf(localPlayer)
     if not arena or getElementData(localPlayer, "dm:inDuel") then return end
     local x, y, z = getElementPosition(localPlayer)
-    local ground = getGroundPosition(x, y, z + 1)
+    local ground = getGroundPosition(x, y, z + (arena.native and 60 or 1))
     if ground and ground > 0 then
         local diff = z - ground
-        if (diff > 1.5 and diff < 12) or (diff < -0.3 and diff > -4) then
+        local limit = arena.native and 60 or 12
+        if (diff > 1.5 and diff < limit) or (diff < -0.3 and diff > -limit) then
             setElementPosition(localPlayer, x, y, ground + 1.0)
         end
     end

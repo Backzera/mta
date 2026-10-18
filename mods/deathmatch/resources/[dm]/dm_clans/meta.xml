@@ -1,0 +1,9 @@
+<meta>
+    <info author="UTG" name="DM Clans" description="Clãs: criar, convidar, tag, pontos e clã x clã (partida de times via dm_ranked)" type="script" version="1.0.0" />
+    <include resource="dm_core" />
+    <include resource="dm_ranked" />
+    <script src="server/s_clans.lua" type="server" />
+    <script src="client/c_ui.lua" type="client" cache="false" />
+    <script src="client/c_clans.lua" type="client" cache="false" />
+    <min_mta_version server="1.5.9" client="1.5.9" />
+</meta>

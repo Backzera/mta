@@ -1,5 +1,5 @@
 --[[
-    Nametags customizadas: nível, nome e barra de vida sobre a cabeça.
+    Nametags: tag (staff/VIP/comprada/elo) + clã destacados acima do nick, nick colorido, vida/colete.
 ]]
 
 local MAX_DIST = 60
@@ -13,6 +13,7 @@ addEventHandler("onClientRender", root, function()
     if not getElementData(localPlayer, "dm:ready") then return end
     local s = UI.s
     local cx, cy, cz = getCameraMatrix()
+    local myTeam = getPlayerTeam(localPlayer)
     for _, player in ipairs(getElementsByType("player", root, true)) do
         if player ~= localPlayer and isElementOnScreen(player) and not isPedDead(player) then
             local x, y, z = getPedBonePosition(player, 8)
@@ -21,31 +22,51 @@ addEventHandler("onClientRender", root, function()
                 if dist <= MAX_DIST and isLineOfSightClear(cx, cy, cz, x, y, z, true, false, false, true, false, false, false, localPlayer) then
                     local sx, sy = getScreenFromWorldPosition(x, y, z + 0.35, 0)
                     if sx then
-                        local scale = UI.clamp(1.15 - dist / MAX_DIST, 0.55, 1)
+                        local scale = UI.clamp(1.15 - dist / MAX_DIST, 0.6, 1)
                         local alpha = UI.clamp(1.4 - dist / MAX_DIST, 0.35, 1)
                         local name = DM.stripColors(getPlayerName(player))
-                        local level = tonumber(getElementData(player, "dm:level")) or 1
-                        local rank = DM.rankForLevel(level)
                         local health = math.max(0, getElementHealth(player)) / 100
                         local armor = getPedArmor(player) / 100
-                        local protected = getElementData(player, "dm:protected")
+                        local tag = getElementData(player, "dm:tag")
+                        local clan = getElementData(player, "dm:clanTag")
+                        local team = getPlayerTeam(player)
+                        local nr, ng, nb = UI.hexToRGB(getElementData(player, "dm:nameColor"))
+                        if myTeam and team == myTeam then nr, ng, nb = 34, 230, 138 end
+                        if getElementData(player, "dm:protected") then nr, ng, nb = 150, 155, 180 end
 
-                        local fontSize = 11
-                        local nameW = UI.textWidth(name, "semibold", fontSize) * scale
-                        local lvl = tostring(level)
-                        local lvlW = (UI.textWidth(lvl, "bold", 9) + s(10)) * scale
-                        local barW = math.max(s(90) * scale, nameW + lvlW + s(8))
-                        local bx = sx - barW / 2
-                        local by = sy - s(26) * scale
-                        -- nível
-                        UI.rect(bx, by - s(16) * scale, lvlW, s(16) * scale, UI.rgb(rank.color, 220 * alpha), s(4))
-                        local f = UI.font("bold", 9)
-                        dxDrawText(lvl, bx, by - s(16) * scale, bx + lvlW, by, tocolor(10, 12, 18, 255 * alpha), scale * (type(f) == "string" and 1 or 1), f, "center", "center")
-                        -- nome
-                        local nf = UI.font("semibold", fontSize)
-                        dxDrawText(name, bx + lvlW + s(6) + 1, by - s(16) * scale + 1, bx + barW + 1, by + 1, tocolor(0, 0, 0, 160 * alpha), scale, nf, "left", "center")
-                        dxDrawText(name, bx + lvlW + s(6), by - s(16) * scale, bx + barW, by, protected and UI.color("accent", 255 * alpha) or tocolor(255, 255, 255, 255 * alpha), scale, nf, "left", "center")
-                        -- vida
+                        local nf = UI.font("semibold", 12)
+                        local nameW = dxGetTextWidth(name, scale, nf)
+                        local barW = math.max(s(90) * scale, nameW + s(10))
+                        local bx = sy and (sx - barW / 2) or 0
+                        local by = sy - s(24) * scale
+                        -- Nick
+                        dxDrawText(name, bx + 1, by - s(18) * scale + 1, bx + barW + 1, by + 1, tocolor(0, 0, 0, 170 * alpha), scale, nf, "center", "center")
+                        dxDrawText(name, bx, by - s(18) * scale, bx + barW, by, tocolor(nr, ng, nb, 255 * alpha), scale, nf, "center", "center")
+                        -- Tags acima do nick (destacadas)
+                        local ty = by - s(18) * scale - s(19) * scale
+                        local pills = {}
+                        if type(clan) == "table" and clan.text then pills[#pills + 1] = clan end
+                        if type(tag) == "table" and tag.text then pills[#pills + 1] = tag end
+                        if #pills > 0 then
+                            local tf = UI.font("bold", 9)
+                            local total = 0
+                            local widths = {}
+                            for i, p in ipairs(pills) do
+                                widths[i] = dxGetTextWidth(p.text, scale, tf) + s(12) * scale
+                                total = total + widths[i] + (i > 1 and s(4) * scale or 0)
+                            end
+                            local px = sx - total / 2
+                            for i, p in ipairs(pills) do
+                                local r, g, b = UI.hexToRGB(p.hex)
+                                local ph = s(16) * scale
+                                UI.rect(px, ty, widths[i], ph, tocolor(r, g, b, (p.kind == "vip" or p.kind == "staff") and 230 * alpha or 70 * alpha), ph / 2)
+                                local tc = (p.kind == "vip" or p.kind == "staff") and tocolor(12, 12, 20, 255 * alpha) or tocolor(r, g, b, 255 * alpha)
+                                dxDrawText(p.text, px, ty, px + widths[i], ty + ph, tc, scale, tf, "center", "center")
+                                if p.kind == "vip" then UI.image("crown.png", px - s(14) * scale, ty + s(1), s(13) * scale, s(13) * scale, tocolor(245, 196, 81, 255 * alpha)) end
+                                px = px + widths[i] + s(4) * scale
+                            end
+                        end
+                        -- Vida / colete
                         local hcol = health > 0.5 and UI.palette.health or (health > 0.25 and UI.palette.warn or UI.palette.danger)
                         UI.bar(bx, by + s(3), barW, s(5) * scale, health, UI.rgb(hcol, 230 * alpha), tocolor(0, 0, 0, 120 * alpha), 2)
                         if armor > 0 then

@@ -1,99 +1,120 @@
-# ARENA PVP — Servidor MTA:SA Mata-mata
+# UTG MATA-MATA #Return2k26 — Servidor MTA:SA
 
-Servidor de PVP completo para Multi Theft Auto: San Andreas, com arenas por arma, duelo X1 com painel,
-arena de C-Bug, kill chat, killfeed, ranking/níveis, login e interface moderna (dx, fonte Poppins).
+Servidor de PVP completo para Multi Theft Auto: San Andreas. Arenas por arma, duelo X1, arena de C-Bug,
+partidas ranqueadas 5x5/10x10 com aquecimento, clãs e clã x clã, economia com loja (tags, VIP, cores),
+sistema de dano com headshot, sons de arma próprios e interface moderna (dx, fonte Poppins, logo UTG).
 
 ```
 mods/deathmatch/
-├── mtaserver.conf                 configuração do servidor (recursos já listados)
-├── acl-adicionar.txt              linhas para colocar no grupo Admin do acl.xml
+├── mtaserver.conf              configuração do servidor (recursos já listados, na ordem certa)
+├── acl-adicionar.txt           linhas para colocar no grupo Admin do acl.xml
 └── resources/[dm]/
-    ├── dm_core/                   núcleo: arenas, spawn, armas, kills, stats, HUD, painéis, chat, comandos
-    ├── dm_maps/                   carrega maps/<arena>.map na dimensão de cada arena (+ portão da M4)
-    ├── dm_duel/                   duelo X1 (F3): pedidos, aceite, sala privada, rodadas, resultado
-    ├── dm_cbug/                   C-Bug liberado só na Arena C-Bug (bloqueado nas outras)
-    └── dm_login/                  painel de login/registro, lembrar-me, convidado
-Arena AK47/, Arena CBUG/, Arena M4/, Arena X1/   mapas originais (os .map já foram copiados para dm_maps/maps)
+    ├── dm_core      núcleo: arenas, spawn, armas, kills ($), stats, tags, economia, HUD, painéis, chat, comandos
+    ├── dm_maps      carrega maps/<arena>.map na dimensão da arena (+ portão da M4); clona o X1 para os duelos
+    ├── dm_weapons   dano por parte do corpo (headshot x2.2, peito x0.5), sons de tiro, skins de arma
+    ├── dm_cbug      C-Bug liberado só na Arena C-Bug
+    ├── dm_duel      duelo X1 (F3): pedidos, sala privada, rodadas, RP e $
+    ├── dm_shop      loja (F4): tags, cores de nick, VIP, extras
+    ├── dm_ranked    ranqueadas (F5): 10x10 M4 Las Payasadas · 5x5 Sniper e 5x5 M4 Bayside, aquecimento, times por elo
+    ├── dm_clans     clãs (F6): criar, convidar, cargos, ranking, clã x clã
+    └── dm_login     login/registro, lembrar-me, convidado
+Arena AK47/, Arena CBUG/, Arena M4/, Arena X1/   mapas originais (já copiados para dm_maps/maps)
 ```
 
 ## Instalação
 
 1. Baixe o servidor MTA:SA (https://multitheftauto.com) e extraia.
 2. Copie `mods/deathmatch/mtaserver.conf` e a pasta `mods/deathmatch/resources/[dm]` para a mesma
-   estrutura dentro do servidor (mantenha os recursos padrão que vêm no pacote: admin, resourcemanager...).
-3. Abra `mods/deathmatch/acl.xml` do servidor e, dentro de `<group name="Admin">`, adicione as
-   linhas de `acl-adicionar.txt`:
-   ```xml
-   <object name="resource.dm_core" />
-   <object name="resource.dm_login" />
-   <object name="resource.dm_duel" />
-   ```
-   Sem isso o registro de contas e os comandos /kick e /ban não funcionam.
-4. Inicie o servidor. Os 5 recursos `dm_*` já iniciam automaticamente pelo `mtaserver.conf`.
-5. Para virar admin: registre-se no jogo e depois adicione `<object name="user.SEUUSUARIO" />`
-   dentro de `<group name="Admin">` no `acl.xml` (ou use o recurso `admin` com a conta Console).
-   Na primeira vez o servidor pode pedir para autorizar o serial no console: `authserial SEUUSUARIO`.
+   estrutura do servidor (mantenha os recursos padrão do pacote: admin, resourcemanager...).
+3. No `mods/deathmatch/acl.xml` do servidor, dentro de `<group name="Admin">`, adicione as linhas de
+   `acl-adicionar.txt` (`resource.dm_core`, `resource.dm_login`, `resource.dm_duel`). Sem isso o registro
+   de contas e `/kick` `/ban` não funcionam.
+4. Inicie o servidor. Os 9 recursos `dm_*` iniciam pelo `mtaserver.conf`.
+5. Admin: registre-se no jogo e adicione `<object name="user.SEUUSUARIO" />` no grupo Admin do `acl.xml`
+   (o servidor pode pedir `authserial SEUUSUARIO` no console na primeira vez). A tag no chat/nametag vem
+   do grupo: Admin → ADMIN, SuperModerator → SUPERVISOR, Moderator → MODERADOR, Helper → AJUDANTE.
 
-## Arenas
+## Teclas
 
-| id        | Arena          | Dimensão | Armas                      | Observação                               |
-|-----------|----------------|----------|----------------------------|------------------------------------------|
-| `lobby`   | Lobby          | 0        | nenhuma                    | zona segura (Pershing Square, LS)        |
-| `ak47`    | Arena AK-47    | 1        | AK-47                      | mapa `ak47.map` (Las Venturas)           |
-| `m4`      | Arena M4       | 2        | M4                         | mapa `m4.map` (Verdant Bluffs) + portão  |
-| `x1`      | Arena X1       | 3        | escolhida no duelo         | mapa `x1.map`; sala de espera + duelos   |
-| `cbug`    | Arena C-Bug    | 4        | Deagle, Shotgun, Sniper    | mapa `cbug.map`; **C-Bug liberado**      |
-| `deagle`  | Arena Deagle   | 5        | Deagle                     | sem mapa (San Fierro)                    |
-| `sniper`  | Arena Sniper   | 6        | Sniper                     | sem mapa (Verdant Meadows)               |
-| `shotgun` | Arena Shotgun  | 7        | Combat Shotgun             | sem mapa (Unity Station)                 |
-| `melee`   | Arena Katana   | 8        | Katana                     | sem mapa (Santa Maria Beach)             |
-| `livre`   | Arena Livre    | 9        | Deagle, Shotgun, MP5, AK, M4, Sniper | sem mapa (Area 69), colete 50  |
+| Tecla | Função                | Tecla | Função                         |
+|-------|-----------------------|-------|--------------------------------|
+| F1    | Ajuda                 | F4    | Loja (tags, cores, VIP, extras)|
+| F2    | Arenas                | F5    | Partidas ranqueadas            |
+| F3    | Duelo X1              | F6    | Clã                            |
+| TAB   | Placar (tags, clã, elo, RP, K/D) | Y / N | Aceitar / recusar duelo |
 
-Tudo isso fica em `dm_core/shared/config.lua` (tabela `DM.arenas`): nome, cor, dimensão, armas,
-spawns, `cbug = true`, `safe = true`. Para criar uma arena nova basta adicionar um bloco e,
-se quiser, um `dm_maps/maps/<id>.map`.
+Comandos: `/arena <id>` `/lobby` `/duelo <jogador>` `/stats` `/top rp|kills|money|duelos` `/saldo`
+`/pagar <jogador> <valor>` `/tag <texto>` `/cla criar <TAG> <nome>` `/skin <id>` `/pm` `/kill`.
+Admin: `/kick` `/ban` `/mute` `/unmute` `/tp` `/anuncio` `/dar <jogador> <$>` `/setvip <jogador> <0-3> [dias]` `/darrp`.
 
-### Spawns
-Os mapas não tinham `<spawnpoint>`, então os spawns foram calculados pela geometria de cada mapa
-(pickups do mapper, pontos dos scripts originais e áreas abertas longe dos objetos) e ficam em
-`config.lua`. No X1, `duelSpots` tem pares de posições frente a frente (30–45 m) usados nos duelos;
-os `spawns` do X1 são a sala de espera. Se algum spawn ficar ruim, edite o número ali — ou adicione
-`<spawnpoint>` no `.map`, que então substitui a config automaticamente.
+## Como o progresso funciona (feito para segurar o jogador)
 
-Rede de segurança: se um jogador nascer no vazio (mapa ainda não carregou, posição ruim), o cliente
-detecta a queda e o servidor o reposiciona no primeiro spawn (âncora) da arena.
+- **Kills dão só $** (`$120` + `$60` headshot + bônus de sequência). **RP e elo** vêm apenas de
+  ranqueadas (vitória +20, derrota -10, +1 por kill, MVP +5) e duelos (+5 / -3).
+- Elos por RP: Bronze 0 · Prata 200 · Ouro 500 · Platina 900 · Diamante 1400 · Mestre 2000 · Lenda 3000.
+- $ também por tempo online (`$300` a cada 10 min), bônus diário (`$1.000`, VIP mais), duelo (`$500`),
+  ranqueada (`$1.500` vitória / `$400` derrota).
+- **Loja (F4)**: tags Veterano `$15k` · Assassino/Sniper `$40k` · Lenda `$100k` · Personalizada `$150k`
+  (`/tag`), cores de nick `$30k–45k`, VIP Bronze/Prata/Ouro (30 dias) `$60k/150k/300k` com 1.25x/1.5x/2x
+  de $, bônus diário maior, respawn rápido, nick colorido, todas as skins e tag VIP destacada; extras
+  (pacote de skins `$25k`, respawn rápido `$50k`). Comprou uma vez, equipa quando quiser.
+- **Clã**: criar custa `$50k`. Pontos de clã por clã x clã (+30 / -15).
+Tudo em `dm_core/shared/config.lua` (`DM.economy`, `DM.rp`, `DM.tiers`, `DM.shop`, `DM.vip`, `DM.clans`).
 
-## Teclas e comandos
+## Arenas (F2)
 
-| Tecla | Função                 |  | Comando               | Função                   |
-|-------|------------------------|--|-----------------------|--------------------------|
-| F1    | Ajuda                  |  | `/arena <id>`         | Entrar em uma arena      |
-| F2    | Painel de arenas       |  | `/arenas` `/lobby` `/x1` | Listar / voltar / ir X1 |
-| F3    | Painel de duelo X1     |  | `/duelo <jogador>`    | Abrir painel já com o alvo |
-| TAB   | Placar                 |  | `/aceitar` `/recusar` | Responder desafio        |
-| Y / N | Aceitar / recusar duelo|  | `/stats [jogador]` `/top` | Estatísticas / top 10 |
-| ESC   | Fechar painel          |  | `/skin <id>` `/pm` `/kill` | Skin / privado / suicídio |
+| id | Arena | Armas | Mapa |
+|----|-------|-------|------|
+| `lobby` | Lobby (seguro) | — | Pershing Square |
+| `ak47` | Arena AK-47 | AK-47 | `ak47.map` (Las Venturas) |
+| `m4` | Arena M4 | M4 | `m4.map` (Verdant Bluffs) + portão |
+| `x1` | Arena X1 | escolhida no duelo | `x1.map` (sala de espera; cada duelo recebe uma cópia do mapa) |
+| `cbug` | Arena C-Bug | Deagle, Shotgun, Sniper | `cbug.map`, **C-Bug liberado** |
+| `deagle` `sniper` `shotgun` `melee` `livre` | arenas sem mapa | Deagle / Sniper / Combat Shotgun / Katana / mix | chão nativo do GTA |
 
-Admin (grupo Admin/Moderator da ACL): `/kick`, `/ban`, `/mute <jogador> [min]`, `/unmute`,
-`/tp <jogador> [arena]`, `/anuncio <msg>`, `/admins`.
+Spawns dos mapas sem `<spawnpoint>` foram calculados pela geometria e estão em `config.lua`
+(`spawns`, e `duelSpots` para o X1). Se um jogador nascer no vazio, o cliente detecta a queda e o servidor
+reposiciona no spawn âncora.
 
-## Sistemas
+## Ranqueadas (F5)
 
-- **Kill chat** `[KILL] Fulano matou Ciclano com AK-47 [HEADSHOT]` para a arena + killfeed animado
-  no canto, hitmarker com número de dano, recompensa “+XP” no centro.
-- **Sequências** (3/5/8/12/20 kills) com banner e som; 8+ anunciadas no servidor todo.
-- **XP e níveis** (nível = √(xp/25)+1), ranks Bronze → Lenda, tags no chat, nametags com nível e vida.
-- **Stats persistentes** em SQLite (`dm_core/data/stats.db`): kills, mortes, headshots, maior
-  sequência, duelos, XP, tempo de jogo. Chave = conta (ou serial para convidados).
-- **Duelo X1**: F3 → escolhe jogador, conjunto de armas (12 opções) e “primeiro a 1/3/5”. O outro
-  jogador recebe popup (Y/N). Sala privada em dimensão própria, contagem 3-2-1, placar, W.O. se sair,
-  vencedor ganha 60 XP e volta para onde estava.
-- **C-Bug**: o MTA bloqueia o crouch-bug por padrão; o servidor libera o glitch e o cliente bloqueia o
-  agachar após o tiro (Deagle/Shotgun/Sniper/Rifle) em toda arena que não tenha `cbug = true`.
-- **Proteção de spawn** 3 s (quebra ao atirar), congelamento curto para o mapa carregar, zonas seguras
-  sem dano (lobby e X1), pickups de arma do mapa só se forem da arena.
-- **Login**: contas do MTA, lembrar-me (senha salva criptografada no cliente), modo convidado.
+| Modo | Local | Jogadores | Armas | Meta |
+|------|-------|-----------|-------|------|
+| 10x10 M4 | Las Payasadas | 20 | M4, colete 100 | 80 kills ou 10 min |
+| 5x5 Sniper | Bayside Trailer Park | 10 | Sniper | 30 kills ou 8 min |
+| 5x5 M4 | Bayside Trailer Park | 10 | M4, colete 100 | 40 kills ou 8 min |
 
-## Ajustes rápidos (`dm_core/shared/config.lua`)
-`DM.server` controla nome, tempo de respawn, proteção, XP por kill/headshot/duelo, vida ao matar,
-clima/hora. `DM.duelWeapons` são os conjuntos do painel X1. `DM.colors` é a paleta da interface.
+Fluxo: entra → **aquecimento** (FFA com as armas do modo, sem recompensa) até completar os jogadores →
+contagem 15 s → times balanceados por RP (Time Ciano x Time Roxo) → team deathmatch com respawn na base
+→ resultado (RP, $, MVP) → volta ao aquecimento. Cada instância tem a sua dimensão; quando uma partida
+começa, novos jogadores vão para uma nova instância. Sair no meio conta derrota.
+
+**Spawns dos times são aproximados** (`DM.rankedModes[*].teamSpawns`, chão nativo com ajuste automático ao
+solo). Me mande as posições marcadas (`x, y, z, rotação`) de cada time e eu atualizo — ou edite direto.
+
+## Clãs (F6) e clã x clã
+
+Criar (`TAG` 2-5 letras, nome 3-20), convidar jogadores online, cargos (líder, oficial, membro), cor da
+tag, ranking de clãs. Líder/oficial seleciona um clã no ranking, escolhe o modo e desafia; o outro clã
+aceita no F6 e os membros online dos dois (mesmo número por lado, mínimo 2) entram em uma partida de times
+privada com as tags dos clãs. Resultado anunciado para o servidor com o placar.
+
+## Sistemas de combate
+
+- **Dano**: o cliente da vítima cancela o dano padrão das armas de fogo e o servidor aplica por parte do
+  corpo: cabeça x2.2 (sniper/rifle mata), peito/quadril x0.5, braços x0.8, pernas x0.7. Mortes passam
+  por `killPed`, então killer/arma ficam corretos no kill chat. Sem fogo amigo nas ranqueadas.
+- **Kill feedback**: caveira/ícone de headshot no centro, som de headshot, `+$` ganho; killfeed no canto
+  superior direito só da sua arena/dimensão; sequências com banner.
+- **Sons de arma**: os do GTA são silenciados (grupo 5) e substituídos por `dm_weapons/sounds/<id>.wav`
+  (gerados proceduralmente — troque pelos seus .wav mantendo o nome).
+- **Skins de arma**: precisam de `.dff/.txd` (binários de pack de skins). Coloque em `dm_weapons/models/`
+  e liste no `meta.xml` conforme `models/LEIA-ME.txt`; o carregador aplica automaticamente.
+- **Munição**: ao trocar de arma e pegar de novo ela volta cheia; ao matar recarrega.
+- **Nametags**: tag (staff/VIP/comprada/elo) e tag do clã destacadas acima do nick colorido, vida e colete.
+
+## Interface
+
+Paleta UTG (violeta `#8B5CF6`, ciano `#22D3EE`, dourado VIP `#F5C451`), fonte Poppins, logo em
+`dm_core/assets/img/logo.png` (canto inferior esquerdo — substitua pela sua, 640x200 PNG). Ícones em
+`assets/img`. Tudo escalonável por resolução.

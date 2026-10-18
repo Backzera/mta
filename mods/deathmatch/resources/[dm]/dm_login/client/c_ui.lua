@@ -20,10 +20,12 @@ function UI.s(v) return v * UI.scale end
 
 -- Paleta: reutiliza DM.colors quando disponível
 local palette = (DM and DM.colors) or {
-    bg = { 10, 13, 20 }, card = { 18, 22, 32 }, card2 = { 26, 31, 44 }, border = { 255, 255, 255 },
-    accent = { 0, 229, 168 }, accent2 = { 124, 92, 255 }, danger = { 255, 77, 109 }, warn = { 255, 181, 71 },
-    info = { 86, 180, 255 }, text = { 242, 244, 248 }, muted = { 139, 147, 167 }, health = { 0, 229, 168 }, armor = { 86, 180, 255 },
+    bg = { 8, 8, 16 }, card = { 16, 16, 30 }, card2 = { 24, 24, 44 }, border = { 255, 255, 255 },
+    accent = { 139, 92, 246 }, accent2 = { 34, 211, 238 }, gold = { 245, 196, 81 }, success = { 34, 230, 138 },
+    danger = { 255, 77, 109 }, warn = { 255, 181, 71 }, info = { 86, 180, 255 }, text = { 245, 245, 250 },
+    muted = { 150, 155, 180 }, health = { 34, 230, 138 }, armor = { 34, 211, 238 }, money = { 245, 196, 81 },
 }
+UI.IMG = ":dm_core/assets/img/"
 UI.palette = palette
 
 function UI.color(name, alpha)
@@ -119,14 +121,44 @@ function UI.border(x, y, w, h, color, radius)
     dxDrawRectangle(x + w - t, y + radius, t, h - radius * 2, color)
 end
 
--- Card padrão: fundo + borda sutil + brilho no topo
-function UI.card(x, y, w, h, radius, alphaMul)
+-- Card padrão UTG: fundo escuro, borda sutil, linha de destaque no topo
+function UI.card(x, y, w, h, radius, alphaMul, accentName)
     alphaMul = alphaMul or 1
-    radius = radius or UI.s(14)
-    UI.rect(x + UI.s(2), y + UI.s(4), w, h, tocolor(0, 0, 0, 90 * alphaMul), radius) -- sombra
-    UI.rect(x, y, w, h, UI.color("card", 236 * alphaMul), radius)
-    UI.rect(x, y, w, h / 2, tocolor(255, 255, 255, 6 * alphaMul), radius)
-    UI.border(x, y, w, h, tocolor(255, 255, 255, 22 * alphaMul), radius)
+    radius = radius or UI.s(12)
+    UI.rect(x + UI.s(2), y + UI.s(5), w, h, tocolor(0, 0, 0, 110 * alphaMul), radius) -- sombra
+    UI.rect(x, y, w, h, UI.color("card", 240 * alphaMul), radius)
+    UI.rect(x, y, w, h / 2, tocolor(255, 255, 255, 5 * alphaMul), radius)
+    UI.border(x, y, w, h, tocolor(255, 255, 255, 24 * alphaMul), radius)
+    if accentName ~= false then
+        local c = palette[accentName or "accent"]
+        UI.gradientH(x + radius, y, (w - radius * 2) * 0.6, UI.s(2), { c[1], c[2], c[3], 230 * alphaMul }, { c[1], c[2], c[3], 0 }, 20)
+    end
+end
+
+-- Imagem dos assets do dm_core (cache de existência)
+local imgCache = {}
+function UI.image(name, x, y, w, h, color, rotation)
+    local path = imgCache[name]
+    if path == nil then
+        local p = UI.IMG .. name
+        path = fileExists(p) and p or false
+        imgCache[name] = path
+    end
+    if not path then return false end
+    dxDrawImage(x, y, w, h, path, rotation or 0, 0, 0, color or tocolor(255, 255, 255, 255))
+    return true
+end
+
+-- Pílula de tag { text, hex } (hex "#RRGGBB")
+function UI.hexToRGB(hex)
+    if type(hex) ~= "string" or #hex < 7 then return 255, 255, 255 end
+    return tonumber(hex:sub(2, 3), 16) or 255, tonumber(hex:sub(4, 5), 16) or 255, tonumber(hex:sub(6, 7), 16) or 255
+end
+function UI.tagPill(tag, x, y, h, alpha, size)
+    if type(tag) ~= "table" or not tag.text then return 0 end
+    alpha = alpha or 1
+    local r, g, b = UI.hexToRGB(tag.hex)
+    return UI.pill(tag.text, x, y, h, tocolor(r, g, b, 45 * alpha), tocolor(r, g, b, 255 * alpha), "bold", size or 8, UI.s(8))
 end
 
 -- Gradiente horizontal simples (n faixas)
