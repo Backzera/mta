@@ -18,7 +18,7 @@ export default function Hud({ h, feed, duelIncoming, screen }) {
       {showMain && (
         <>
           {/* topo */}
-          <div className="hud__info">{h.server} · {h.online} online · {h.fps} fps · {h.ping} ms</div>
+          <div className="hud__info"><b>{h.server}</b><span>{h.online} online</span><span>{h.fps} fps</span><span className={h.ping < 80 ? 'is-good' : h.ping < 150 ? 'is-warn' : 'is-bad'}>{h.ping} ms</span></div>
           <div className="hud__arena" style={{ '--c': rgb(arena.color) }}><i />{arena.name.toUpperCase()} · {arena.players} {arena.players === 1 ? 'jogador' : 'jogadores'}</div>
 
           {/* status + logo (inferior esquerdo, empilhado) */}
@@ -26,6 +26,9 @@ export default function Hud({ h, feed, duelIncoming, screen }) {
             {h.protected > 0 && !arena.safe && (
               <div className="hud__prot"><Ring value={h.protected / (h.protectedTotal || 3000)} size={18} stroke={3} color={[34, 230, 138]} />PROTEGIDO {(h.protected / 1000).toFixed(1)}s</div>
             )}
+            <div className="pops">{asArray(feed.pops).map((p, i) => (
+              <span key={p.id} className={p.amount > 0 ? 'is-good' : 'is-bad'} style={{ animationDelay: `${i * 30}ms` }}>{p.amount > 0 ? '+' : '-'}{money(Math.abs(p.amount))} {p.reason}</span>
+            ))}</div>
             <div className="status">
               <div className="status__row">
                 <TagPill t={h.clan} /><TagPill t={h.tag} />
@@ -41,19 +44,23 @@ export default function Hud({ h, feed, duelIncoming, screen }) {
               <div className="status__bar"><span>COLETE</span><b>{Math.ceil(h.armor)}</b></div>
               <Bar value={h.armor / 100} color={[124, 200, 255]} className="bar--armor" />
             </div>
-            <div className="pops">{asArray(feed.pops).map((p, i) => (
-              <span key={p.id} className={p.amount > 0 ? 'is-good' : 'is-bad'} style={{ animationDelay: `${i * 30}ms` }}>{p.amount > 0 ? '+' : '-'}{money(Math.abs(p.amount))} {p.reason}</span>
-            ))}</div>
             <img className="hud__logo" src="./img/logo.png" alt="UTG" />
           </div>
 
           {/* arma */}
-          <div className="weapon">
+          <div className={`weapon ${h.skin ? 'weapon--skin' : ''}`} style={h.skin ? { '--c': h.skin.color } : undefined}>
             {h.streak >= 2 && <span className="weapon__streak"><img src="./img/flame.png" alt="" />SEQUÊNCIA x{h.streak}</span>}
-            <span className="weapon__name">{h.weapon}</span>
-            {h.hasAmmo ? (
-              <><div className="weapon__ammo"><b>{h.clip}</b><span>/ {h.reserve}</span></div><Bar value={h.clip / Math.max(1, h.clipSize)} color={[34, 230, 138]} className="bar--clip" /></>
-            ) : <span className="weapon__none">{arena.safe ? 'Zona segura' : 'Corpo a corpo'}</span>}
+            <div className="weapon__art">
+              {h.skin && h.skin.preview ? <img src={`./img/wskins/${h.skin.preview}`} alt="" />
+                : h.weaponIcon ? <img src={`./img/weapons/${h.weaponIcon}`} alt="" /> : <span className="weapon__noicon">{h.weapon.slice(0, 2)}</span>}
+            </div>
+            <div className="weapon__body">
+              <span className="weapon__name">{h.weapon}</span>
+              {h.skin && <span className="weapon__skin"><i>{h.skin.rarity}</i> {h.skin.name}</span>}
+              {h.hasAmmo ? (
+                <><div className="weapon__ammo"><b>{h.clip}</b><span>/ {h.reserve}</span></div><Bar value={h.clip / Math.max(1, h.clipSize)} color={h.skin ? h.skin.color : [34, 230, 138]} className="bar--clip" /></>
+              ) : <span className="weapon__none">{arena.safe ? 'Zona segura' : 'Corpo a corpo'}</span>}
+            </div>
           </div>
 
           {/* dicas do lobby */}
@@ -70,7 +77,7 @@ export default function Hud({ h, feed, duelIncoming, screen }) {
           {asArray(feed.kills).map((k) => (
             <div key={k.id} className={`kill ${k.mine ? 'is-mine' : ''} ${k.me ? 'is-me' : ''}`}>
               <img src={`./img/${k.headshot ? 'headshot' : 'skull'}.png`} alt="" />
-              {k.killer ? <><b className={k.mine ? 'is-good' : ''}>{k.killer}</b><i>»</i><b className={k.me ? 'is-bad' : ''}>{k.victim}</b><span>· {k.weapon}{k.headshot ? ' ✦' : ''}</span></>
+              {k.killer ? <><b className={k.mine ? 'is-good' : ''}>{k.killer}</b><i>»</i><b className={k.me ? 'is-bad' : ''}>{k.victim}</b><span>· {k.weapon}{k.headshot ? ' ✦' : ''}</span>{k.skin && !Array.isArray(k.skin) && <em className="kill__skin" style={{ '--c': k.skin.color }}>{k.skin.name}</em>}</>
                 : <><b>{k.victim}</b><span>morreu · {k.weapon}</span></>}
             </div>
           ))}

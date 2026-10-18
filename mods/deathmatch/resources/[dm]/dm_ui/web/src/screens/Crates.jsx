@@ -1,20 +1,21 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { toLua, asArray, asObj } from '../bridge.js'
 import { Frame, Btn, Tabs, Counter, Empty, Pill, rgb, rgba, money } from '../ui.jsx'
 
 const GOLD = [245, 196, 81]
-const RARITY_ORDER = ['comum', 'rara', 'epica', 'lendaria']
+const RARITY_ORDER = ['comum', 'rara', 'epica', 'lendaria', 'mitica', 'ultimate']
 
 function ItemCard({ it, rar, selected, children, className = '' }) {
   const rc = rar.color
+  const art = it.type === 'wskin' ? (it.preview ? `./img/wskins/${it.preview}` : it.texture ? `./img/wskins/${it.texture}` : null) : null
   return (
-    <div className={`item ${selected ? 'is-selected' : ''} ${className}`} style={{ '--c': rgb(rc) }}>
-      <div className="item__art">
-        {it.type === 'wskin' && it.texture ? <img src={`./img/wskins/${it.texture}`} alt="" />
-          : <img className="item__icon" src={`./img/${it.type === 'skin' ? 'shield.png' : 'coin.png'}`} alt="" />}
+    <div className={`item item--${it.rarity} ${selected ? 'is-selected' : ''} ${className}`} style={{ '--c': rgb(rc) }}>
+      <div className={`item__art ${it.preview ? 'item__art--icon' : ''}`}>
+        {art ? <img src={art} alt="" /> : <img className="item__icon" src={`./img/${it.type === 'skin' ? 'shield.png' : 'coin.png'}`} alt="" />}
       </div>
       <b>{it.name}</b>
-      <small>{rar.name.toUpperCase()}</small>
+      <small>{rar.name.toUpperCase()}{it.weaponLabel && it.weapon !== 'all' ? ` · ${it.weaponLabel}` : ''}</small>
       {children}
     </div>
   )
@@ -27,7 +28,8 @@ export default function Crates({ st, reel }) {
   const rar = (it) => rarities[it.rarity] || rarities.comum || { name: 'Comum', color: [150, 165, 155] }
   const [tab, setTab] = useState('boxes')
   const bal = d.money || 0
-  const inv = items.filter((i) => i.type !== 'money' && owned.includes(i.key))
+  const inv = items.filter((i) => i.type !== 'money' && owned.includes(i.key)).sort((a, b) => RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity))
+  const eqW = asObj(d.equippedW)
 
   return (
     <Frame title="CAIXAS" subtitle="Abra caixas com $ e ganhe skins exclusivas, skins de arma e dinheiro. Itens repetidos devolvem metade do valor." icon="trophy.png"
@@ -59,17 +61,19 @@ export default function Crates({ st, reel }) {
           {inv.length === 0 && <Empty>Você ainda não tem itens. Abra uma caixa!</Empty>}
           <div className="inv__grid">
             {inv.map((it) => {
-              const eq = (it.type === 'skin' && d.equippedSkin === it.model) || (it.type === 'wskin' && d.equippedW === it.key)
+              const eq = (it.type === 'skin' && d.equippedSkin === it.model) || (it.type === 'wskin' && eqW[it.weapon || 'all'] === it.key)
               return (
                 <ItemCard key={it.key} it={it} rar={rar(it)} selected={eq}>
-                  <Btn kind={eq ? 'ghost' : 'outline'} disabled={eq} onClick={() => toLua('crates', 'equip', { key: it.key })}>{eq ? 'EQUIPADO' : 'EQUIPAR'}</Btn>
+                  <Btn kind={eq ? 'ghost' : 'outline'} onClick={() => toLua('crates', 'equip', { key: it.key })}>{eq ? 'EQUIPADA ✓' : 'EQUIPAR'}</Btn>
                 </ItemCard>
               )
             })}
           </div>
+          {d.hasTrail && <TrailPicker value={d.trail} />}
           <div className="hrow">
             <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'skin:none' })}>SKIN PADRÃO</Btn>
-            <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'wskin:none' })}>ARMA PADRÃO</Btn>
+            <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'wskin:none' })}>ARMAS PADRÃO</Btn>
+            <span className="hint">Uma skin por arma (AK-47, M4, outras). Clique na skin equipada para remover.</span>
           </div>
         </div>
       )}
@@ -78,18 +82,43 @@ export default function Crates({ st, reel }) {
   )
 }
 
+const TRAIL_COLORS = ['#FF4A1E', '#FF8C32', '#F5C451', '#22E68A', '#7CC8FF', '#4D6BFF', '#C76BFF', '#FF4D9D', '#FFFFFF']
+// Cor do rastro da ponta da arma (skins Mítica/Ultimate): cor da skin, cores fixas ou RGB
+function TrailPicker({ value }) {
+  const pick = (v) => toLua('crates', 'trail', { value: v })
+  return (
+    <div className="trail">
+      <span className="eyebrow">Rastro da ponta da arma <small>(skins Mítica e Ultimate)</small></span>
+      <div className="trail__opts">
+        <button className={`trail__sw trail__sw--skin ${!value ? 'is-active' : ''}`} onClick={() => pick('skin')} title="Cor da skin">SKIN</button>
+        {TRAIL_COLORS.map((c) => <button key={c} className={`trail__sw ${value === c ? 'is-active' : ''}`} style={{ background: c, boxShadow: `0 0 .8vw ${c}88` }} onClick={() => pick(c)} />)}
+        <button className={`trail__sw trail__sw--rgb ${value === 'rgb' ? 'is-active' : ''}`} onClick={() => pick('rgb')} title="RGB (arco-íris)">RGB</button>
+      </div>
+    </div>
+  )
+}
+
 function Reel({ reel, item, rar }) {
   const keys = asArray(reel.items)
   const target = reel.target || 34
-  const [go, setGo] = useState(false)
+  const trackRef = useRef(null)
+  const [tx, setTx] = useState(null)
   const [done, setDone] = useState(false)
-  useEffect(() => { const a = setTimeout(() => setGo(true), 60); const b = setTimeout(() => setDone(true), 5400); return () => { clearTimeout(a); clearTimeout(b) } }, [reel.id])
+  useEffect(() => {
+    setTx(null); setDone(false)
+    // posição final medida no DOM: centro da carta alvo alinhado com a agulha (50% da tela)
+    const a = setTimeout(() => {
+      const el = trackRef.current && trackRef.current.children[target - 1]
+      if (el) setTx(window.innerWidth / 2 - (el.offsetLeft + el.offsetWidth / 2))
+    }, 80)
+    const b = setTimeout(() => setDone(true), 5500)
+    return () => { clearTimeout(a); clearTimeout(b) }
+  }, [reel.id])
   const result = item(reel.result)
-  const cardW = 9, gap = 0.6 // vw
-  const offset = (target - 1) * (cardW + gap)
-  return (
+  const start = `translateX(calc(50vw - 4.5vw))`
+  return createPortal(
     <div className="reel">
-      <div className="reel__track" style={{ transform: `translateX(calc(50vw - ${cardW / 2}vw - ${go ? offset : 0}vw))`, transition: go ? 'transform 5.2s cubic-bezier(.12,.9,.14,1)' : 'none' }}>
+      <div ref={trackRef} className="reel__track" style={{ transform: tx === null ? start : `translateX(${tx}px)`, transition: tx === null ? 'none' : 'transform 5.2s cubic-bezier(.12,.9,.14,1)' }}>
         {keys.map((k, i) => { const it = item(k); return it ? <ItemCard key={i} it={it} rar={rar(it)} selected={done && i === target - 1} className="item--reel" /> : null })}
       </div>
       <div className="reel__needle" />
@@ -99,6 +128,7 @@ function Reel({ reel, item, rar }) {
           <Btn kind="primary" color={GOLD} onClick={() => toLua('crates', 'reelClose')}>CONTINUAR</Btn>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }

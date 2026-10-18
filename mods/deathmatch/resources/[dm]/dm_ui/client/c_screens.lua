@@ -375,9 +375,20 @@ local function cratesState()
     local owned = {}
     for _, it in ipairs(C.items) do if hasPerk("item:" .. it.key) then owned[#owned + 1] = it.key end end
     local items = {}
-    for _, it in ipairs(C.items) do items[#items + 1] = { key = it.key, type = it.type, name = it.name, rarity = it.rarity, texture = it.texture or false, model = it.model or false } end
-    return { money = money(), rarities = C.rarities, items = items, boxes = C.boxes, owned = owned,
-        equippedSkin = tonumber(getElementData(localPlayer, "dm:skin")) or 0, equippedW = getElementData(localPlayer, "dm:wskin") or false }
+    for _, it in ipairs(C.items) do
+        items[#items + 1] = { key = it.key, type = it.type, name = it.name, rarity = it.rarity, texture = it.texture or false, model = it.model or false,
+            weapon = it.weapon or false, preview = it.preview and (it.key .. ".png") or false,
+            weaponLabel = it.weapon and (C.weaponSkins and C.weaponSkins[it.weapon] and C.weaponSkins[it.weapon].label or "Outras armas") or false }
+    end
+    local eq = getElementData(localPlayer, "dm:wskin")
+    if type(eq) == "string" then eq = { all = eq } end
+    local hasTrail = false
+    for _, it in ipairs(C.items) do
+        if it.type == "wskin" and (it.rarity == "mitica" or it.rarity == "ultimate") and hasPerk("item:" .. it.key) then hasTrail = true end
+    end
+    return { money = money(), rarities = C.rarities, items = items, boxes = C.boxes, owned = owned, hasTrail = hasTrail,
+        trail = type(eq) == "table" and eq.trail or false,
+        equippedSkin = tonumber(getElementData(localPlayer, "dm:skin")) or 0, equippedW = type(eq) == "table" and eq or {} }
 end
 local reelOpen = false
 function openCratesPanel()
@@ -389,6 +400,7 @@ UI.onEscape("crates", function() if not reelOpen then UI.close("crates") end end
 UI.on("crates", "close", function() if not reelOpen then UI.close("crates") end end)
 UI.on("crates", "open", function(p) triggerServerEvent("crates:open", localPlayer, p.box) end)
 UI.on("crates", "equip", function(p) triggerServerEvent("crates:equip", localPlayer, p.key) end)
+UI.on("crates", "trail", function(p) triggerServerEvent("crates:trail", localPlayer, p.value) end)
 UI.on("crates", "reelClose", function() reelOpen = false UI.push("reelClose", {}) end)
 addEvent("crates:result", true)
 addEventHandler("crates:result", root, function(boxKey, itemKey, duplicate)

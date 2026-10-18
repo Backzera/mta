@@ -3,6 +3,7 @@
 
     <!-- Compartilhado -->
     <script src="shared/config.lua" type="shared" />
+    <script src="shared/skins_generated.lua" type="shared" />
 
     <!-- Servidor -->
     <script src="server/s_util.lua" type="server" />
