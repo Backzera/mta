@@ -1,0 +1,117 @@
+import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { toLua, asArray, asObj } from '../bridge.js'
+import { Frame, Btn, Tabs, Counter, Empty, Pill, rgb, rgba, money } from '../ui.jsx'
+
+const GOLD = [245, 196, 81]
+const RARITY_ORDER = ['comum', 'rara', 'epica', 'lendaria', 'mitica', 'ultimate']
+
+function ItemCard({ it, rar, selected, children, className = '' }) {
+  const rc = rar.color
+  const art = it.type === 'wskin' ? (it.preview ? `./img/wskins/${it.preview}` : it.texture ? `./img/wskins/${it.texture}` : null) : null
+  return (
+    <div className={`item item--${it.rarity} ${selected ? 'is-selected' : ''} ${className}`} style={{ '--c': rgb(rc) }}>
+      <div className={`item__art ${it.preview ? 'item__art--icon' : ''}`}>
+        {art ? <img src={art} alt="" /> : <img className="item__icon" src={`./img/${it.type === 'skin' ? 'shield.png' : 'coin.png'}`} alt="" />}
+      </div>
+      <b>{it.name}</b>
+      <small>{rar.name.toUpperCase()}{it.weaponLabel && it.weapon !== 'all' ? ` · ${it.weaponLabel}` : ''}</small>
+      {children}
+    </div>
+  )
+}
+
+export default function Crates({ st, reel }) {
+  const d = st || {}
+  const rarities = asObj(d.rarities), items = asArray(d.items), boxes = asArray(d.boxes), owned = asArray(d.owned)
+  const item = (k) => items.find((i) => i.key === k)
+  const rar = (it) => rarities[it.rarity] || rarities.comum || { name: 'Comum', color: [150, 165, 155] }
+  const [tab, setTab] = useState('boxes')
+  const bal = d.money || 0
+  const inv = items.filter((i) => i.type !== 'money' && owned.includes(i.key)).sort((a, b) => RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity))
+  const eqW = asObj(d.equippedW)
+
+  return (
+    <Frame title="CAIXAS" subtitle="Abra caixas com $ e ganhe skins exclusivas, skins de arma e dinheiro. Itens repetidos devolvem metade do valor." icon="trophy.png"
+      badge={<>SALDO <Counter value={bal} format={money} dur={800} /></>} badgeColor={GOLD} onClose={() => toLua('crates', 'close')} width="66vw" height="74vh"
+      footer="F7 ou ESC fecha · skins de arma são texturas por jogador · skins exclusivas ficam salvas na sua conta">
+      <Tabs tabs={[['boxes', 'CAIXAS'], ['inv', 'MEU INVENTÁRIO']]} value={tab} onChange={setTab} />
+      {tab === 'boxes' ? (
+        <div className="boxes">
+          {boxes.map((b, i) => {
+            const total = asArray(b.pool).reduce((s, p) => s + p.weight, 0)
+            const byR = {}
+            for (const p of asArray(b.pool)) { const it = item(p.item); if (it) byR[it.rarity] = (byR[it.rarity] || 0) + p.weight }
+            return (
+              <article key={b.key} className="box" style={{ '--c': rgb(b.color), animationDelay: `${i * 70}ms` }}>
+                <div className="box__glow" />
+                <img className="box__icon" src={`./img/${b.icon || 'trophy.png'}`} alt="" />
+                <h3>{b.name}</h3>
+                <p>{b.desc}</p>
+                <div className="box__odds">
+                  {RARITY_ORDER.filter((r) => byR[r]).map((r) => <Pill key={r} color={(rarities[r] || {}).color}>{(rarities[r] || {}).name} {Math.round((byR[r] / total) * 100)}%</Pill>)}
+                </div>
+                <Btn kind="primary" color={GOLD} disabled={bal < b.price || !!reel} onClick={() => toLua('crates', 'open', { box: b.key })}>ABRIR · {money(b.price)}</Btn>
+              </article>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="inv">
+          {inv.length === 0 && <Empty>Você ainda não tem itens. Abra uma caixa!</Empty>}
+          <div className="inv__grid">
+            {inv.map((it) => {
+              const eq = (it.type === 'skin' && d.equippedSkin === it.model) || (it.type === 'wskin' && eqW[it.weapon || 'all'] === it.key)
+              return (
+                <ItemCard key={it.key} it={it} rar={rar(it)} selected={eq}>
+                  <Btn kind={eq ? 'ghost' : 'outline'} onClick={() => toLua('crates', 'equip', { key: it.key })}>{eq ? 'EQUIPADA ✓' : 'EQUIPAR'}</Btn>
+                </ItemCard>
+              )
+            })}
+          </div>
+          <div className="hrow">
+            <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'skin:none' })}>SKIN PADRÃO</Btn>
+            <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'wskin:none' })}>ARMAS PADRÃO</Btn>
+            <span className="hint">Uma skin por arma (AK-47, M4, outras). Clique na skin equipada para remover.</span>
+          </div>
+        </div>
+      )}
+      {reel && <Reel reel={reel} item={item} rar={rar} />}
+    </Frame>
+  )
+}
+
+function Reel({ reel, item, rar }) {
+  const keys = asArray(reel.items)
+  const target = reel.target || 34
+  const trackRef = useRef(null)
+  const [tx, setTx] = useState(null)
+  const [done, setDone] = useState(false)
+  useEffect(() => {
+    setTx(null); setDone(false)
+    // posição final medida no DOM: centro da carta alvo alinhado com a agulha (50% da tela)
+    const a = setTimeout(() => {
+      const el = trackRef.current && trackRef.current.children[target - 1]
+      if (el) setTx(window.innerWidth / 2 - (el.offsetLeft + el.offsetWidth / 2))
+    }, 80)
+    const b = setTimeout(() => setDone(true), 5500)
+    return () => { clearTimeout(a); clearTimeout(b) }
+  }, [reel.id])
+  const result = item(reel.result)
+  const start = `translateX(calc(50vw - 4.5vw))`
+  return createPortal(
+    <div className="reel">
+      <div ref={trackRef} className="reel__track" style={{ transform: tx === null ? start : `translateX(${tx}px)`, transition: tx === null ? 'none' : 'transform 5.2s cubic-bezier(.12,.9,.14,1)' }}>
+        {keys.map((k, i) => { const it = item(k); return it ? <ItemCard key={i} it={it} rar={rar(it)} selected={done && i === target - 1} className="item--reel" /> : null })}
+      </div>
+      <div className="reel__needle" />
+      {done && result && (
+        <div className="reel__done" style={{ '--c': rgb(rar(result).color) }}>
+          <h2>{reel.duplicate ? 'REPETIDO — metade do valor devolvida' : `VOCÊ GANHOU: ${result.name.toUpperCase()}`}</h2>
+          <Btn kind="primary" color={GOLD} onClick={() => toLua('crates', 'reelClose')}>CONTINUAR</Btn>
+        </div>
+      )}
+    </div>,
+    document.body
+  )
+}

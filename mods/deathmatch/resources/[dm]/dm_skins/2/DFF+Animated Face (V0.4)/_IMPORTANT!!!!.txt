@@ -1,0 +1,2 @@
+It is mandatory to install these animations to avoid bugs.
+Animations ONLY to use with my Hatsune Miku skins, may cause visual bugs in peds/player/other skins.
