@@ -3,6 +3,7 @@
     <include resource="dm_core" />
     <min_mta_version client="1.5.9" />
 
+    <script src="client/c_build.lua" type="client" />
     <script src="client/c_core.lua" type="client" />
     <script src="client/c_hud.lua" type="client" />
     <script src="client/c_screens.lua" type="client" />
@@ -12,10 +13,9 @@
     <export function="isHudVisible" type="client" />
     <export function="isPanelOpen" type="client" />
 
-    <!-- Build estático do Vite (http://mta/local/dist/index.html) -->
-    <file src="dist/index.html" />
-    <file src="dist/assets/hub.js" />
-    <file src="dist/assets/index.css" />
+    <!-- Build do Vite (gerado automaticamente por npm run build; não edite à mão) -->
+    <file src="dist/assets/hub-BCbkMtWs.js" />
+    <file src="dist/assets/index-CcjDACga.css" />
     <file src="dist/fonts/Oswald.ttf" />
     <file src="dist/fonts/Poppins-Regular.ttf" />
     <file src="dist/fonts/Poppins-SemiBold.ttf" />
@@ -36,4 +36,5 @@
     <file src="dist/img/wskins/fogo.png" />
     <file src="dist/img/wskins/galaxia.png" />
     <file src="dist/img/wskins/neon.png" />
+    <file src="dist/index.html" />
 </meta>

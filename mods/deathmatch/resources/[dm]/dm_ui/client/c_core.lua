@@ -105,7 +105,7 @@ addEventHandler("ui:act", root, function(screen, action, json)
         local ok, decoded = pcall(fromJSON, json)
         if ok and type(decoded) == "table" then payload = decoded end
     end
-    if screen == "app" and action == "mounted" then triggerEvent("ui:mounted", localPlayer) return end
+    if screen == "app" and action == "mounted" then triggerEvent("ui:mounted", localPlayer, payload.build) return end
     local h = handlers[screen] and handlers[screen][action]
     if action == "close" and not h then UI.close(screen) return end
     if h then h(payload) end
@@ -166,7 +166,7 @@ local function createUIBrowser()
     addEventHandler("onClientBrowserCreated", browser, function()
         created = true
         diag("browser criado, carregando " .. URL)
-        loadBrowserURL(browser, URL)
+        loadBrowserURL(browser, URL .. "?v=" .. (UI_BUILD or "0"))
     end)
     addEventHandler("onClientBrowserDocumentReady", browser, function(url)
         -- o MTA dispara este evento também para a página em branco inicial: só aceita a nossa página
@@ -200,7 +200,15 @@ end
 addEvent("ui:jserror")
 addEventHandler("ui:jserror", root, function(msg) diag("ERRO JS: " .. tostring(msg), 1) readyTick = getTickCount() end)
 addEvent("ui:mounted")
-addEventHandler("ui:mounted", root, function() diag("app React montado") end)
+addEventHandler("ui:mounted", root, function(build)
+    local expected = UI_BUILD or "?"
+    if tostring(build) ~= expected then
+        diag(("app montado com build %s, esperado %s: arquivos dist/ desatualizados na hospedagem"):format(tostring(build), expected), 1)
+        readyTick = nil
+    else
+        diag("app React montado (build " .. expected .. ")")
+    end
+end)
 -- /uitest: pinta a página de verde por 3 s para separar "página não desenha" de "erro no JS"
 addCommandHandler("uitest", function()
     if not browser then return end

@@ -1,0 +1,18 @@
+<meta>
+    <info author="UTG" name="UTG UI (CEF)" description="Interface completa em HTML/CSS/React renderizada via CEF: HUD, hub, loja, duelo, ranqueadas, clãs, caixas, placar, ajuda e login" type="script" version="2.0" />
+    <include resource="dm_core" />
+    <min_mta_version client="1.5.9" />
+
+    <script src="client/c_build.lua" type="client" />
+    <script src="client/c_core.lua" type="client" />
+    <script src="client/c_hud.lua" type="client" />
+    <script src="client/c_screens.lua" type="client" />
+
+    <export function="notify" type="client" />
+    <export function="setHudVisible" type="client" />
+    <export function="isHudVisible" type="client" />
+    <export function="isPanelOpen" type="client" />
+
+    <!-- Build do Vite (gerado automaticamente por npm run build; não edite à mão) -->
+<!-- FILES -->
+</meta>

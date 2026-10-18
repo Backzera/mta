@@ -1,28 +1,48 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { readdirSync, statSync, writeFileSync, readFileSync } from 'node:fs'
+import { join, relative } from 'node:path'
 
-// Saída estática com nomes fixos (sem hash) para listar no meta.xml do MTA.
-// O CEF do MTA serve os arquivos em http://mta/local/. Para evitar qualquer restrição de
-// script "module"/crossorigin nesse esquema, o bundle (sem import/export) é carregado como script clássico.
+// Build para o CEF do MTA (http://mta/local/dist/...):
+//  - nomes com hash: o cache do navegador interno nunca reaproveita um bundle antigo
+//  - script clássico (sem type="module") e caminhos relativos
+//  - gera ../meta.xml (lista de arquivos) e ../client/c_build.lua (versão) a cada build
+const BUILD = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12)
+
 const classicScript = () => ({
   name: 'classic-script',
   transformIndexHtml: (html) => html.replace(' type="module" crossorigin', ' defer').replace(' crossorigin', ''),
 })
 
+const walk = (dir) => readdirSync(dir).flatMap((f) => { const p = join(dir, f); return statSync(p).isDirectory() ? walk(p) : [p] })
+
+const mtaFiles = () => ({
+  name: 'mta-meta',
+  closeBundle() {
+    const dist = join(__dirname, '..', 'dist')
+    const files = walk(dist).map((p) => 'dist/' + relative(dist, p).split('\\').join('/')).sort()
+    const tpl = readFileSync(join(__dirname, 'meta.template.xml'), 'utf8')
+    const list = files.map((f) => `    <file src="${f}" />`).join('\n')
+    writeFileSync(join(__dirname, '..', 'meta.xml'), tpl.replace('<!-- FILES -->', list))
+    writeFileSync(join(__dirname, '..', 'client', 'c_build.lua'), `-- gerado pelo build (npm run build) — não edite\nUI_BUILD = "${BUILD}"\n`)
+  },
+})
+
 export default defineConfig({
-  plugins: [react(), classicScript()],
+  plugins: [react(), classicScript(), mtaFiles()],
   base: './',
+  define: { __BUILD__: JSON.stringify(BUILD) },
   build: {
-    modulePreload: false,
     outDir: '../dist',
     emptyOutDir: true,
     assetsDir: 'assets',
     target: 'es2018',
+    modulePreload: false,
     rollupOptions: {
       output: {
-        entryFileNames: 'assets/hub.js',
-        chunkFileNames: 'assets/[name].js',
-        assetFileNames: 'assets/[name][extname]',
+        entryFileNames: 'assets/hub-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
       },
     },
   },
