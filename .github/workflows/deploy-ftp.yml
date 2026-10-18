@@ -1,0 +1,136 @@
+name: Deploy MTA via FTP
+
+on:
+  push:
+    branches:
+      - claude/modest-cray-8tz6fw
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mta-ftp-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate FTP secrets
+        shell: bash
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_REMOTE_ROOT: ${{ secrets.FTP_REMOTE_ROOT }}
+        run: |
+          set -euo pipefail
+          test -n "$FTP_HOST" || { echo "FTP_HOST não configurado"; exit 1; }
+          test -n "$FTP_USERNAME" || { echo "FTP_USERNAME não configurado"; exit 1; }
+          test -n "$FTP_PASSWORD" || { echo "FTP_PASSWORD não configurado"; exit 1; }
+          test -n "$FTP_REMOTE_ROOT" || { echo "FTP_REMOTE_ROOT não configurado"; exit 1; }
+
+      - name: Deploy changed server files
+        shell: bash
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_REMOTE_ROOT: ${{ secrets.FTP_REMOTE_ROOT }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          encode_path() {
+            python3 - "$1" <<'PY'
+import sys
+from urllib.parse import quote
+print(quote(sys.argv[1], safe="/"))
+PY
+          }
+
+          upload_file() {
+            local file="$1"
+            [ -f "$file" ] || return 0
+
+            case "$file" in
+              mods/deathmatch/*) ;;
+              *) return 0 ;;
+            esac
+
+            local root="${FTP_REMOTE_ROOT%/}"
+            local remote="${root}/${file}"
+            remote="${remote#/}"
+            local encoded
+            encoded="$(encode_path "$remote")"
+
+            echo "UPLOAD  $file"
+            curl --fail --silent --show-error \
+              --globoff \
+              --ftp-create-dirs \
+              --retry 3 \
+              --retry-delay 2 \
+              --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
+              --upload-file "$file" \
+              "ftp://${FTP_HOST}/${encoded}"
+          }
+
+          delete_file() {
+            local file="$1"
+
+            case "$file" in
+              mods/deathmatch/*) ;;
+              *) return 0 ;;
+            esac
+
+            local root="${FTP_REMOTE_ROOT%/}"
+            local remote="${root}/${file}"
+            remote="${remote#/}"
+
+            echo "DELETE  $file"
+            curl --fail --silent --show-error \
+              --globoff \
+              --retry 2 \
+              --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
+              --quote "DELE ${remote}" \
+              "ftp://${FTP_HOST}/" >/dev/null || true
+          }
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "Deploy manual completo de mods/deathmatch/"
+            mapfile -t FILES < <(git ls-files 'mods/deathmatch/**')
+            for file in "${FILES[@]}"; do
+              upload_file "$file"
+            done
+            exit 0
+          fi
+
+          if [ -z "$BEFORE_SHA" ] || [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            mapfile -t FILES < <(git ls-files 'mods/deathmatch/**')
+          else
+            mapfile -t FILES < <(git diff --name-only --diff-filter=ACMRT "$BEFORE_SHA" "$CURRENT_SHA" -- 'mods/deathmatch/**')
+          fi
+
+          if [ "${#FILES[@]}" -eq 0 ]; then
+            echo "Nenhum arquivo do servidor mudou neste push."
+          else
+            for file in "${FILES[@]}"; do
+              upload_file "$file"
+            done
+          fi
+
+          if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            mapfile -t DELETED < <(git diff --name-only --diff-filter=D "$BEFORE_SHA" "$CURRENT_SHA" -- 'mods/deathmatch/**')
+            for file in "${DELETED[@]}"; do
+              delete_file "$file"
+            done
+          fi
