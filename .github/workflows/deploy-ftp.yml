@@ -51,11 +51,7 @@ jobs:
           set -euo pipefail
 
           encode_path() {
-            python3 - "$1" <<'PY'
-import sys
-from urllib.parse import quote
-print(quote(sys.argv[1], safe="/"))
-PY
+            python3 -c 'import sys; from urllib.parse import quote; print(quote(sys.argv[1], safe="/"))' "$1"
           }
 
           upload_file() {
