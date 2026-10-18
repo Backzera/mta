@@ -468,7 +468,7 @@ DM.duelRounds = { 1, 3, 5 }   -- "primeiro a N"
 DM.arenaById = {}
 for i, arena in ipairs(DM.arenas) do
     arena.index = i
-    arena.native = arena.native ~= false and (arena.id == "lobby" or arena.id == "ak47" or arena.id == "m4" or arena.id == "deagle" or arena.id == "sniper" or arena.id == "shotgun" or arena.id == "melee" or arena.id == "livre")
+    arena.native = arena.native ~= false and (arena.id == "lobby" or arena.id == "ak47" or arena.id == "m4" or arena.id == "melee")
     DM.arenaById[arena.id] = arena
 end
 
