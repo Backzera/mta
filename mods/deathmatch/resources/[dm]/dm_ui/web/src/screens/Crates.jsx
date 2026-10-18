@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { toLua, asArray, asObj } from '../bridge.js'
 import { Frame, Btn, Tabs, Counter, Empty, Pill, rgb, rgba, money } from '../ui.jsx'
 
@@ -98,7 +99,7 @@ function Reel({ reel, item, rar }) {
   }, [reel.id])
   const result = item(reel.result)
   const start = `translateX(calc(50vw - 4.5vw))`
-  return (
+  return createPortal(
     <div className="reel">
       <div ref={trackRef} className="reel__track" style={{ transform: tx === null ? start : `translateX(${tx}px)`, transition: tx === null ? 'none' : 'transform 5.2s cubic-bezier(.12,.9,.14,1)' }}>
         {keys.map((k, i) => { const it = item(k); return it ? <ItemCard key={i} it={it} rar={rar(it)} selected={done && i === target - 1} className="item--reel" /> : null })}
@@ -110,6 +111,7 @@ function Reel({ reel, item, rar }) {
           <Btn kind="primary" color={GOLD} onClick={() => toLua('crates', 'reelClose')}>CONTINUAR</Btn>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
