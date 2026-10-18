@@ -115,9 +115,8 @@ addEventHandler("onClientRender", root, function()
                     local bpt = pts[i]
                     local r, g, b = tr.r, tr.g, tr.b
                     if isRgb then r, g, b = rainbow(i * 0.04) end
-                    dxDrawLine3D(a[1], a[2], a[3], bpt[1], bpt[2], bpt[3], tocolor(r, g, b, 60 * f), 6 + 14 * f)
-                    dxDrawLine3D(a[1], a[2], a[3], bpt[1], bpt[2], bpt[3], tocolor(r, g, b, 220 * f), 2 + 9 * f)
-                    dxDrawLine3D(a[1], a[2], a[3], bpt[1], bpt[2], bpt[3], tocolor(255, 255, 255, 160 * f), 1 + 2.5 * f)
+                    dxDrawLine3D(a[1], a[2], a[3], bpt[1], bpt[2], bpt[3], tocolor(r, g, b, 200 * f), 1 + 5 * f)
+                    dxDrawLine3D(a[1], a[2], a[3], bpt[1], bpt[2], bpt[3], tocolor(255, 255, 255, 140 * f), 1 + 1.5 * f)
                 end
             end
             -- ponto de luz na ponta
