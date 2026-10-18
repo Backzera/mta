@@ -20,7 +20,7 @@ local function loadSkins()
             outputDebugString(("[dm_skins] Arquivo ausente para %s (ID %d)."):format(skin.name, skin.id), 1)
         else
             -- Ordem correta: TXD primeiro, depois DFF.
-            local txd = engineLoadTXD(skin.txd)
+            local txd = engineLoadTXD(skin.txd, false)
             if not txd then
                 outputDebugString(("[dm_skins] Falha ao carregar TXD de %s: %s"):format(skin.name, skin.txd), 1)
             else
