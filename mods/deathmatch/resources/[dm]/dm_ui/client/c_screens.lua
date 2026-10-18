@@ -382,7 +382,12 @@ local function cratesState()
     end
     local eq = getElementData(localPlayer, "dm:wskin")
     if type(eq) == "string" then eq = { all = eq } end
-    return { money = money(), rarities = C.rarities, items = items, boxes = C.boxes, owned = owned,
+    local hasTrail = false
+    for _, it in ipairs(C.items) do
+        if it.type == "wskin" and (it.rarity == "mitica" or it.rarity == "ultimate") and hasPerk("item:" .. it.key) then hasTrail = true end
+    end
+    return { money = money(), rarities = C.rarities, items = items, boxes = C.boxes, owned = owned, hasTrail = hasTrail,
+        trail = type(eq) == "table" and eq.trail or false,
         equippedSkin = tonumber(getElementData(localPlayer, "dm:skin")) or 0, equippedW = type(eq) == "table" and eq or {} }
 end
 local reelOpen = false
@@ -395,6 +400,7 @@ UI.onEscape("crates", function() if not reelOpen then UI.close("crates") end end
 UI.on("crates", "close", function() if not reelOpen then UI.close("crates") end end)
 UI.on("crates", "open", function(p) triggerServerEvent("crates:open", localPlayer, p.box) end)
 UI.on("crates", "equip", function(p) triggerServerEvent("crates:equip", localPlayer, p.key) end)
+UI.on("crates", "trail", function(p) triggerServerEvent("crates:trail", localPlayer, p.value) end)
 UI.on("crates", "reelClose", function() reelOpen = false UI.push("reelClose", {}) end)
 addEvent("crates:result", true)
 addEventHandler("crates:result", root, function(boxKey, itemKey, duplicate)

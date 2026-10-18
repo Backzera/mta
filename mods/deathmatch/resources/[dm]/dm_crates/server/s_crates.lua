@@ -36,9 +36,16 @@ local function getEquipped(player)
     if type(e) == "string" then return { all = e } end
     return type(e) == "table" and e or {}
 end
+local TRAIL_RARITY = { mitica = true, ultimate = true }
+local function ownsTrailSkin(player)
+    for _, it in ipairs(cfg().items) do
+        if it.type == "wskin" and TRAIL_RARITY[it.rarity] and core:playerHasPerk(player, "item:" .. it.key) then return true end
+    end
+    return false
+end
 local function saveEquipped(player, e)
     local n = 0
-    for _ in pairs(e) do n = n + 1 end
+    for w in pairs(e) do if w ~= "trail" then n = n + 1 end end
     setElementData(player, "dm:wskin", n > 0 and e or false)
     core:setPlayerStat(player, "equip_wskin", n > 0 and toJSON(e) or "")
 end
@@ -74,6 +81,20 @@ addEventHandler("crates:open", root, function(boxKey)
     elseif rank >= 4 then
         core:sendServerMessage(root, ("#F5C451✦ CAIXAS #8FA39A» #FFFFFF%s #969BB4abriu uma %s e tirou #FFFFFF%s #969BB4(%s)!"):format(nick(player), b.name, it.name, rname))
     end
+end)
+
+-- cor do rastro (skins Mítica/Ultimate): "skin" (padrão), "rgb" ou "#RRGGBB"
+addEvent("crates:trail", true)
+addEventHandler("crates:trail", root, function(value)
+    local player = client
+    if player ~= source then return end
+    if not ownsTrailSkin(player) and not core:isPlayerAdmin(player) then core:notifyPlayer(player, "Você precisa de uma skin Mítica ou Ultimate.", "warn", "Rastro") return end
+    local e = getEquipped(player)
+    if value == "rgb" then e.trail = "rgb"
+    elseif type(value) == "string" and value:match("^#%x%x%x%x%x%x$") then e.trail = value:upper()
+    else e.trail = nil end
+    saveEquipped(player, e)
+    core:notifyPlayer(player, e.trail == "rgb" and "Rastro RGB ativado!" or (e.trail and "Cor do rastro: " .. e.trail or "Rastro na cor da skin."), "success", "Rastro")
 end)
 
 addEvent("crates:equip", true)
@@ -131,7 +152,7 @@ addEventHandler("dm:onStatsLoaded", root, function()
     if saved and saved ~= "" then
         local e = saved:sub(1, 1) == "[" and fromJSON(saved) or { all = saved }
         local clean = {}
-        for w, k in pairs(type(e) == "table" and e or {}) do if item(k) then clean[w] = k end end
+        for w, k in pairs(type(e) == "table" and e or {}) do if w == "trail" or item(k) then clean[w] = k end end
         local n = 0
         for _ in pairs(clean) do n = n + 1 end
         setElementData(source, "dm:wskin", n > 0 and clean or false)
@@ -172,18 +193,29 @@ addCommandHandler("skins", function(player, _, filter)
         outputChatBox("#7CFFB2» #FFFFFF" .. table.concat(out, "  ", i, math.min(i + 3, #out)), player, 255, 255, 255, true)
     end
 end)
-addCommandHandler("darskin", function(player, _, key)
+-- /darskin <chave|todas>            para você
+-- /darskin <jogador|id> <chave|todas>  para outro jogador
+addCommandHandler("darskin", function(player, _, a, b)
     if not core:isPlayerAdmin(player) then core:notifyPlayer(player, "Só admin.", "error", "Skins") return end
-    if not key then core:notifyPlayer(player, "Use /darskin <chave> ou /darskin todas. Veja /skins.", "warn", "Skins") return end
+    if not a then core:notifyPlayer(player, "Use /darskin <chave|todas> ou /darskin <jogador> <chave|todas>. Veja /skins.", "warn", "Skins") return end
+    local target, key = player, a
+    if b then
+        target = core:findPlayer(a)
+        key = b
+        if not target then core:notifyPlayer(player, "Jogador não encontrado: " .. a, "error", "Skins") return end
+    end
     if key == "todas" then
         local n = 0
         for _, it in ipairs(cfg().items) do
-            if it.type ~= "money" and not core:playerHasPerk(player, "item:" .. it.key) then core:givePlayerPerk(player, "item:" .. it.key) n = n + 1 end
+            if it.type ~= "money" and not core:playerHasPerk(target, "item:" .. it.key) then core:givePlayerPerk(target, "item:" .. it.key) n = n + 1 end
         end
-        core:notifyPlayer(player, ("%d itens adicionados ao inventário (F7)."):format(n), "success", "Skins")
+        core:notifyPlayer(target, ("%d itens adicionados ao inventário (F7)."):format(n), "success", "Skins")
+        if target ~= player then core:notifyPlayer(player, ("%d itens dados para %s."):format(n, nick(target)), "success", "Skins") end
         return
     end
-    local it = equipKey(player, key)
-    if it then core:notifyPlayer(player, ("Equipada: %s (%s)"):format(it.name, it.rarity), "success", "Skins")
+    local it = equipKey(target, key)
+    if it then
+        core:notifyPlayer(target, ("Equipada: %s (%s)"):format(it.name, it.rarity), "success", "Skins")
+        if target ~= player then core:notifyPlayer(player, ("%s equipada em %s."):format(it.name, nick(target)), "success", "Skins") end
     else core:notifyPlayer(player, "Chave inválida. Veja /skins.", "error", "Skins") end
 end)

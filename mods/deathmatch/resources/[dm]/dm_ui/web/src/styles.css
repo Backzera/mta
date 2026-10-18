@@ -343,6 +343,16 @@ select.input { appearance: none; }
 .reel__done { position: absolute; top: 50%; left: 0; right: 0; margin-top: 6vw; text-align: center; animation: pop .4s var(--ease) both; }
 .reel__done h2 { font-size: 1.8vw; color: var(--c); text-shadow: 0 0 1.5vw var(--c); margin-bottom: 1vw; }
 
+.trail { margin: .6vw 0 .9vw; padding: .9vw 1vw; border-radius: .7vw; background: rgba(255,255,255,.03); border: 1px solid var(--line); }
+.trail .eyebrow small { font-size: .55vw; letter-spacing: .1em; color: var(--muted); text-transform: none; margin-left: .5em; }
+.trail__opts { display: flex; gap: .5vw; align-items: center; flex-wrap: wrap; }
+.trail__sw { width: 1.9vw; height: 1.9vw; border-radius: .45vw; border: 2px solid transparent; font: 700 .5vw 'Poppins'; letter-spacing: .08em; color: #06140c; transition: .15s; }
+.trail__sw:hover { transform: translateY(-2px) scale(1.08); }
+.trail__sw.is-active { border-color: #fff; transform: scale(1.12); }
+.trail__sw--skin { background: rgba(255,255,255,.12); color: #fff; width: auto; padding: 0 .6vw; }
+.trail__sw--rgb { width: auto; padding: 0 .6vw; color: #fff; background: linear-gradient(90deg, #ff4a1e, #f5c451, #22e68a, #7cc8ff, #c76bff, #ff4d9d); background-size: 300% 100%; animation: rgbShift 3s linear infinite; }
+@keyframes rgbShift { from { background-position: 0 0 } to { background-position: 300% 0 } }
+
 /* ============ PLACAR (TAB) ============ */
 .board { width: 62vw; max-height: 86vh; display: flex; flex-direction: column; border-radius: 1vw; background: rgba(6, 16, 10, .93); border: 1px solid var(--line); box-shadow: 0 2vw 5vw rgba(0,0,0,.6), 0 0 2vw rgba(var(--g), .15); overflow: hidden; animation: pop .22s var(--ease) both; }
 .board__head { display: flex; align-items: center; gap: 1.2vw; padding: 1vw 1.6vw; background: linear-gradient(90deg, rgba(var(--g), .14), transparent); border-bottom: 1px solid var(--line); }

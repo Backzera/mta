@@ -69,6 +69,7 @@ export default function Crates({ st, reel }) {
               )
             })}
           </div>
+          {d.hasTrail && <TrailPicker value={d.trail} />}
           <div className="hrow">
             <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'skin:none' })}>SKIN PADRÃO</Btn>
             <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'wskin:none' })}>ARMAS PADRÃO</Btn>
@@ -78,6 +79,22 @@ export default function Crates({ st, reel }) {
       )}
       {reel && <Reel reel={reel} item={item} rar={rar} />}
     </Frame>
+  )
+}
+
+const TRAIL_COLORS = ['#FF4A1E', '#FF8C32', '#F5C451', '#22E68A', '#7CC8FF', '#4D6BFF', '#C76BFF', '#FF4D9D', '#FFFFFF']
+// Cor do rastro da ponta da arma (skins Mítica/Ultimate): cor da skin, cores fixas ou RGB
+function TrailPicker({ value }) {
+  const pick = (v) => toLua('crates', 'trail', { value: v })
+  return (
+    <div className="trail">
+      <span className="eyebrow">Rastro da ponta da arma <small>(skins Mítica e Ultimate)</small></span>
+      <div className="trail__opts">
+        <button className={`trail__sw trail__sw--skin ${!value ? 'is-active' : ''}`} onClick={() => pick('skin')} title="Cor da skin">SKIN</button>
+        {TRAIL_COLORS.map((c) => <button key={c} className={`trail__sw ${value === c ? 'is-active' : ''}`} style={{ background: c, boxShadow: `0 0 .8vw ${c}88` }} onClick={() => pick(c)} />)}
+        <button className={`trail__sw trail__sw--rgb ${value === 'rgb' ? 'is-active' : ''}`} onClick={() => pick('rgb')} title="RGB (arco-íris)">RGB</button>
+      </div>
+    </div>
   )
 }
 
