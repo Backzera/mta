@@ -434,39 +434,6 @@ DM.arenas = {
         },
     },
     {
-        id = "deagle", name = "Arena Deagle", short = "DEAGLE",
-        desc = "Somente Deagle. Cada tiro conta.",
-        type = "ffa", dimension = 5, color = { 0, 170, 100 },
-        weapons = { { 24, 500 } }, armor = 0,
-        spawns = {
-            { -1935.5, 239.5, 34.3, 90 },  { -1960.0, 260.0, 34.3, 180 },
-            { -1910.0, 220.0, 34.3, 0 },   { -1945.0, 280.0, 34.3, 270 },
-            { -1980.0, 230.0, 34.3, 45 },  { -1920.0, 300.0, 34.3, 315 },
-        },
-    },
-    {
-        id = "sniper", name = "Arena Sniper", short = "SNIPER",
-        desc = "Somente Sniper. Um tiro, uma morte.",
-        type = "ffa", dimension = 6, color = { 110, 220, 170 },
-        weapons = { { 34, 200 } }, armor = 0,
-        spawns = {
-            { 420.0, 2500.0, 16.5, 90 },  { 380.0, 2530.0, 16.5, 180 },
-            { 460.0, 2470.0, 16.5, 0 },   { 340.0, 2480.0, 16.5, 270 },
-            { 480.0, 2540.0, 16.5, 45 },  { 400.0, 2440.0, 16.5, 315 },
-        },
-    },
-    {
-        id = "shotgun", name = "Arena Shotgun", short = "SHOTGUN",
-        desc = "Somente Combat Shotgun. Combate aproximado.",
-        type = "ffa", dimension = 7, color = { 60, 210, 140 },
-        weapons = { { 27, 300 } }, armor = 0,
-        spawns = {
-            { 1740.0, -1860.0, 13.5, 90 },  { 1770.0, -1880.0, 13.5, 180 },
-            { 1710.0, -1840.0, 13.5, 0 },   { 1760.0, -1830.0, 13.5, 270 },
-            { 1720.0, -1890.0, 13.5, 45 },  { 1790.0, -1850.0, 13.5, 315 },
-        },
-    },
-    {
         id = "melee", name = "Arena Katana", short = "KATANA",
         desc = "Somente Katana. Sem armas de fogo.",
         type = "ffa", dimension = 8, color = { 90, 190, 150 },
@@ -475,17 +442,6 @@ DM.arenas = {
             { 370.0, -2040.0, 7.8, 90 },  { 340.0, -2060.0, 7.8, 180 },
             { 400.0, -2020.0, 7.8, 0 },   { 360.0, -2000.0, 7.8, 270 },
             { 330.0, -2020.0, 7.8, 45 },  { 410.0, -2060.0, 7.8, 315 },
-        },
-    },
-    {
-        id = "livre", name = "Arena Livre", short = "LIVRE",
-        desc = "Todas as armas clássicas. Caos total.",
-        type = "ffa", dimension = 9, color = { 200, 255, 220 },
-        weapons = { { 24, 300 }, { 25, 200 }, { 29, 400 }, { 30, 400 }, { 31, 400 }, { 34, 100 } }, armor = 50,
-        spawns = {
-            { 215.0, 1860.0, 17.65, 90 },  { 250.0, 1880.0, 17.65, 180 },
-            { 190.0, 1830.0, 17.65, 0 },   { 240.0, 1820.0, 17.65, 270 },
-            { 270.0, 1850.0, 17.65, 45 },  { 200.0, 1900.0, 17.65, 315 },
         },
     },
 }
