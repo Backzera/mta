@@ -10,7 +10,8 @@ local CRATES
 local WEAPON_KEY = { [30] = "ak47", [31] = "m4" }
 local TRAIL_RARITY = { mitica = true, ultimate = true }
 local TRAIL_LIFE, TRAIL_MAX = 650, 30
-local TRACER_LIFE, FLASH_LIFE = 140, 70
+local TRACER_LIFE, FLASH_LIFE = 140, 130
+local sparks = {}   -- faíscas flutuando na ponta das armas Mítica/Ultimate
 local trails, tracers, flashes = {}, {}, {}
 local glow
 
@@ -79,7 +80,10 @@ addEventHandler("onClientPlayerWeaponFire", root, function(weapon, ammo, clip, h
     end
     local now = getTickCount()
     tracers[#tracers + 1] = { mx, my, mz, hx, hy, hz, now, r, g, b }
-    flashes[#flashes + 1] = { player = player, t = now, r = r, g = g, b = b, skin = it ~= nil }
+    -- raios do clarão: 7 direções aleatórias em volta do cano
+    local rays = {}
+    for i = 1, 7 do rays[i] = { math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1, 0.25 + math.random() * 0.45 } end
+    flashes[#flashes + 1] = { player = player, t = now, r = r, g = g, b = b, skin = it ~= nil, rays = rays, big = it ~= nil and TRAIL_RARITY[it.rarity] }
 end)
 
 -- ---------- render ----------
@@ -118,8 +122,14 @@ addEventHandler("onClientRender", root, function()
             end
             -- ponto de luz na ponta
             if glow then
-                dxDrawMaterialLine3D(x, y, z - 0.14, x, y, z + 0.14, glow, 0.3, tocolor(tr.r, tr.g, tr.b, 200))
-                dxDrawMaterialLine3D(x, y, z - 0.06, x, y, z + 0.06, glow, 0.12, tocolor(255, 255, 255, 230))
+                local pulse = 0.85 + 0.15 * math.sin(now / 90)
+                dxDrawMaterialLine3D(x, y, z - 0.2 * pulse, x, y, z + 0.2 * pulse, glow, 0.42 * pulse, tocolor(tr.r, tr.g, tr.b, 150))
+                dxDrawMaterialLine3D(x, y, z - 0.08, x, y, z + 0.08, glow, 0.16, tocolor(255, 255, 255, 230))
+                -- faíscas místicas: nascem no cano e sobem flutuando
+                if math.random() < 0.45 then
+                    sparks[#sparks + 1] = { x = x + (math.random() - 0.5) * 0.1, y = y + (math.random() - 0.5) * 0.1, z = z, t = now,
+                        vx = (math.random() - 0.5) * 0.5, vy = (math.random() - 0.5) * 0.5, vz = 0.3 + math.random() * 0.6, r = tr.r, g = tr.g, b = tr.b, life = 500 + math.random(400) }
+                end
             end
         elseif trails[p] then
             trails[p] = nil
@@ -140,18 +150,48 @@ addEventHandler("onClientRender", root, function()
             dxDrawLine3D(t[1], t[2], t[3], x2, y2, z2, tocolor(255, 255, 255, 120 * f), 1)
         end
     end
-    -- clarões
+    -- faíscas
+    for i = #sparks, 1, -1 do
+        local sp = sparks[i]
+        local age = now - sp.t
+        if age > sp.life then
+            table.remove(sparks, i)
+        elseif glow then
+            local k = age / 1000
+            local f = 1 - age / sp.life
+            local x, y, z = sp.x + sp.vx * k, sp.y + sp.vy * k, sp.z + sp.vz * k
+            local sz = 0.05 + 0.06 * f
+            dxDrawMaterialLine3D(x, y, z - sz, x, y, z + sz, glow, sz * 2, tocolor(sp.r, sp.g, sp.b, 220 * f))
+        end
+    end
+    -- clarões estilo CrossFire: núcleo que explode e some + raios radiais + anel
     for i = #flashes, 1, -1 do
         local fl = flashes[i]
         local age = now - fl.t
         if age > FLASH_LIFE or not isElement(fl.player) then
             table.remove(flashes, i)
         elseif glow then
-            local f = 1 - age / FLASH_LIFE
+            local p = age / FLASH_LIFE
+            local f = 1 - p
             local x, y, z = muzzle(fl.player)
-            local size = (fl.skin and 0.55 or 0.35) * (0.7 + 0.3 * f)
-            dxDrawMaterialLine3D(x, y, z - size / 2, x, y, z + size / 2, glow, size, tocolor(fl.r, fl.g, fl.b, 255 * f))
-            dxDrawMaterialLine3D(x, y, z - size / 4, x, y, z + size / 4, glow, size / 2, tocolor(255, 255, 255, 220 * f))
+            local base = fl.big and 0.9 or (fl.skin and 0.6 or 0.4)
+            local grow = 0.6 + 0.6 * math.min(1, age / 40)      -- expande nos primeiros 40 ms
+            local size = base * grow
+            -- núcleo
+            dxDrawMaterialLine3D(x, y, z - size / 2, x, y, z + size / 2, glow, size, tocolor(fl.r, fl.g, fl.b, 230 * f))
+            dxDrawMaterialLine3D(x, y, z - size / 4, x, y, z + size / 4, glow, size / 2, tocolor(255, 255, 255, 240 * f))
+            -- raios
+            local rl = size * 1.3
+            for _, ry in ipairs(fl.rays) do
+                local len = rl * ry[4] * (0.5 + 0.5 * grow)
+                local n = math.sqrt(ry[1] ^ 2 + ry[2] ^ 2 + ry[3] ^ 2) + 0.001
+                dxDrawMaterialLine3D(x, y, z, x + ry[1] / n * len, y + ry[2] / n * len, z + ry[3] / n * len, glow, 0.05 + 0.08 * f, tocolor(fl.r, fl.g, fl.b, 200 * f))
+            end
+            -- anel de choque (só skins)
+            if fl.skin then
+                local ring = size * (0.8 + 1.4 * p)
+                dxDrawMaterialLine3D(x, y, z - 0.01, x, y, z + 0.01, glow, ring, tocolor(fl.r, fl.g, fl.b, 60 * f))
+            end
         end
     end
 end)

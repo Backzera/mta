@@ -8,6 +8,24 @@ local spawnTick = 0
 local lastSig = nil
 
 local function nick(p) return (getPlayerName(p):gsub("#%x%x%x%x%x%x", "")) end
+local WEAPON_ICONS = { [4] = true, [16] = true, [23] = true, [24] = true, [25] = true, [29] = true, [30] = true, [31] = true, [34] = true }
+local WEAPON_KEY = { [30] = "ak47", [31] = "m4" }
+local function hexColor(c) return ("#%02X%02X%02X"):format(c[1], c[2], c[3]) end
+-- skin equipada por um jogador na arma (nome, cor da raridade, preview) ou false
+local function skinInfo(player, weapon)
+    local wkey = WEAPON_KEY[weapon]
+    if not wkey then return false end
+    local e = getElementData(player, "dm:wskin")
+    if type(e) ~= "table" or not e[wkey] then return false end
+    local C = core:getCratesConfig()
+    for _, it in ipairs(C.items) do
+        if it.key == e[wkey] then
+            local r = C.rarities[it.rarity]
+            return { name = (it.name:gsub("^[^|]*| ", "")), rarity = r and r.name or it.rarity, color = r and hexColor(r.color) or "#FFFFFF", preview = it.preview and (it.key .. ".png") or false, trail = e.trail or false }
+        end
+    end
+    return false
+end
 local function tagOf(data)
     if type(data) ~= "table" or not data.text then return false end
     local hex = data.hex
@@ -53,6 +71,7 @@ local function pushHud()
         money = tonumber(getElementData(localPlayer, "dm:money")) or 0, rp = rp,
         health = math.max(0, getElementHealth(localPlayer)), armor = getPedArmor(localPlayer),
         weapon = (getWeaponNameFromID(weapon) or "Mãos"):upper(), clip = clip, reserve = math.max(0, total - clip),
+        weaponIcon = WEAPON_ICONS[weapon] and (weapon .. ".png") or false, skin = skinInfo(localPlayer, weapon),
         clipSize = tonumber(getWeaponProperty(weapon, "pro", "maximum_clip_ammo")) or math.max(clip, 1), hasAmmo = weapon > 1 and total > 0,
         streak = tonumber(getElementData(localPlayer, "dm:streak")) or 0,
         arena = arena, server = core:getConfig().fullName, online = #getElementsByType("player"), fps = fps, ping = getPlayerPing(localPlayer),
@@ -87,7 +106,7 @@ addEventHandler("ui:notify", root, function(text, ntype, title) notify(text, nty
 addEvent("dm:onKill", true)
 addEventHandler("dm:onKill", root, function(killerName, victimName, weapon, headshot, killer, victim)
     UI.push("kill", { killer = killerName or false, victim = victimName, weapon = getWeaponNameFromID(weapon or 0) or "?", headshot = headshot == true,
-        mine = killer == localPlayer, me = victim == localPlayer })
+        mine = killer == localPlayer, me = victim == localPlayer, skin = (killer and isElement(killer)) and skinInfo(killer, weapon or 0) or false })
 end)
 addEvent("dm:onKillReward", true)
 addEventHandler("dm:onKillReward", root, function(victimName, money, headshot, streak)

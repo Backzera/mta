@@ -19,7 +19,7 @@ const modes = [
 const player = { name: 'hehenr', tier: 'OURO', tierColor: GOLD, money: 626000, rp: 640 }
 const hud = {
   visible: true, name: 'hehenr', nameColor: '#7CFFB2', tag: { text: 'VIP OURO', hex: '#F5C451', glyph: '♛' }, clan: { text: 'UTG', hex: '#22E68A', glyph: '◆' },
-  tier: 'OURO', tierShort: 'OUR', tierColor: GOLD, money: 626000, rp: 640, health: 72, armor: 40, weapon: 'M4', clip: 23, reserve: 577, clipSize: 50, hasAmmo: true, streak: 4,
+  tier: 'OURO', tierShort: 'OUR', tierColor: GOLD, money: 626000, rp: 640, health: 72, armor: 40, weapon: 'M4', clip: 23, reserve: 577, clipSize: 50, hasAmmo: true, streak: 4, weaponIcon: '31.png', skin: { name: 'Masterpiece', rarity: 'Ultimate', color: '#7CFFB2', preview: 'm4_masterpiece.png' },
   arena: { name: 'Arena M4', color: rgb(70, 240, 160), players: 6, safe: false, type: 'ffa' }, server: 'UTG MATA-MATA #Return2k26', online: 37, fps: 98, ping: 42, protected: 0,
   hints: [['F2', 'Jogar'], ['F3', 'Duelo'], ['F4', 'Loja'], ['F6', 'Clã'], ['F7', 'Caixas'], ['TAB', 'Placar']],
 }
@@ -29,7 +29,7 @@ export function run(screen) {
   ui.set('hud', hud)
   ui.set('duel', { incoming: [] })
   if (screen === 'hud') {
-    ui.push('kill', { killer: 'hehenr', victim: 'Zeca', weapon: 'M4', headshot: true, mine: true })
+    ui.push('kill', { killer: 'hehenr', victim: 'Zeca', weapon: 'M4', headshot: true, mine: true, skin: { name: 'Masterpiece', color: '#7CFFB2' } })
     ui.push('kill', { killer: 'Tony', victim: 'hehenr', weapon: 'AK-47', me: true })
     ui.push('toast', { text: 'Você subiu para o elo Ouro!', type: 'success', title: 'Elo' })
     ui.push('reward', { text: 'Você eliminou Zeca', money: 250, headshot: true })

@@ -14,7 +14,7 @@
     <export function="isPanelOpen" type="client" />
 
     <!-- Build do Vite (gerado automaticamente por npm run build; não edite à mão) -->
-    <file src="dist/assets/hub-B-MrKwdl.js" />
+    <file src="dist/assets/hub-CaK_eqSb.js" />
     <file src="dist/fonts/Oswald.ttf" />
     <file src="dist/fonts/Poppins-Regular.ttf" />
     <file src="dist/fonts/Poppins-SemiBold.ttf" />
@@ -29,6 +29,15 @@
     <file src="dist/img/tag.png" />
     <file src="dist/img/target.png" />
     <file src="dist/img/trophy.png" />
+    <file src="dist/img/weapons/16.png" />
+    <file src="dist/img/weapons/23.png" />
+    <file src="dist/img/weapons/24.png" />
+    <file src="dist/img/weapons/25.png" />
+    <file src="dist/img/weapons/29.png" />
+    <file src="dist/img/weapons/30.png" />
+    <file src="dist/img/weapons/31.png" />
+    <file src="dist/img/weapons/34.png" />
+    <file src="dist/img/weapons/4.png" />
     <file src="dist/img/wskins/ak47_aquamarine_revenge.png" />
     <file src="dist/img/wskins/ak47_asiimov.png" />
     <file src="dist/img/wskins/ak47_black_laminate.png" />
