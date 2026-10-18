@@ -10,6 +10,7 @@ local sw, sh = guiGetScreenSize()
 local browser, browserReady = nil, false
 local panelOpen = false
 local panelOriginal = nil
+local lastNativeVisible = nil
 
 local DEFAULTS = {
     enabled = true,
@@ -74,9 +75,15 @@ local function notify(text, kind)
 end
 
 local function applyNativeCrosshair()
-    -- Com a mira customizada ligada, esconde somente a mira nativa.
-    -- Se o jogador desligar a customizada, a mira original do GTA/MTA volta.
-    showPlayerHudComponent("crosshair", settings.enabled ~= true)
+    -- "crosshair" também controla o scope da sniper no GTA.
+    -- Por isso a mira nativa volta automaticamente com a sniper (ID 34).
+    local scopedWeapon = getPedWeapon(localPlayer) == 34
+    local showNative = settings.enabled ~= true or scopedWeapon
+    if lastNativeVisible ~= showNative then
+        showPlayerHudComponent("crosshair", showNative)
+        lastNativeVisible = showNative
+    end
+    return scopedWeapon
 end
 
 local function hexToColor(hex, alpha)
@@ -117,7 +124,8 @@ local function line(x1, y1, x2, y2, color, thickness)
 end
 
 local function drawCrosshair()
-    if panelOpen or not settings.enabled then return end
+    local scopedWeapon = applyNativeCrosshair()
+    if panelOpen or not settings.enabled or scopedWeapon then return end
     if getElementData(localPlayer, "dm:ready") ~= true or isPedDead(localPlayer) then return end
 
     local cx, cy = aimPosition()
@@ -240,10 +248,41 @@ end
 addCommandHandler("mira", togglePanel)
 addCommandHandler("crosshair", togglePanel)
 
-bindKey("escape", "down", function()
-    if panelOpen then
+-- createBrowser é off-screen: teclado usa focusBrowser, mas mouse/scroll precisam ser injetados.
+local function browserInputActive()
+    return panelOpen and browser and isElement(browser) and browserReady
+end
+
+addEventHandler("onClientCursorMove", root, function(_, _, absoluteX, absoluteY)
+    if browserInputActive() then
+        injectBrowserMouseMove(browser, absoluteX, absoluteY)
+    end
+end)
+
+addEventHandler("onClientClick", root, function(button, state, absoluteX, absoluteY)
+    if not browserInputActive() then return end
+    injectBrowserMouseMove(browser, absoluteX, absoluteY)
+    if state == "down" then
+        injectBrowserMouseDown(browser, button)
+    else
+        injectBrowserMouseUp(browser, button)
+    end
+end)
+
+addEventHandler("onClientKey", root, function(key, press)
+    if not panelOpen or not press then return end
+
+    if key == "escape" then
         closePanel(false)
         cancelEvent()
+        return
+    end
+
+    if not browserInputActive() then return end
+    if key == "mouse_wheel_up" then
+        injectBrowserMouseWheel(browser, 40, 0)
+    elseif key == "mouse_wheel_down" then
+        injectBrowserMouseWheel(browser, -40, 0)
     end
 end)
 
