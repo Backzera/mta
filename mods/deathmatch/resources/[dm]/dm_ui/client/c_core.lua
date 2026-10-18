@@ -121,6 +121,23 @@ addEventHandler("onClientKey", root, function(key, press)
 end)
 function UI.onEscape(screen, fn) escapeFns[screen] = fn end
 
+-- ---------- mouse -> browser ----------
+-- createBrowser é off-screen: o MTA só manda teclado (focusBrowser); o mouse precisa ser injetado.
+local function inputActive() return browser and ready and current and current ~= "board" end
+addEventHandler("onClientCursorMove", root, function(_, _, ax, ay)
+    if inputActive() then injectBrowserMouseMove(browser, ax, ay) end
+end)
+addEventHandler("onClientClick", root, function(button, state, ax, ay)
+    if not inputActive() then return end
+    injectBrowserMouseMove(browser, ax, ay)
+    if state == "down" then injectBrowserMouseDown(browser, button) else injectBrowserMouseUp(browser, button) end
+end)
+addEventHandler("onClientKey", root, function(key, press)
+    if not inputActive() or not press then return end
+    if key == "mouse_wheel_up" then injectBrowserMouseWheel(browser, 40, 0)
+    elseif key == "mouse_wheel_down" then injectBrowserMouseWheel(browser, -40, 0) end
+end)
+
 -- ---------- HUD ----------
 function setHudVisible(state) hudVisible = state end
 function isHudVisible() return hudVisible end
@@ -181,8 +198,11 @@ local function createUIBrowser()
         if chatPending then chatPending = false showChat(false) end
         for _, code in ipairs(queue) do executeBrowserJavascript(browser, code) end
         queue = {}
-        -- garante que a tela aberta antes do carregamento apareça (a fila pode ter sido podada)
-        if current and lastOpen[current] then js(("window.ui.open(%q,%s)"):format(current, toJSON(lastOpen[current]))) end
+        -- garante que a tela aberta antes do carregamento apareça (a fila pode ter sido podada) e receba o teclado
+        if current and lastOpen[current] then
+            js(("window.ui.open(%q,%s)"):format(current, toJSON(lastOpen[current])))
+            if current ~= "board" then focusBrowser(browser) end
+        end
         if first then
             addEventHandler("onClientRender", root, render, true, "low-5")
             outputChatBox("#7CFFB2[UTG] Interface carregada.", 255, 255, 255, true)
