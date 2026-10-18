@@ -9,7 +9,7 @@ local core = exports.dm_core
 local CRATES
 local WEAPON_KEY = { [30] = "ak47", [31] = "m4" }
 local TRAIL_RARITY = { mitica = true, ultimate = true }
-local TRAIL_LIFE, TRAIL_MAX = 650, 30
+local TRAIL_LIFE, TRAIL_MAX = 650, 48
 local TRACER_LIFE, FLASH_LIFE = 140, 130
 local sparks = {}   -- faíscas flutuando na ponta das armas Mítica/Ultimate
 local trails, tracers, flashes = {}, {}, {}
@@ -102,7 +102,7 @@ addEventHandler("onClientRender", root, function()
             local x, y, z = muzzle(p)
             local pts = tr.points
             local last = pts[#pts]
-            if not last or (x - last[1]) ^ 2 + (y - last[2]) ^ 2 + (z - last[3]) ^ 2 > 0.0004 then
+            if not last or (x - last[1]) ^ 2 + (y - last[2]) ^ 2 + (z - last[3]) ^ 2 > 0.0001 then
                 pts[#pts + 1] = { x, y, z, now }
                 if #pts > TRAIL_MAX then table.remove(pts, 1) end
             end
