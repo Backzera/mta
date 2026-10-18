@@ -118,8 +118,18 @@ def main():
     money = [("money_2k", "$2.000", 2000, "comum"), ("money_5k", "$5.000", 5000, "comum"), ("money_12k", "$12.000", 12000, "rara"), ("money_30k", "$30.000", 30000, "epica")]
     legacy = [("wskin_carbono", "Carbono", "carbono.png", "comum"), ("wskin_neon", "Neon Verde", "neon.png", "rara"), ("wskin_rosa", "Camo Rosa", "camo_rosa.png", "rara"),
               ("wskin_galaxia", "Galáxia", "galaxia.png", "epica"), ("wskin_fogo", "Fogo", "fogo.png", "epica"), ("wskin_dourado", "Dourado", "dourado.png", "lendaria")]
-    skins = [("skin_305", "Lenda Urbana", 305, "rara"), ("skin_294", "Operador", 294, "rara"), ("skin_287", "Soldado Elite", 287, "epica"),
-             ("skin_285", "SWAT Fantasma", 285, "epica"), ("skin_163", "Agente Sombra", 163, "lendaria"), ("skin_312", "Assassino UTG", 312, "mitica")]
+    skins = [
+        ("skin_305", "Lenda Urbana", 305, "rara"), ("skin_294", "Operador", 294, "rara"),
+        ("skin_287", "Soldado Elite", 287, "epica"), ("skin_285", "SWAT Fantasma", 285, "epica"),
+        ("skin_163", "Agente Sombra", 163, "lendaria"), ("skin_312", "Assassino UTG", 312, "mitica"),
+        ("skin_miku", "Hatsune Miku", 298, "rara"),
+        ("skin_sakura_miku", "Sakura Miku", 299, "epica"),
+        ("skin_zoro", "Roronoa Zoro", 300, "epica"),
+        ("skin_luffy", "Monkey D. Luffy", 301, "epica"),
+        ("skin_usada_pekora", "Usada Pekora", 302, "lendaria"),
+        ("skin_tanjiro", "Tanjiro Kamado", 303, "rara"),
+        ("skin_naruto_bijuu", "Naruto Bijuu", 304, "lendaria"),
+    ]
 
     def lua_item(d):
         return "        { " + ", ".join(f'{k} = {v if isinstance(v, (int, float)) else chr(34) + str(v) + chr(34)}' for k, v in d.items()) + " },"
