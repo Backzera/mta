@@ -28,6 +28,7 @@
     <script src="client/c_arenas.lua" type="client" />
     <script src="client/c_scoreboard.lua" type="client" />
     <script src="client/c_help.lua" type="client" />
+    <script src="client/c_crosshair.lua" type="client" />
 
     <!-- Shaders da interface -->
     <file src="shaders/rounded.fx" />
@@ -105,6 +106,7 @@
     <export function="getClanConfig" type="shared" />
     <export function="formatMoney" type="shared" />
     <export function="getTierForRP" type="shared" />
+    <export function="getCratesConfig" type="shared" />
     <export function="getArenaSpawns" type="server" />
     <export function="notify" type="client" />
     <export function="playUISound" type="client" />

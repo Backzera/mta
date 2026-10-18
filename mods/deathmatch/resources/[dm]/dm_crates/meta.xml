@@ -1,0 +1,18 @@
+<meta>
+    <info author="UTG" name="DM Crates" description="Caixas (F7): roleta com skins exclusivas, skins de arma (texturas), dinheiro; inventário e equipar" type="script" version="1.0.0" />
+    <include resource="dm_core" />
+    <script src="server/s_crates.lua" type="server" />
+    <script src="client/c_ui.lua" type="client" />
+    <script src="client/c_skins.lua" type="client" />
+    <script src="client/c_crates.lua" type="client" />
+    <file src="texreplace.fx" />
+    <file src="textures/neon.png" />
+    <file src="textures/dourado.png" />
+    <file src="textures/camo_rosa.png" />
+    <file src="textures/carbono.png" />
+    <file src="textures/galaxia.png" />
+    <file src="textures/fogo.png" />
+    <!-- Skins personalizadas (pele): coloque models/skins/<model>.dff e .txd e liste aqui:
+         <file src="models/skins/305.dff" /> <file src="models/skins/305.txd" /> -->
+    <min_mta_version server="1.5.9" client="1.5.9" />
+</meta>

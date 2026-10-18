@@ -11,8 +11,8 @@ local sessionStart = {} -- player -> tick
 local loading = {}      -- player -> key em carregamento
 
 local INT_COLUMNS = { "kills", "deaths", "headshots", "best_streak", "duels_won", "duels_lost", "money", "rp",
-    "ranked_wins", "ranked_losses", "ranked_kills", "vip", "vip_until", "clan_id", "daily_last", "playtime", "first_seen", "last_seen" }
-local TEXT_COLUMNS = { "tag", "name_color", "perks", "clan_role", "custom_tag" }
+    "ranked_wins", "ranked_losses", "ranked_kills", "vip", "vip_until", "clan_id", "daily_last", "playtime", "first_seen", "last_seen", "equip_skin" }
+local TEXT_COLUMNS = { "tag", "name_color", "perks", "clan_role", "custom_tag", "equip_wskin" }
 
 local function initDB()
     db = dbConnect("sqlite", "data/stats.db")
@@ -31,7 +31,7 @@ local function initDB()
         money = "INTEGER DEFAULT 0", rp = "INTEGER DEFAULT 0", ranked_wins = "INTEGER DEFAULT 0", ranked_losses = "INTEGER DEFAULT 0",
         ranked_kills = "INTEGER DEFAULT 0", vip = "INTEGER DEFAULT 0", vip_until = "INTEGER DEFAULT 0", tag = "TEXT DEFAULT ''",
         custom_tag = "TEXT DEFAULT ''", name_color = "TEXT DEFAULT ''", perks = "TEXT DEFAULT ''", clan_id = "INTEGER DEFAULT 0",
-        clan_role = "TEXT DEFAULT ''", daily_last = "INTEGER DEFAULT 0",
+        clan_role = "TEXT DEFAULT ''", daily_last = "INTEGER DEFAULT 0", equip_skin = "INTEGER DEFAULT 0", equip_wskin = "TEXT DEFAULT ''",
     }
     local existing = {}
     local qh = dbQuery(db, "PRAGMA table_info(players)")
@@ -121,7 +121,7 @@ local function newRow(key, player)
         key = key, name = getPlayerVisibleName(player),
         kills = 0, deaths = 0, headshots = 0, best_streak = 0, duels_won = 0, duels_lost = 0,
         money = 0, rp = 0, ranked_wins = 0, ranked_losses = 0, ranked_kills = 0,
-        vip = 0, vip_until = 0, tag = "", custom_tag = "", name_color = "", perks = "", clan_id = 0, clan_role = "",
+        vip = 0, vip_until = 0, tag = "", custom_tag = "", name_color = "", perks = "", clan_id = 0, clan_role = "", equip_skin = 0, equip_wskin = "",
         daily_last = 0, playtime = 0, first_seen = now, last_seen = now, _new = true,
     }
 end
@@ -186,10 +186,10 @@ function savePlayerStats(player)
     row.name = getPlayerVisibleName(player)
     dbExec(db, [[UPDATE players SET name=?, kills=?, deaths=?, headshots=?, best_streak=?, duels_won=?, duels_lost=?,
         money=?, rp=?, ranked_wins=?, ranked_losses=?, ranked_kills=?, vip=?, vip_until=?, tag=?, custom_tag=?, name_color=?,
-        perks=?, clan_id=?, clan_role=?, daily_last=?, playtime=?, last_seen=? WHERE key=?]],
+        perks=?, clan_id=?, clan_role=?, daily_last=?, playtime=?, last_seen=?, equip_skin=?, equip_wskin=? WHERE key=?]],
         row.name, row.kills, row.deaths, row.headshots, row.best_streak, row.duels_won, row.duels_lost,
         row.money, row.rp, row.ranked_wins, row.ranked_losses, row.ranked_kills, row.vip, row.vip_until, row.tag, row.custom_tag,
-        row.name_color, row.perks, row.clan_id, row.clan_role, row.daily_last, row.playtime, row.last_seen, row.key)
+        row.name_color, row.perks, row.clan_id, row.clan_role, row.daily_last, row.playtime, row.last_seen, row.equip_skin or 0, row.equip_wskin or "", row.key)
 end
 
 function getPlayerStats(player) return stats[player] end

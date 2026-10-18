@@ -11,6 +11,7 @@ function getVipConfig() return DM.vip end
 function getClanConfig() return DM.clans end
 function formatMoney(v) return DM.formatMoney(v) end
 function getTierForRP(rp) return DM.tierForRP(rp) end
+function getCratesConfig() return DM.crates end
 function getRankedModes() return DM.rankedModes end
 function getPlayerArena(player)
     player = player or localPlayer

@@ -12,6 +12,7 @@ function getVipConfig() return DM.vip end
 function getClanConfig() return DM.clans end
 function formatMoney(v) return DM.formatMoney(v) end
 function getTierForRP(rp) return DM.tierForRP(rp) end
+function getCratesConfig() return DM.crates end
 
 function getPlayerArena(player)
     if not isElement(player) then return nil end

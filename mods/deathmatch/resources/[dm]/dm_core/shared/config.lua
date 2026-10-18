@@ -156,6 +156,46 @@ DM.clans = {
     pointsWin = 30, pointsLoss = -15,
 }
 
+-- CAIXAS (F7): raridades, itens e caixas. Skins de arma = texturas (textures/*.png) aplicadas por jogador.
+-- Skins exclusivas = modelos do GTA pouco usados; com models/skins/<model>.dff/.txd no dm_crates viram personalizadas.
+DM.crates = {
+    rarities = {
+        comum    = { name = "Comum",    color = { 150, 165, 155 } },
+        rara     = { name = "Rara",     color = { 120, 210, 255 } },
+        epica    = { name = "Épica",    color = { 200, 110, 255 } },
+        lendaria = { name = "Lendária", color = { 245, 196, 81 } },
+    },
+    items = {
+        { key = "money_3k",  type = "money", name = "$3.000",  amount = 3000,  rarity = "comum" },
+        { key = "money_8k",  type = "money", name = "$8.000",  amount = 8000,  rarity = "comum" },
+        { key = "money_25k", type = "money", name = "$25.000", amount = 25000, rarity = "rara" },
+        { key = "money_80k", type = "money", name = "$80.000", amount = 80000, rarity = "epica" },
+        { key = "wskin_carbono", type = "wskin", name = "Carbono",     texture = "carbono.png",   rarity = "comum" },
+        { key = "wskin_neon",    type = "wskin", name = "Neon Verde",  texture = "neon.png",      rarity = "rara" },
+        { key = "wskin_rosa",    type = "wskin", name = "Camo Rosa",   texture = "camo_rosa.png", rarity = "rara" },
+        { key = "wskin_galaxia", type = "wskin", name = "Galáxia",     texture = "galaxia.png",   rarity = "epica" },
+        { key = "wskin_fogo",    type = "wskin", name = "Fogo",        texture = "fogo.png",      rarity = "epica" },
+        { key = "wskin_dourado", type = "wskin", name = "Dourado",     texture = "dourado.png",   rarity = "lendaria" },
+        { key = "skin_305", type = "skin", name = "Lenda Urbana",   model = 305, rarity = "rara" },
+        { key = "skin_294", type = "skin", name = "Operador",       model = 294, rarity = "rara" },
+        { key = "skin_287", type = "skin", name = "Soldado Elite",  model = 287, rarity = "epica" },
+        { key = "skin_285", type = "skin", name = "SWAT Fantasma",  model = 285, rarity = "epica" },
+        { key = "skin_163", type = "skin", name = "Agente Sombra",  model = 163, rarity = "lendaria" },
+        { key = "skin_312", type = "skin", name = "Assassino UTG",  model = 312, rarity = "lendaria" },
+    },
+    boxes = {
+        { key = "comum", name = "Caixa Comum", price = 12000, color = { 120, 255, 180 }, icon = "target.png",
+          desc = "Dinheiro e skins de arma comuns, com chance de rara.",
+          pool = { { item = "money_3k", weight = 40 }, { item = "money_8k", weight = 25 }, { item = "wskin_carbono", weight = 18 }, { item = "wskin_neon", weight = 8 }, { item = "wskin_rosa", weight = 6 }, { item = "skin_305", weight = 3 } } },
+        { key = "rara", name = "Caixa Rara", price = 40000, color = { 120, 210, 255 }, icon = "shield.png",
+          desc = "Skins raras e épicas, dinheiro alto e chance de lendária.",
+          pool = { { item = "money_8k", weight = 22 }, { item = "money_25k", weight = 18 }, { item = "wskin_neon", weight = 15 }, { item = "wskin_rosa", weight = 12 }, { item = "skin_305", weight = 9 }, { item = "skin_294", weight = 9 }, { item = "wskin_galaxia", weight = 6 }, { item = "skin_287", weight = 5 }, { item = "wskin_dourado", weight = 2 }, { item = "skin_163", weight = 2 } } },
+        { key = "lendaria", name = "Caixa Lendária", price = 100000, color = { 245, 196, 81 }, icon = "trophy.png",
+          desc = "Só épicos e lendários: skins exclusivas e a arma dourada.",
+          pool = { { item = "money_25k", weight = 20 }, { item = "money_80k", weight = 12 }, { item = "wskin_galaxia", weight = 18 }, { item = "wskin_fogo", weight = 16 }, { item = "skin_287", weight = 12 }, { item = "skin_285", weight = 10 }, { item = "wskin_dourado", weight = 5 }, { item = "skin_163", weight = 4 }, { item = "skin_312", weight = 3 } } },
+    },
+}
+
 -- CHAT: canais, glifos (ícones de texto que o chat do MTA renderiza) e emojis por atalho
 DM.chat = {
     channels = {

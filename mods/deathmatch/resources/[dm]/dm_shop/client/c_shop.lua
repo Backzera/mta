@@ -33,7 +33,7 @@ local function itemCard(id, x, y, w, h, a, title, subtitle, price, color, state,
     })
     UI.rrect(x, y + s(14), s(4), h - s(28), UI.rgb(color, 255 * a), s(2), { glow = s(6), glowColor = UI.rgb(color, 120 * a) })
     UI.text(title, x + s(20), y + s(12), w - s(40), s(20), UI.rgb(color, 255 * a), "bold", 13, "left", "center", true)
-    UI.text(subtitle, x + s(20), y + s(34), w - s(40), s(34), UI.color("muted", 255 * a), "regular", 9, "left", "top", false, true)
+    UI.text(subtitle, x + s(20), y + s(32), w - s(40), s(30), UI.color("muted", 255 * a), "regular", 8, "left", "top", false, true)
     if badge then UI.pill(badge, x + w - UI.textWidth(badge, "semibold", 8) - s(32), y + s(12), s(18), UI.color("gold", 50 * a), UI.color("gold", 255 * a), "semibold", 8) end
     local bw, bh = s(118), s(28)
     local bx, by = x + w - bw - s(14), y + h - bh - s(12)
@@ -71,13 +71,13 @@ local function render()
     local gy = f.cy + s(50)
     local cols = 2
     local cw = (f.cw - s(16)) / cols
-    local ch = s(122)
+    local ch = s(104)
     local i = 0
     local total = 0
     local function place(fn)
         local col, row = i % cols, math.floor(i / cols)
         local p = UI.stagger(a, i + 1, math.max(1, total), 0.5)
-        fn(f.cx + col * (cw + s(16)), gy + row * (ch + s(14)) + (1 - p) * s(14), cw, ch, a * p)
+        fn(f.cx + col * (cw + s(16)), gy + row * (ch + s(12)) + (1 - p) * s(14), cw, ch, a * p)
         i = i + 1
     end
     local tagData = getElementData(localPlayer, "dm:tag")
@@ -108,7 +108,7 @@ local function render()
             place(function(ix, iy, iw, ih, ia)
                 itemCard("color_" .. item.key, ix, iy, iw, ih, ia, item.name:upper(), "Cor do seu nick no chat, no placar e sobre o boneco.", item.price, item.color,
                     equipped and "equipped" or (owned and "owned" or nil), function() triggerServerEvent("shop:buy", localPlayer, "nameColors", item.key) end)
-                UI.text("Nick de exemplo", ix + s(20), iy + s(66), iw, s(18), UI.rgb(item.color, 255 * ia), "bold", 11, "left", "center")
+                UI.text("Nick de exemplo", ix + s(20), iy + s(58), iw, s(18), UI.rgb(item.color, 255 * ia), "bold", 11, "left", "center")
             end)
         end
         place(function(ix, iy, iw, ih, ia)

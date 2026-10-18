@@ -173,11 +173,7 @@ local function show()
     local user, pass = loadCredentials()
     if user and pass then
         fUser.text, fPass.text = user, pass
-        login.busy = true
-        setMessage("Entrando automaticamente como " .. user .. "...", "info")
-        setTimer(function()
-            if login.open then triggerServerEvent("login:attempt", localPlayer, user, pass, true) end
-        end, 900, 1)
+        setMessage("Bem-vindo de volta, " .. user .. "! Clique em ENTRAR para jogar.", "success")
     end
 end
 

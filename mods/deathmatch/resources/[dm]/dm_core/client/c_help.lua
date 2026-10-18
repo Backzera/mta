@@ -7,7 +7,7 @@ local help = { open = false, tick = 0, rendering = false }
 
 local KEYS = {
     { "F1", "Esta ajuda" }, { "F2", "Arenas" }, { "F3", "Duelo X1" }, { "F4", "Loja" },
-    { "F5", "Ranqueadas" }, { "F6", "Clã" }, { "TAB", "Placar" }, { "Y / N", "Aceitar / recusar duelo" }, { "ESC", "Fechar painel" },
+    { "F5", "Ranqueadas" }, { "F6", "Clã" }, { "F7", "Caixas" }, { "TAB", "Placar" }, { "Y / N", "Aceitar / recusar duelo" }, { "ESC", "Fechar painel" },
 }
 local COMMANDS = {
     { "/arena <nome>", "Entrar em uma arena" }, { "/lobby", "Voltar ao lobby" },

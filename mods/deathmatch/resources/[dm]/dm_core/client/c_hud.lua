@@ -177,7 +177,7 @@ local function drawLobbyHint()
     if UI.getOpenPanel() then return end
     local s = UI.s
     local items = arena.type == "lobby"
-        and { { "F2", "Arenas" }, { "F3", "Duelo" }, { "F4", "Loja" }, { "F5", "Ranqueadas" }, { "F6", "Clã" }, { "TAB", "Placar" } }
+        and { { "F2", "Jogar" }, { "F3", "Duelo" }, { "F4", "Loja" }, { "F6", "Clã" }, { "F7", "Caixas" }, { "TAB", "Placar" } }
         or { { "F3", "Desafiar" }, { "F2", "Arenas" }, { "/lobby", "Voltar" } }
     local total = 0
     local widths = {}
