@@ -50,9 +50,9 @@ addEventHandler("onPlayerWasted", root, function(ammo, killer, weapon, bodypart)
         end
 
         -- Kill chat (só para quem está na mesma arena/dimensão)
-        local hs = headshot and " #FFB547[HEADSHOT]" or ""
+        local hs = headshot and " #FFB547✦ HEADSHOT" or ""
         for _, p in ipairs(arenaPlayers) do
-            outputChatBox(("#FF4D6D[KILL] #FFFFFF%s #969BB4matou #FFFFFF%s #969BB4com #7CFFB2%s%s"):format(
+            outputChatBox(("#FF4D6D☠ #FFFFFF%s #8FA39A» #FFFFFF%s #8FA39A· #7CFFB2%s%s"):format(
                 killerName, victimName, weaponName, hs), p, 255, 255, 255, true)
         end
 
@@ -62,7 +62,7 @@ addEventHandler("onPlayerWasted", root, function(ammo, killer, weapon, bodypart)
 
         local streakInfo = DM.streaks[streak]
         if streakInfo then
-            local msg = ("%s[SEQUÊNCIA] #FFFFFF%s #FFFFFF%s #969BB4(%d kills)"):format(streakInfo.color, killerName, streakInfo.text, streak)
+            local msg = ("%s★ #FFFFFF%s #FFFFFF%s #8FA39A(%d kills)"):format(streakInfo.color, killerName, streakInfo.text, streak)
             local target = streak >= 8 and root or arenaPlayers
             if type(target) == "table" then
                 for _, p in ipairs(target) do outputChatBox(msg, p, 255, 255, 255, true) end
@@ -74,7 +74,7 @@ addEventHandler("onPlayerWasted", root, function(ammo, killer, weapon, bodypart)
         triggerEvent("dm:onPlayerKill", killer, victim, weapon, headshot)
     else
         for _, p in ipairs(arenaPlayers) do
-            outputChatBox(("#969BB4[MORTE] #FFFFFF%s #969BB4morreu (%s)"):format(victimName, weaponName), p, 255, 255, 255, true)
+            outputChatBox(("#8FA39A☠ #FFFFFF%s #8FA39Amorreu · %s"):format(victimName, weaponName), p, 255, 255, 255, true)
         end
         triggerClientEvent(arenaPlayers, "dm:onKill", resourceRoot, false, victimName, weapon, false, false, victim)
         triggerClientEvent(victim, "dm:onDeath", resourceRoot, false, weapon, false, getPlayerRespawnDelay(victim))

@@ -12,7 +12,7 @@ DM.server = {
     tagline         = "#Return2k26",
     fullName        = "UTG MATA-MATA #Return2k26",
     discord         = "discord.gg/utg",            -- mostrado nas mensagens automáticas (edite)
-    chatPrefix      = "#22E68A[UTG]#FFFFFF",
+    chatPrefix      = "#22E68A✿ UTG #8FA39A»#FFFFFF",
     respawnDelay    = 3000,                        -- ms até renascer após morrer
     respawnDelayVip = 2000,                        -- ms para VIP
     spawnProtection = 3000,                        -- ms de proteção ao nascer
@@ -156,16 +156,46 @@ DM.clans = {
     pointsWin = 30, pointsLoss = -15,
 }
 
+-- CHAT: canais, glifos (ícones de texto que o chat do MTA renderiza) e emojis por atalho
+DM.chat = {
+    channels = {
+        global = { label = "Global", glyph = "✿", color = "#22E68A" },
+        arena  = { label = "Arena",  glyph = "▲", color = "#7CFFB2" },
+        clan   = { label = "Clã",    glyph = "◆", color = "#F5C451" },
+        pm     = { label = "PM",     glyph = "✉", color = "#FF8CF0" },
+        staff  = { label = "Staff",  glyph = "♛", color = "#FF4D6D" },
+    },
+    -- glifo por elo (aparece antes do ID)
+    tierGlyphs = { Bronze = "●", Prata = "◆", Ouro = "★", Platina = "✦", Diamante = "❖", Mestre = "♛", Lenda = "☠" },
+    -- glifo por tipo de tag (staff / vip / comprada)
+    kindGlyphs = { staff = "♛", vip = "★", shop = "◆" },
+    -- cores de texto da mensagem por tipo de jogador
+    messageColor = { staff = "#FFD6DE", vip = "#FFF1C9", default = "#E6EEE9" },
+    idColor = "#8FA39A",
+    sep = "#8FA39A»",
+    emojis = {
+        [":skull:"] = "☠", [":caveira:"] = "☠", [":star:"] = "★", [":estrela:"] = "★", [":heart:"] = "♥", [":coracao:"] = "♥",
+        [":crown:"] = "♛", [":coroa:"] = "♛", [":flower:"] = "✿", [":flor:"] = "✿", [":plane:"] = "✈", [":aviao:"] = "✈",
+        [":music:"] = "♪", [":musica:"] = "♪", [":diamond:"] = "◆", [":diamante:"] = "◆", [":check:"] = "✔", [":ok:"] = "✔",
+        [":x:"] = "✘", [":sun:"] = "☀", [":sol:"] = "☀", [":peace:"] = "☮", [":paz:"] = "☮", [":yin:"] = "☯",
+        [":spade:"] = "♠", [":club:"] = "♣", [":smile:"] = "☺", [":sad:"] = "☹", [":arrow:"] = "➤", [":seta:"] = "➤",
+        [":up:"] = "▲", [":down:"] = "▼", [":dot:"] = "●", [":target:"] = "◎", [":alvo:"] = "◎", [":king:"] = "♚",
+        [":rei:"] = "♚", [":note:"] = "♫", [":radioactive:"] = "☢", [":bio:"] = "☣", [":snow:"] = "❄", [":neve:"] = "❄",
+        [":fire:"] = "♨", [":fogo:"] = "♨", [":gun:"] = "➹", [":arma:"] = "➹", [":money:"] = "$", [":dinheiro:"] = "$",
+    },
+}
+
 -- Mensagens automáticas do servidor ({online} e {discord} são substituídos)
 DM.broadcasts = {
-    "#22E68A[UTG] #FFFFFF{online} jogadores online agora. Chame seus amigos!",
-    "#22E68A[UTG] #FFFFFFPressione #7CFFB2F5 #FFFFFFpara entrar nas partidas ranqueadas 5x5 e 10x10 e subir de elo.",
-    "#22E68A[UTG] #FFFFFFKills dão #22E68A$ #FFFFFF— use na loja (#7CFFB2F4#FFFFFF) para tags, VIP e cores de nick.",
-    "#22E68A[UTG] #FFFFFFDesafie alguém no X1 com #7CFFB2F3#FFFFFF. Vitórias no X1 dão RP.",
-    "#22E68A[UTG] #FFFFFFCrie ou entre em um clã (#7CFFB2F6#FFFFFF) e dispute clã x clã.",
-    "#22E68A[UTG] #FFFFFFHeadshot vale mais: dano no peito é reduzido, mire na cabeça.",
-    "#22E68A[UTG] #FFFFFFFique online: a cada 10 minutos você ganha bônus em $. Bônus diário no primeiro login do dia.",
-    "#22E68A[UTG] #FFFFFFDiscord: #7CFFB2{discord}",
+    "#22E68A✿ UTG #8FA39A» #FFFFFF{online} jogadores online agora. Chame seus amigos!",
+    "#22E68A✿ UTG #8FA39A» #FFFFFFPressione #7CFFB2F5 #FFFFFFpara entrar nas ranqueadas 5x5 e 10x10 e subir de elo ★",
+    "#22E68A✿ UTG #8FA39A» #FFFFFFKills dão #F5C451$ #FFFFFF— use na loja (#7CFFB2F4#FFFFFF) para tags, VIP e cores de nick ◆",
+    "#22E68A✿ UTG #8FA39A» #FFFFFFDesafie alguém no X1 com #7CFFB2F3#FFFFFF. Vitórias no X1 dão RP ✦",
+    "#22E68A✿ UTG #8FA39A» #FFFFFFCrie ou entre em um clã (#7CFFB2F6#FFFFFF) e dispute clã x clã ♛",
+    "#22E68A✿ UTG #8FA39A» #FFFFFFHeadshot vale mais: o dano no peito é reduzido, mire na cabeça ☠",
+    "#22E68A✿ UTG #8FA39A» #FFFFFFEmojis no chat: digite #7CFFB2/emojis #FFFFFFpara ver os atalhos ☺",
+    "#22E68A✿ UTG #8FA39A» #FFFFFFFique online: a cada 10 minutos você ganha $. Bônus diário no primeiro login ☀",
+    "#22E68A✿ UTG #8FA39A» #FFFFFFDiscord: #7CFFB2{discord}",
 }
 
 -- Paleta de cores da interface (RGB). O cliente converte com tocolor().

@@ -172,7 +172,7 @@ local function endMatch(inst, winner, reason)
     end
     if wasMatch then
         local winName = winner and inst.teamNames[winner] or "Empate"
-        core:sendServerMessage(root, ("#F5C451[RANQUEADA] #FFFFFF%s #969BB4— %s venceu por #FFFFFF%d x %d#969BB4%s"):format(
+        core:sendServerMessage(root, ("#F5C451★ RANQUEADA #8FA39A» #FFFFFF%s #969BB4— %s venceu por #FFFFFF%d x %d#969BB4%s"):format(
             inst.mode.name, winName, inst.score.A, inst.score.B, mvp and (" · MVP #FFFFFF" .. nick(mvp)) or ""))
     end
     if inst.fixedTeams then

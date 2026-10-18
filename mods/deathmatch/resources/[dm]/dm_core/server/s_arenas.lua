@@ -244,7 +244,7 @@ addEventHandler("dm:playerReady", root, function()
     if not getPlayerStats(player) then loadPlayerStats(player) end
     setPlayerArena(player, "lobby", true)
     notifyPlayer(player, "Bem-vindo ao " .. DM.server.fullName .. "! Pressione F2 para escolher uma arena.", "success", "Bem-vindo")
-    sendServerMessage(player, "#969BB4Teclas: #FFFFFFF1 #969BB4ajuda · #FFFFFFF2 #969BB4arenas · #FFFFFFF3 #969BB4duelo · #FFFFFFF4 #969BB4loja · #FFFFFFF5 #969BB4ranqueadas · #FFFFFFF6 #969BB4clã · #FFFFFFTAB #969BB4placar")
+    sendServerMessage(player, "#969BB4Teclas: #FFFFFFF1 #969BB4ajuda · #FFFFFFF2 #969BB4arenas · #FFFFFFF3 #969BB4duelo · #FFFFFFF4 #969BB4loja · #FFFFFFF5 #969BB4ranqueadas · #FFFFFFF6 #969BB4clã · #FFFFFFTAB #969BB4placar · #FFFFFF/emojis")
 end)
 
 local function isLoginRunning()

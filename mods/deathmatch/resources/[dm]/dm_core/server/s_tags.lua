@@ -59,15 +59,29 @@ function isPlayerStaff(player)
     return staffTag(player) ~= nil
 end
 
--- Nick formatado para o chat: [CLÃ] [TAG] Nome
-function formatPlayerName(player)
+-- Nick formatado para o chat no estilo:  ★ ✦ [1042] [CLÃ] Nick
+--   glifo da tag (staff ♛ / vip ★ / comprada ◆) · glifo do elo · ID · tag do clã · nick colorido
+function formatPlayerName(player, short)
     local tag = getElementData(player, "dm:tag") or getPlayerTag(player)
     local clan = getElementData(player, "dm:clanTag")
+    local row = getPlayerStats(player)
+    local tier = DM.tierForRP(row and row.rp or 0)
     local parts = {}
+    local kindGlyph = DM.chat.kindGlyphs[tag.kind]
+    if kindGlyph then parts[#parts + 1] = tag.hex .. kindGlyph end
+    parts[#parts + 1] = DM.rgbToHex(unpack(tier.color)) .. (DM.chat.tierGlyphs[tier.name] or "●")
+    local id = getElementData(player, "dm:id")
+    if id and id ~= 0 then parts[#parts + 1] = ("%s[%d]"):format(DM.chat.idColor, id) end
+    if not short and tag.kind ~= "tier" then parts[#parts + 1] = ("%s[%s]"):format(tag.hex, tag.text) end
     if clan and clan.text then parts[#parts + 1] = ("%s[%s]"):format(clan.hex or "#969BB4", clan.text) end
-    parts[#parts + 1] = ("%s[%s]"):format(tag.hex, tag.text)
     parts[#parts + 1] = getPlayerNameColor(player) .. getPlayerVisibleName(player)
     return table.concat(parts, " ")
+end
+
+-- Cor do texto da mensagem conforme o tipo do jogador
+function getPlayerMessageColor(player)
+    local tag = getElementData(player, "dm:tag") or getPlayerTag(player)
+    return DM.chat.messageColor[tag.kind] or DM.chat.messageColor.default
 end
 
 addEventHandler("onPlayerLogin", root, function() setTimer(refreshPlayerTag, 500, 1, source) end)

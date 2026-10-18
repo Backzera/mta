@@ -143,19 +143,37 @@ function loadPlayerStats(player, callback)
             for _, col in ipairs(INT_COLUMNS) do row[col] = tonumber(row[col]) or 0 end
             for _, col in ipairs(TEXT_COLUMNS) do if type(row[col]) ~= "string" then row[col] = "" end end
             row.name = getPlayerVisibleName(p)
+            row.uid = (tonumber(row.uid) or 0) + 1000
+            finishLoad(p, row, callback)
         else
             row = newRow(k, p)
             dbExec(db, "INSERT OR IGNORE INTO players (key, name, first_seen, last_seen) VALUES (?, ?, ?, ?)",
                 k, row.name, row.first_seen, row.last_seen)
+            -- busca o ID (rowid) recém-criado
+            dbQuery(function(qh2, p2, row2)
+                local res2 = dbPoll(qh2, 0)
+                if not isElement(p2) then return end
+                row2.uid = (res2 and res2[1] and tonumber(res2[1].uid) or 0) + 1000
+                finishLoad(p2, row2, callback)
+            end, { p, row }, db, "SELECT rowid AS uid FROM players WHERE key = ?", k)
         end
-        row._perks = decodePerks(row.perks)
-        stats[p] = row
-        pushStatsToClient(p)
-        triggerEvent("dm:onStatsLoaded", p, row._new == true)
-        if callback then callback(p, row) end
-    end, { player, key }, db, "SELECT * FROM players WHERE key = ?", key)
+    end, { player, key }, db, "SELECT rowid AS uid, * FROM players WHERE key = ?", key)
 end
 addEvent("dm:onStatsLoaded")
+
+function finishLoad(player, row, callback)
+    row._perks = decodePerks(row.perks)
+    stats[player] = row
+    setElementData(player, "dm:id", row.uid or 0)
+    pushStatsToClient(player)
+    triggerEvent("dm:onStatsLoaded", player, row._new == true)
+    if callback then callback(player, row) end
+end
+
+function getPlayerId(player)
+    local row = stats[player]
+    return row and row.uid or nil
+end
 
 function savePlayerStats(player)
     local row = stats[player]
@@ -199,7 +217,7 @@ function addPlayerStat(player, field, amount)
             local up = newTier.min > oldTier.min
             triggerClientEvent(player, "dm:tierChange", resourceRoot, newTier.name, up)
             if up then
-                sendServerMessage(root, string.format("#FFFFFF%s #969BB4subiu para o elo %s%s#969BB4!",
+                sendServerMessage(root, string.format("▲ #FFFFFF%s #969BB4subiu para o elo %s%s#969BB4!",
                     getPlayerVisibleName(player), DM.rgbToHex(unpack(newTier.color)), newTier.name))
             end
         end

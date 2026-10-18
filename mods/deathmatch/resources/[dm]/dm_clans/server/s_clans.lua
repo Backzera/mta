@@ -347,7 +347,7 @@ addEventHandler("clans:respondChallenge", root, function(accept)
     for i = 1, size do teamA[i] = a[i] teamB[i] = b[i] end
     local id = exports.dm_ranked:startClanMatch(mode.id, teamA, teamB, { idA = from.id, idB = c.id, tagA = from.tag, tagB = c.tag, nameA = from.name, nameB = c.name })
     if id then
-        core:sendServerMessage(root, ("#F5C451[CLÃ x CLÃ] #FFFFFF[%s] %s #969BB4vs #FFFFFF[%s] %s #969BB4— %s (%dx%d) começou!"):format(from.tag, from.name, c.tag, c.name, mode.name, size, size))
+        core:sendServerMessage(root, ("#F5C451◆ CLÃ x CLÃ #8FA39A» #FFFFFF[%s] %s #969BB4vs #FFFFFF[%s] %s #969BB4— %s (%dx%d) começou!"):format(from.tag, from.name, c.tag, c.name, mode.name, size, size))
     end
 end)
 
@@ -365,7 +365,7 @@ addEventHandler("ranked:clanMatchEnd", root, function(info, winner, scoreA, scor
     end
     saveClan(a); saveClan(b)
     local winTag = winner == "A" and a.tag or (winner == "B" and b.tag or nil)
-    core:sendServerMessage(root, ("#F5C451[CLÃ x CLÃ] #FFFFFF[%s] %d x %d [%s] #969BB4— %s"):format(a.tag, scoreA, scoreB, b.tag, winTag and ("vitória de [" .. winTag .. "]") or "empate"))
+    core:sendServerMessage(root, ("#F5C451◆ CLÃ x CLÃ #8FA39A» #FFFFFF[%s] %d x %d [%s] #969BB4— %s"):format(a.tag, scoreA, scoreB, b.tag, winTag and ("vitória de [" .. winTag .. "]") or "empate"))
     triggerClientEvent(root, "dm:notify", resourceRoot, ("[%s] %d x %d [%s] — %s"):format(a.tag, scoreA, scoreB, b.tag, winTag and ("[" .. winTag .. "] venceu!") or "empate"), "info", "Clã x Clã")
 end)
 

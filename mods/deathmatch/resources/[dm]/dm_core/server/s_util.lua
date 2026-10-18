@@ -41,6 +41,12 @@ end
 -- Procura jogador por nome parcial (sem cores, case-insensitive)
 function findPlayer(partial)
     if not partial or partial == "" then return nil end
+    local id = tonumber(partial)
+    if id then
+        for _, p in ipairs(getElementsByType("player")) do
+            if tonumber(getElementData(p, "dm:id")) == id then return p end
+        end
+    end
     partial = DM.stripColors(partial):lower()
     local exact, matches = nil, {}
     for _, p in ipairs(getElementsByType("player")) do

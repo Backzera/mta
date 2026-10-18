@@ -198,7 +198,7 @@ addCommandHandler("anuncio", function(player, cmd, ...)
     if not requireAdmin(player) then return end
     local text = table.concat({ ... }, " ")
     if text == "" then usage(player, "/anuncio <mensagem>") return end
-    outputChatBox(("#FFB547[ANÚNCIO] #FFFFFF%s"):format(DM.stripColors(text)), root, 255, 255, 255, true)
+    outputChatBox(("#FF4D6D♛ ANÚNCIO #8FA39A» #FFFFFF%s"):format(DM.stripColors(text)), root, 255, 255, 255, true)
     triggerClientEvent(root, "dm:notify", resourceRoot, DM.stripColors(text), "warn", "Anúncio")
 end)
 
