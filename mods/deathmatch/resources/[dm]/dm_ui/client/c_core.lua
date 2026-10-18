@@ -15,6 +15,7 @@ local escapeFns = {}        -- [tela] = fn
 local openFns, closeFns = {}, {}
 local current = nil         -- tela aberta
 local hudVisible = true
+local lastOpen = {}       -- [tela] = últimos dados (para reabrir se a página recarregar)
 
 setElementData(localPlayer, "dm:hubCEF", true, false)
 
@@ -26,7 +27,10 @@ local function js(code)
         if #queue > 60 then table.remove(queue, 1) end
     end
 end
-function UI.set(key, value) js(("window.ui.set(%q,%s)"):format(key, toJSON(value or {}))) end
+function UI.set(key, value)
+    if current == key then lastOpen[key] = value end
+    js(("window.ui.set(%q,%s)"):format(key, toJSON(value or {})))
+end
 function UI.merge(key, value) js(("window.ui.merge(%q,%s)"):format(key, toJSON(value or {}))) end
 function UI.push(kind, value) js(("window.ui.push(%q,%s)"):format(kind, toJSON(value or {}))) end
 function UI.js(code) js(code) end
@@ -57,7 +61,8 @@ function UI.open(name, data, opts)
     if not opts.noCursor then showCursor(true) end
     showChat(false)
     toggleAllControls(false, true, false)
-    if data then js(("window.ui.open(%q,%s)"):format(name, toJSON(data))) else js(("window.ui.open(%q)"):format(name)) end
+    lastOpen[name] = data or {}
+    js(("window.ui.open(%q,%s)"):format(name, toJSON(data or {})))
     if browser and ready and not opts.noCursor then focusBrowser(browser) end
     if openFns[name] then openFns[name]() end
     UI.sound("click", 0.4)
@@ -141,13 +146,24 @@ local function createUIBrowser()
         loadBrowserURL(browser, URL)
     end)
     addEventHandler("onClientBrowserDocumentReady", browser, function(url)
-        if ready then return end
+        -- o MTA dispara este evento também para a página em branco inicial: só aceita a nossa página
+        if not tostring(url):find("dist/index.html", 1, true) then
+            diag("documento ignorado: " .. tostring(url))
+            return
+        end
+        local first = not ready
         ready = true
         diag("documento pronto: " .. tostring(url))
         for _, code in ipairs(queue) do executeBrowserJavascript(browser, code) end
         queue = {}
-        addEventHandler("onClientRender", root, render, true, "low-5")
-        triggerEvent("ui:ready", localPlayer)
+        if first then
+            addEventHandler("onClientRender", root, render, true, "low-5")
+            outputChatBox("#7CFFB2[UTG] Interface carregada.", 255, 255, 255, true)
+            triggerEvent("ui:ready", localPlayer)
+        else
+            -- página recarregou: reabre a tela atual
+            if current and lastOpen[current] then js(("window.ui.open(%q,%s)"):format(current, toJSON(lastOpen[current]))) end
+        end
     end)
     -- diagnóstico: se em 12 s nada carregou, avisa no chat (sem travar o jogador)
     setTimer(function()
