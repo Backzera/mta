@@ -2,7 +2,5 @@
     <info author="Arena PVP" name="DM Duel (X1)" description="Sistema de duelo 1v1 com painel (F3), pedidos e salas privadas" type="script" version="1.0.0" />
     <include resource="dm_core" />
     <script src="server/s_duel.lua" type="server" />
-    <script src="client/c_ui.lua" type="client" />
-    <script src="client/c_duel.lua" type="client" />
     <min_mta_version server="1.5.9" client="1.5.9" />
 </meta>

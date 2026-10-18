@@ -110,7 +110,9 @@ addEventHandler("onClientRender", root, function()
             local sub = death.killer and ("Eliminado por %s  ·  %s%s"):format(death.killer, death.weapon, death.headshot and "  ·  HEADSHOT" or "") or ("Causa: %s"):format(death.weapon)
             UI.textShadow(sub, 0, UI.sh / 2 - s(76), UI.sw, s(26), tocolor(255, 255, 255, 220 * a), "medium", 13, "center", "center")
             local remaining = math.max(0, (death.until_ - now) / 1000)
-            if remaining > 0 then
+            if getElementData(localPlayer, "dm:noRespawn") then
+                UI.text("Aguarde o fim do round", 0, UI.sh / 2 + s(10), UI.sw, s(20), UI.color("muted", 255 * a), "semibold", 10, "center", "center")
+            elseif remaining > 0 then
                 local total = math.max(0.001, death.total / 1000)
                 local cx, cy, r = UI.sw / 2, UI.sh / 2 + s(30), s(44)
                 UI.ring(cx, cy, r, s(5), remaining / total, UI.color("accent", 255 * a), tocolor(255, 255, 255, 20 * a))
@@ -122,17 +124,4 @@ addEventHandler("onClientRender", root, function()
         end
     end
 
-    -- Indicador de proteção de spawn (acima do bloco de status)
-    local arena = arenaOf(localPlayer)
-    if arena and not arena.safe and getElementData(localPlayer, "dm:protected") and not isPedDead(localPlayer) then
-        local total = DM.server.spawnProtection
-        local remaining = total - (now - spawnTick)
-        if remaining > 0 and remaining <= total then
-            local w, h = s(150), s(26)
-            local x, y = s(20), UI.sh - s(14) - s(236) * 200 / 640 - s(8) - s(128) - h - s(8)
-            UI.rrect(x, y, w, h, UI.color("card", 200), h / 2, { border = 1, borderColor = UI.color("accent", 150), glow = s(8), glowColor = UI.color("accent", 90) })
-            UI.ring(x + s(14), y + h / 2, s(7), s(3), remaining / total, UI.color("accent"), tocolor(255, 255, 255, 25))
-            UI.text(("PROTEGIDO  %.1fs"):format(remaining / 1000), x + s(28), y, w - s(32), h, UI.color("accent"), "semibold", 9, "left", "center")
-        end
-    end
 end)

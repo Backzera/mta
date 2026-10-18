@@ -1,0 +1,39 @@
+<meta>
+    <info author="UTG" name="UTG UI (CEF)" description="Interface completa em HTML/CSS/React renderizada via CEF: HUD, hub, loja, duelo, ranqueadas, clãs, caixas, placar, ajuda e login" type="script" version="2.0" />
+    <include resource="dm_core" />
+    <min_mta_version client="1.5.9" />
+
+    <script src="client/c_core.lua" type="client" />
+    <script src="client/c_hud.lua" type="client" />
+    <script src="client/c_screens.lua" type="client" />
+
+    <export function="notify" type="client" />
+    <export function="setHudVisible" type="client" />
+    <export function="isHudVisible" type="client" />
+    <export function="isPanelOpen" type="client" />
+
+    <!-- Build estático do Vite (http://mta/local/dist/index.html) -->
+    <file src="dist/index.html" />
+    <file src="dist/assets/hub.js" />
+    <file src="dist/assets/index.css" />
+    <file src="dist/fonts/Oswald.ttf" />
+    <file src="dist/fonts/Poppins-Regular.ttf" />
+    <file src="dist/fonts/Poppins-SemiBold.ttf" />
+    <file src="dist/img/coin.png" />
+    <file src="dist/img/crown.png" />
+    <file src="dist/img/flame.png" />
+    <file src="dist/img/headshot.png" />
+    <file src="dist/img/logo.png" />
+    <file src="dist/img/shield.png" />
+    <file src="dist/img/skull.png" />
+    <file src="dist/img/swords.png" />
+    <file src="dist/img/tag.png" />
+    <file src="dist/img/target.png" />
+    <file src="dist/img/trophy.png" />
+    <file src="dist/img/wskins/camo_rosa.png" />
+    <file src="dist/img/wskins/carbono.png" />
+    <file src="dist/img/wskins/dourado.png" />
+    <file src="dist/img/wskins/fogo.png" />
+    <file src="dist/img/wskins/galaxia.png" />
+    <file src="dist/img/wskins/neon.png" />
+</meta>

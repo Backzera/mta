@@ -76,21 +76,27 @@ Spawns dos mapas sem `<spawnpoint>` foram calculados pela geometria e estão em 
 (`spawns`, e `duelSpots` para o X1). Se um jogador nascer no vazio, o cliente detecta a queda e o servidor
 reposiciona no spawn âncora.
 
-## Ranqueadas (F5)
+## Ranqueadas (F5) — MD3
 
-| Modo | Local | Jogadores | Armas | Meta |
-|------|-------|-----------|-------|------|
-| 10x10 M4 | Las Payasadas | 20 | M4, colete 100 | 80 kills ou 10 min |
-| 5x5 Sniper | Bayside Trailer Park | 10 | Sniper | 30 kills ou 8 min |
-| 5x5 M4 | Bayside Trailer Park | 10 | M4, colete 100 | 40 kills ou 8 min |
+| Modo | Local | Jogadores | Armas | Papéis |
+|------|-------|-----------|-------|--------|
+| 10x10 M4 | Las Payasadas | 20 | M4, colete 100 | 1 sniper por time (Sniper + M4), resto só M4 |
+| 5x5 Sniper | Bayside Trailer Park | 10 | Sniper | todos iguais |
+| 5x5 M4 | Bayside Trailer Park | 10 | M4, colete 100 | 1 sniper por time (Sniper + M4), resto só M4 |
 
 Fluxo: entra → **aquecimento** (FFA com as armas do modo, sem recompensa) até completar os jogadores →
-contagem 15 s → times balanceados por RP (Time Ciano x Time Roxo) → team deathmatch com respawn na base
-→ resultado (RP, $, MVP) → volta ao aquecimento. Cada instância tem a sua dimensão; quando uma partida
-começa, novos jogadores vão para uma nova instância. Sair no meio conta derrota.
+**contagem de 20 s** com os times já formados por RP (Time Verde x Time Laranja) e a **escolha de papel**
+(SNIPER ou M4; só um sniper por time — se ninguém escolher, um é sorteado) → **melhor de 3 rounds de
+5 minutos, sem respawn**: o time que eliminar o outro vence o round; se o tempo acabar com jogadores vivos
+dos dois lados, todos os vivos são teleportados para a **morte súbita** (área pequena cercada por um
+col-shape; quem sair é devolvido) até sobrar um lado (limite de 90 s: mais vivos vence) → primeiro a 2
+rounds vence → resultado (RP, $, MVP) → volta ao aquecimento. Quem morre assiste um companheiro até o fim
+do round. Cada instância tem a sua dimensão; partidas em andamento não aceitam entrada. Sair no meio conta
+derrota. Tudo em `DM.ranked` (`roundTime`, `roundsToWin`, `suddenDeathMax`, `sniperLoadout`).
 
-**Spawns dos times são aproximados** (`DM.rankedModes[*].teamSpawns`, chão nativo com ajuste automático ao
-solo). Me mande as posições marcadas (`x, y, z, rotação`) de cada time e eu atualizo — ou edite direto.
+**Spawns dos times e da morte súbita são aproximados** (`DM.rankedModes[*].teamSpawns` / `suddenDeath`,
+chão nativo com ajuste automático ao solo). Me mande as posições marcadas (`x, y, z, rotação`) e eu
+atualizo — ou edite direto.
 
 ## Clãs (F6) e clã x clã
 
@@ -143,24 +149,23 @@ fonte Poppins, logo em `dm_core/assets/img/logo.png` (canto inferior esquerdo, c
 empilhados em cima — substitua pela sua, 640x200 PNG). Se a placa de vídeo não compilar os shaders, tudo
 cai para primitivas dx automaticamente. Guia para novos painéis: `docs/UI_SPEC.md`.
 
-### Hub de arenas em CEF (`dm_hub`)
+### Interface em CEF (`dm_ui`)
 
-A seleção de arenas (F2) agora é uma página HTML/CSS/React renderizada dentro do MTA via CEF
-(`createBrowser` local + `dxDrawImage`), com transparência real sobre a cena do GTA. O Lua
-(`dm_hub/client/c_hub.lua`) cuida do browser, F2/ESC, cursor, chat, câmera no local escolhido e dos
-eventos de entrada já existentes (`dm:requestArena` / `ranked:requestJoin`). Ponte: JS → Lua com
-`mta.triggerEvent("hub:select|hub:enter|hub:close", ...)`; Lua → JS com `executeBrowserJavascript`
-(`window.hub.setState/counts/open/close`). Os arquivos servidos são estáticos (`dm_hub/dist/`,
-`http://mta/local/dist/index.html`), sem CDN nem servidor de desenvolvimento — o `dist/` já vem
-compilado no repositório. Para alterar o visual:
+Toda a interface (HUD, hub de arenas F2, loja F4, duelo F3, ranqueadas F5, clãs F6, caixas F7, placar TAB,
+ajuda F1 e login) é uma página HTML/CSS/React renderizada dentro do MTA via CEF em um único browser
+transparente (`createBrowser` + `dxDrawImage`), com fundo animado verde (aurora, feixes, partículas) atrás
+dos painéis e a cena do GTA visível. O Lua (`dm_ui/client/`) cuida do browser, teclas, cursor, chat oculto,
+câmera, dados reais e dos eventos já existentes dos servidores; o JS só desenha. Ponte: JS → Lua com
+`mta.triggerEvent("ui:act", tela, ação, json)`; Lua → JS com `window.ui.set/open/close/push`. Os arquivos
+servidos são estáticos (`dm_ui/dist/`, `http://mta/local/dist/index.html`), sem CDN nem servidor de
+desenvolvimento — o `dist/` já vem compilado. Para alterar o visual:
 
 ```
-cd "mods/deathmatch/resources/[dm]/dm_hub/web"
+cd "mods/deathmatch/resources/[dm]/dm_ui/web"
 npm install
 npm run build        # gera ../dist (listado no meta.xml)
 ```
 
-Pré-visualização fora do jogo com dados de exemplo: abra `dist/index.html?demo` servido por qualquer
-servidor HTTP local. Enquanto `dm_hub` está ligado, o hub dx antigo do `dm_core` fica desativado
-(`dm:hubCEF`); parando o `dm_hub`, o F2 volta a abrir a versão dx. A loja e os outros painéis seguem
-em dx por enquanto.
+Pré-visualização fora do jogo com dados de exemplo: sirva `dist/` por HTTP e abra
+`index.html?demo=hub` (ou shop, duel, ranked, clans, crates, board, help, login, hud, rhud, rhud2, reel).
+Ficaram em dx apenas a mira, o hitmarker, os nametags e a tela de morte (`dm_core/client/`).

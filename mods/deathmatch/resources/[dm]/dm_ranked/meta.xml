@@ -2,8 +2,6 @@
     <info author="UTG" name="DM Ranked" description="Partidas ranqueadas 5x5/10x10 com aquecimento, times balanceados, RP e clã x clã" type="script" version="1.0.0" />
     <include resource="dm_core" />
     <script src="server/s_ranked.lua" type="server" />
-    <script src="client/c_ui.lua" type="client" />
-    <script src="client/c_ranked.lua" type="client" />
     <export function="startClanMatch" type="server" />
     <export function="getModeInfo" type="server" />
     <min_mta_version server="1.5.9" client="1.5.9" />

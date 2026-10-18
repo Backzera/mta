@@ -105,13 +105,17 @@ DM.shop = {
     },
 }
 
--- MODOS RANQUEADOS (partidas em dimensões próprias; aquecimento até completar os jogadores)
+-- MODOS RANQUEADOS MD3 (3 rounds de 5 min sem respawn; roles = true -> 1 sniper por time com Sniper + M4, resto só M4)
 -- Spawns: edite à vontade (ou me mande as posições marcadas). native = chão do GTA (ajuste automático ao solo).
 DM.rankedModes = {
     {
         id = "m4_10x10", name = "10x10 M4", place = "Las Payasadas", teamSize = 10,
-        weapons = { { 31, 600 } }, armor = 100, killTarget = 80, duration = 600, color = { 34, 230, 138 },
+        weapons = { { 31, 600 } }, armor = 100, roles = true, roundTime = 300, color = { 34, 230, 138 },
         center = { -250.0, 2620.0, 63.0 }, native = true,
+        -- morte súbita: área pequena cercada (col esférico) onde os vivos se enfrentam quando o tempo do round acaba
+        suddenDeath = { center = { -250.0, 2620.0, 63.0 }, radius = 18,
+            A = { { -262.0, 2612.0, 63.0, 60 }, { -262.0, 2616.0, 63.0, 75 }, { -262.0, 2620.0, 63.0, 90 }, { -262.0, 2624.0, 63.0, 105 }, { -262.0, 2628.0, 63.0, 120 }, { -259.0, 2614.0, 63.0, 70 }, { -259.0, 2618.0, 63.0, 85 }, { -259.0, 2622.0, 63.0, 95 }, { -259.0, 2626.0, 63.0, 110 }, { -259.0, 2630.0, 63.0, 125 } },
+            B = { { -238.0, 2612.0, 63.0, 300 }, { -238.0, 2616.0, 63.0, 285 }, { -238.0, 2620.0, 63.0, 270 }, { -238.0, 2624.0, 63.0, 255 }, { -238.0, 2628.0, 63.0, 240 }, { -241.0, 2614.0, 63.0, 290 }, { -241.0, 2618.0, 63.0, 275 }, { -241.0, 2622.0, 63.0, 265 }, { -241.0, 2626.0, 63.0, 250 }, { -241.0, 2630.0, 63.0, 235 } } },
         teamSpawns = {
             A = { { -205.0, 2592.0, 63.0, 90 }, { -208.0, 2598.0, 63.0, 90 }, { -211.0, 2604.0, 63.0, 90 }, { -205.0, 2610.0, 63.0, 90 }, { -209.0, 2616.0, 63.0, 90 },
                   { -202.0, 2586.0, 63.0, 90 }, { -214.0, 2590.0, 63.0, 90 }, { -214.0, 2610.0, 63.0, 90 }, { -200.0, 2602.0, 63.0, 90 }, { -206.0, 2622.0, 63.0, 90 } },
@@ -122,8 +126,11 @@ DM.rankedModes = {
     },
     {
         id = "sniper_5x5", name = "5x5 Sniper", place = "Bayside Trailer Park", teamSize = 5,
-        weapons = { { 34, 150 } }, armor = 0, killTarget = 30, duration = 480, color = { 200, 110, 255 },
+        weapons = { { 34, 150 } }, armor = 0, roles = false, roundTime = 300, color = { 110, 220, 170 },
         center = { -2480.0, 2320.0, 5.0 }, native = true,
+        suddenDeath = { center = { -2480.0, 2320.0, 5.0 }, radius = 16,
+            A = { { -2492.0, 2314.0, 5.0, 60 }, { -2492.0, 2318.0, 5.0, 80 }, { -2492.0, 2322.0, 5.0, 100 }, { -2492.0, 2326.0, 5.0, 120 }, { -2489.0, 2320.0, 5.0, 90 } },
+            B = { { -2468.0, 2314.0, 5.0, 300 }, { -2468.0, 2318.0, 5.0, 280 }, { -2468.0, 2322.0, 5.0, 260 }, { -2468.0, 2326.0, 5.0, 240 }, { -2471.0, 2320.0, 5.0, 270 } } },
         teamSpawns = {
             A = { { -2530.0, 2360.0, 5.0, 135 }, { -2526.0, 2354.0, 5.0, 135 }, { -2534.0, 2354.0, 5.0, 135 }, { -2522.0, 2362.0, 5.0, 135 }, { -2538.0, 2362.0, 5.0, 135 } },
             B = { { -2430.0, 2280.0, 5.0, 315 }, { -2426.0, 2286.0, 5.0, 315 }, { -2434.0, 2286.0, 5.0, 315 }, { -2422.0, 2278.0, 5.0, 315 }, { -2438.0, 2278.0, 5.0, 315 } },
@@ -132,8 +139,11 @@ DM.rankedModes = {
     },
     {
         id = "m4_5x5", name = "5x5 M4", place = "Bayside Trailer Park", teamSize = 5,
-        weapons = { { 31, 600 } }, armor = 100, killTarget = 40, duration = 480, color = { 120, 255, 180 },
+        weapons = { { 31, 600 } }, armor = 100, roles = true, roundTime = 300, color = { 124, 255, 178 },
         center = { -2480.0, 2320.0, 5.0 }, native = true,
+        suddenDeath = { center = { -2480.0, 2320.0, 5.0 }, radius = 16,
+            A = { { -2492.0, 2314.0, 5.0, 60 }, { -2492.0, 2318.0, 5.0, 80 }, { -2492.0, 2322.0, 5.0, 100 }, { -2492.0, 2326.0, 5.0, 120 }, { -2489.0, 2320.0, 5.0, 90 } },
+            B = { { -2468.0, 2314.0, 5.0, 300 }, { -2468.0, 2318.0, 5.0, 280 }, { -2468.0, 2322.0, 5.0, 260 }, { -2468.0, 2326.0, 5.0, 240 }, { -2471.0, 2320.0, 5.0, 270 } } },
         teamSpawns = {
             A = { { -2530.0, 2360.0, 5.0, 135 }, { -2526.0, 2354.0, 5.0, 135 }, { -2534.0, 2354.0, 5.0, 135 }, { -2522.0, 2362.0, 5.0, 135 }, { -2538.0, 2362.0, 5.0, 135 } },
             B = { { -2430.0, 2280.0, 5.0, 315 }, { -2426.0, 2286.0, 5.0, 315 }, { -2434.0, 2286.0, 5.0, 315 }, { -2422.0, 2278.0, 5.0, 315 }, { -2438.0, 2278.0, 5.0, 315 } },
@@ -142,7 +152,13 @@ DM.rankedModes = {
     },
 }
 DM.ranked = {
-    countdown     = 15,    -- s entre completar os jogadores e começar
+    countdown     = 20,    -- s entre completar os jogadores e começar (times formados; escolha de papel: 1 sniper por time)
+    rounds        = 3,     -- MD3
+    roundsToWin   = 2,     -- primeiro a 2 rounds
+    roundTime     = 300,   -- s por round (sem respawn); ao esgotar -> morte súbita
+    roundBreak    = 5,     -- s entre rounds
+    suddenDeathMax = 90,   -- s máximos de morte súbita (depois vence quem tiver mais vivos)
+    sniperLoadout = { { 34, 150 }, { 31, 600 } }, -- quem escolhe SNIPER recebe Sniper + M4
     resultsTime   = 12,    -- s mostrando o resultado
     respawn       = 4000,  -- ms respawn durante a partida
     protection    = 2000,  -- ms proteção ao nascer na partida
@@ -347,7 +363,7 @@ DM.arenas = {
         id = "lobby", name = "Lobby", short = "LOBBY",
         desc = "Zona segura. F2 arenas · F3 duelo · F4 loja · F5 ranqueadas · F6 clã.",
         type = "lobby", safe = true, dimension = 0,
-        color = { 0, 229, 168 }, weapons = {},
+        color = { 124, 255, 178 }, weapons = {},
         spawns = {
             { 1544.9, -1675.6, 13.56, 90 }, { 1537.4, -1674.3, 13.56, 270 },
             { 1552.9, -1676.5, 13.56, 90 }, { 1545.1, -1668.5, 13.56, 180 },
@@ -357,7 +373,7 @@ DM.arenas = {
     {
         id = "ak47", name = "Arena AK-47", short = "AK-47",
         desc = "Somente AK-47. Mapa fechado em Las Venturas.",
-        type = "ffa", dimension = 1, color = { 255, 120, 40 },
+        type = "ffa", dimension = 1, color = { 34, 230, 138 },
         weapons = { { 30, 500 } }, armor = 0,
         spawns = {
             { 1069.57, 1774.26, 10.82, 177.6 }, { 1087.76, 1775.06, 10.82, 126.8 },
@@ -371,7 +387,7 @@ DM.arenas = {
     {
         id = "m4", name = "Arena M4", short = "M4",
         desc = "Somente M4. Base militar em Verdant Bluffs.",
-        type = "ffa", dimension = 2, color = { 86, 180, 255 },
+        type = "ffa", dimension = 2, color = { 70, 240, 160 },
         weapons = { { 31, 500 } }, armor = 0,
         spawns = {
             { 1194.72, -2013.08, 69.27, 134.1 }, { 1187.98, -1998.14, 84.98, 155.2 },
@@ -385,7 +401,7 @@ DM.arenas = {
     {
         id = "x1", name = "Arena X1", short = "X1",
         desc = "Duelos 1v1 em sala privada. Pressione F3 para desafiar.",
-        type = "duel", safe = true, dimension = 3, color = { 124, 92, 255 },
+        type = "duel", safe = true, dimension = 3, color = { 160, 255, 200 },
         weapons = {},
         spawns = {
             { -1356.42, -924.23, 992.40, 200.0 }, { -1390.00, -981.00, 992.40, 310.6 },
@@ -405,7 +421,7 @@ DM.arenas = {
     {
         id = "cbug", name = "Arena C-Bug", short = "C-BUG",
         desc = "Deagle, Shotgun e Sniper. C-Bug LIBERADO somente aqui.",
-        type = "ffa", dimension = 4, color = { 255, 77, 109 }, cbug = true,
+        type = "ffa", dimension = 4, color = { 20, 200, 120 }, cbug = true,
         weapons = { { 24, 500 }, { 25, 500 }, { 34, 200 } }, armor = 0,
         spawns = {
             { -3770.16, 1893.17, 6.97, 180.0 }, { -3750.00, 1839.00, 7.00, 252.3 },
@@ -419,7 +435,7 @@ DM.arenas = {
     {
         id = "deagle", name = "Arena Deagle", short = "DEAGLE",
         desc = "Somente Deagle. Cada tiro conta.",
-        type = "ffa", dimension = 5, color = { 255, 181, 71 },
+        type = "ffa", dimension = 5, color = { 0, 170, 100 },
         weapons = { { 24, 500 } }, armor = 0,
         spawns = {
             { -1935.5, 239.5, 34.3, 90 },  { -1960.0, 260.0, 34.3, 180 },
@@ -430,7 +446,7 @@ DM.arenas = {
     {
         id = "sniper", name = "Arena Sniper", short = "SNIPER",
         desc = "Somente Sniper. Um tiro, uma morte.",
-        type = "ffa", dimension = 6, color = { 200, 110, 255 },
+        type = "ffa", dimension = 6, color = { 110, 220, 170 },
         weapons = { { 34, 200 } }, armor = 0,
         spawns = {
             { 420.0, 2500.0, 16.5, 90 },  { 380.0, 2530.0, 16.5, 180 },
@@ -441,7 +457,7 @@ DM.arenas = {
     {
         id = "shotgun", name = "Arena Shotgun", short = "SHOTGUN",
         desc = "Somente Combat Shotgun. Combate aproximado.",
-        type = "ffa", dimension = 7, color = { 255, 140, 66 },
+        type = "ffa", dimension = 7, color = { 60, 210, 140 },
         weapons = { { 27, 300 } }, armor = 0,
         spawns = {
             { 1740.0, -1860.0, 13.5, 90 },  { 1770.0, -1880.0, 13.5, 180 },
@@ -452,7 +468,7 @@ DM.arenas = {
     {
         id = "melee", name = "Arena Katana", short = "KATANA",
         desc = "Somente Katana. Sem armas de fogo.",
-        type = "ffa", dimension = 8, color = { 192, 198, 210 },
+        type = "ffa", dimension = 8, color = { 90, 190, 150 },
         weapons = { { 8, 1 } }, armor = 0,
         spawns = {
             { 370.0, -2040.0, 7.8, 90 },  { 340.0, -2060.0, 7.8, 180 },
@@ -463,7 +479,7 @@ DM.arenas = {
     {
         id = "livre", name = "Arena Livre", short = "LIVRE",
         desc = "Todas as armas clássicas. Caos total.",
-        type = "ffa", dimension = 9, color = { 0, 229, 168 },
+        type = "ffa", dimension = 9, color = { 200, 255, 220 },
         weapons = { { 24, 300 }, { 25, 200 }, { 29, 400 }, { 30, 400 }, { 31, 400 }, { 34, 100 } }, armor = 50,
         spawns = {
             { 215.0, 1860.0, 17.65, 90 },  { 250.0, 1880.0, 17.65, 180 },

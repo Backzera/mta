@@ -3,7 +3,5 @@
     <include resource="dm_core" />
     <include resource="dm_ranked" />
     <script src="server/s_clans.lua" type="server" />
-    <script src="client/c_ui.lua" type="client" />
-    <script src="client/c_clans.lua" type="client" />
     <min_mta_version server="1.5.9" client="1.5.9" />
 </meta>

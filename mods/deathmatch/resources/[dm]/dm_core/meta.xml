@@ -19,15 +19,10 @@
     <script src="client/c_exports.lua" type="client" />
     <script src="client/c_ui.lua" type="client" />
     <script src="client/c_sounds.lua" type="client" />
-    <script src="client/c_notify.lua" type="client" />
-    <script src="client/c_hud.lua" type="client" />
-    <script src="client/c_killfeed.lua" type="client" />
+    <script src="client/c_bridge.lua" type="client" />
     <script src="client/c_spawn.lua" type="client" />
     <script src="client/c_hitmarker.lua" type="client" />
     <script src="client/c_nametags.lua" type="client" />
-    <script src="client/c_arenas.lua" type="client" />
-    <script src="client/c_scoreboard.lua" type="client" />
-    <script src="client/c_help.lua" type="client" />
     <script src="client/c_crosshair.lua" type="client" />
 
     <!-- Shaders da interface -->
