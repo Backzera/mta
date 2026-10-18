@@ -119,6 +119,7 @@ local function beginSpawnValidation(arenaId, serial, collisionFreeze)
     local mySerial = activeSpawnSerial
     local started = getTickCount()
     local timeout = 6200
+    local completed = false
 
     local function attempt()
         if mySerial ~= activeSpawnSerial or isPedDead(localPlayer) then
@@ -135,6 +136,7 @@ local function beginSpawnValidation(arenaId, serial, collisionFreeze)
         local worldReady = not waitingForWorld()
 
         if mapReady and groundZ and worldReady then
+            completed = true
             finishSpawnValidation(mySerial, groundZ, collisionFreeze)
             return
         end
@@ -142,12 +144,13 @@ local function beginSpawnValidation(arenaId, serial, collisionFreeze)
         if getTickCount() - started >= timeout then
             -- Timeout de segurança: usa o melhor chão encontrado, se houver,
             -- e deixa a rede dm:badSpawn cuidar de um caso extremo.
+            completed = true
             finishSpawnValidation(mySerial, groundZ, collisionFreeze)
         end
     end
 
     attempt()
-    if mySerial == activeSpawnSerial and not spawnCheckTimer then
+    if not completed and mySerial == activeSpawnSerial and not spawnCheckTimer then
         spawnCheckTimer = setTimer(attempt, 180, 0)
     end
 end
