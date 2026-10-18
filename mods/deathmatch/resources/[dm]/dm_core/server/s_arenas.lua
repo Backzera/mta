@@ -90,6 +90,7 @@ end
 
 -- Tempo de respawn (VIP / perk de respawn rápido)
 function getPlayerRespawnDelay(player)
+    if getElementData(player, "dm:managed") then return DM.ranked.respawn end
     if isPlayerVip(player) > 0 or playerHasPerk(player, "fastrespawn") then
         return DM.server.respawnDelayVip
     end
@@ -138,7 +139,7 @@ function spawnPlayerInArena(player, opts)
     local x, y, z, rot = sp[1], sp[2], sp[3], sp[4] or 0
     local dim = opts.dimension or arena.dimension
 
-    spawnPlayer(player, x, y, z + 0.5, rot, getPlayerSkin(player), 0, dim)
+    spawnPlayer(player, x, y, z + 0.5, rot, getPlayerSkin(player), 0, dim, opts.team or getPlayerTeam(player) or nil)
     setElementInterior(player, 0)
     setElementDimension(player, dim)
     setCameraInterior(player, 0)
@@ -161,7 +162,7 @@ function spawnPlayerInArena(player, opts)
         if arena.safe then
             setElementData(player, "dm:protected", true)
         else
-            setProtected(player, DM.server.spawnProtection)
+            setProtected(player, opts.protection or (arena.type == "ranked" and DM.ranked.protection) or DM.server.spawnProtection)
         end
     end
 
@@ -192,7 +193,13 @@ function setPlayerArena(player, arenaId, silent, noSpawn)
 
     if arena.type == "ranked" then
         -- dm_ranked cuida do spawn e das partidas
-        triggerEvent("ranked:join", player, arenaId)
+        local res = getResourceFromName("dm_ranked")
+        if res and getResourceState(res) == "running" then
+            triggerEvent("ranked:join", player, arenaId)
+        else
+            notifyPlayer(player, "As partidas ranqueadas estão desativadas no momento.", "warn")
+            return setPlayerArena(player, "lobby", true)
+        end
     elseif not noSpawn then
         spawnPlayerInArena(player)
     end
@@ -306,9 +313,10 @@ addEventHandler("dm:badSpawn", root, function()
     data.badSpawns = (data.badSpawnTick and now - data.badSpawnTick < 20000) and (data.badSpawns or 0) + 1 or 1
     data.badSpawnTick = now
     if data.badSpawns > 3 then return end -- evita loop
+    if getElementData(source, "dm:managed") then return end -- partidas ranqueadas cuidam do próprio spawn
     local list = arenaSpawns[arena.id] or arena.spawns
     outputServerLog(("[dm_core] %s caiu no vazio na arena %s — reposicionando (spawn âncora)"):format(getPlayerVisibleName(source), arena.id))
-    spawnPlayerInArena(source, { spawn = list[1] })
+    spawnPlayerInArena(source, { spawn = list[1], dimension = getElementDimension(source) })
 end)
 
 -- Streak (usado por s_kills)

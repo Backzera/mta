@@ -34,7 +34,7 @@ end)
 -- Arma volta com munição completa ao trocar e pegar de novo
 addEventHandler("onPlayerWeaponSwitch", root, function(prevSlot, newSlot)
     if not DM.server.refillOnSwitch then return end
-    local weapon = getPedWeapon(source, newSlot)
+    local weapon = getPedWeapon(source)
     if weapon and weapon > 1 then refillPlayerWeapons(source, weapon) end
 end)
 

@@ -28,12 +28,24 @@ local function initDB()
     )]])
     -- migração: colunas novas (ALTER falha silenciosamente se já existir)
     local adds = {
-        "money INTEGER DEFAULT 0", "rp INTEGER DEFAULT 0", "ranked_wins INTEGER DEFAULT 0", "ranked_losses INTEGER DEFAULT 0",
-        "ranked_kills INTEGER DEFAULT 0", "vip INTEGER DEFAULT 0", "vip_until INTEGER DEFAULT 0", "tag TEXT DEFAULT ''",
-        "custom_tag TEXT DEFAULT ''", "name_color TEXT DEFAULT ''", "perks TEXT DEFAULT ''", "clan_id INTEGER DEFAULT 0",
-        "clan_role TEXT DEFAULT ''", "daily_last INTEGER DEFAULT 0",
+        money = "INTEGER DEFAULT 0", rp = "INTEGER DEFAULT 0", ranked_wins = "INTEGER DEFAULT 0", ranked_losses = "INTEGER DEFAULT 0",
+        ranked_kills = "INTEGER DEFAULT 0", vip = "INTEGER DEFAULT 0", vip_until = "INTEGER DEFAULT 0", tag = "TEXT DEFAULT ''",
+        custom_tag = "TEXT DEFAULT ''", name_color = "TEXT DEFAULT ''", perks = "TEXT DEFAULT ''", clan_id = "INTEGER DEFAULT 0",
+        clan_role = "TEXT DEFAULT ''", daily_last = "INTEGER DEFAULT 0",
     }
-    for _, col in ipairs(adds) do dbExec(db, "ALTER TABLE players ADD COLUMN " .. col) end
+    local existing = {}
+    local qh = dbQuery(db, "PRAGMA table_info(players)")
+    for _, col in ipairs(dbPoll(qh, -1) or {}) do existing[col.name] = true end
+    local migrated = false
+    for name, def in pairs(adds) do
+        if not existing[name] then
+            dbExec(db, "ALTER TABLE players ADD COLUMN " .. name .. " " .. def)
+            migrated = true
+        end
+    end
+    if migrated and existing.xp and not existing.rp then
+        dbExec(db, "UPDATE players SET rp = xp WHERE rp = 0") -- progresso antigo vira RP
+    end
     dbExec(db, "CREATE INDEX IF NOT EXISTS idx_players_kills ON players(kills DESC)")
     dbExec(db, "CREATE INDEX IF NOT EXISTS idx_players_rp ON players(rp DESC)")
 end
@@ -232,13 +244,14 @@ function setPlayerVip(player, level, days)
     local row = stats[player]
     if not row then return false end
     level = math.max(0, math.min(3, tonumber(level) or 0))
-    row.vip = level
     if level == 0 then
         row.vip_until = 0
     else
-        local base = (row.vip_until > getRealTime().timestamp and row.vip == level) and row.vip_until or getRealTime().timestamp
+        local now = getRealTime().timestamp
+        local base = (row.vip_until > now and row.vip == level) and row.vip_until or now
         row.vip_until = base + (tonumber(days) or 30) * 86400
     end
+    row.vip = level
     pushStatsToClient(player)
     return true
 end

@@ -63,7 +63,7 @@ local function createInstance(mode, fixedTeams)
     local inst = {
         id = nextInstance, mode = mode, dim = mode.dimension + instanceCounter[mode.id],
         state = "warmup", players = {}, teamOf = {}, teams = { A = {}, B = {} }, score = { A = 0, B = 0 },
-        kills = {}, deaths = {}, fixedTeams = fixedTeams or false,
+        kills = {}, deaths = {}, fixedTeams = fixedTeams or false, respawnTimers = {},
         teamNames = { A = "Time Ciano", B = "Time Roxo" },
         teamElems = { A = createTeam("Ranked " .. nextInstance .. " A", unpack(TEAM_COLORS.A)), B = createTeam("Ranked " .. nextInstance .. " B", unpack(TEAM_COLORS.B)) },
     }
@@ -74,6 +74,7 @@ end
 
 local function destroyInstance(inst)
     killTimerSafe(inst.timer)
+    for _, t in pairs(inst.respawnTimers or {}) do killTimerSafe(t) end
     for _, t in pairs(inst.teamElems) do if isElement(t) then destroyElement(t) end end
     instances[inst.id] = nil
 end
@@ -100,7 +101,14 @@ end
 local function spawnInTeam(inst, player)
     local team = inst.teamOf[player]
     local list = team and inst.mode.teamSpawns[team] or inst.mode.warmupSpawns
-    core:spawnPlayerInArena(player, { spawn = randomSpawn(list), weapons = inst.mode.weapons, armor = inst.mode.armor, dimension = inst.dim })
+    core:spawnPlayerInArena(player, { spawn = randomSpawn(list), weapons = inst.mode.weapons, armor = inst.mode.armor, dimension = inst.dim, team = team and inst.teamElems[team] or nil })
+    if team then setPlayerTeam(player, inst.teamElems[team]) end
+end
+
+local function killRespawn(inst, player)
+    local t = inst.respawnTimers and inst.respawnTimers[player]
+    if t and isTimer(t) then killTimer(t) end
+    if inst.respawnTimers then inst.respawnTimers[player] = nil end
 end
 
 -- ---------------- Entrada / saída ----------------
@@ -190,6 +198,7 @@ local function endMatch(inst, winner, reason)
             inst.teamOf = {}
             for p in pairs(inst.players) do
                 if isElement(p) then
+                    killRespawn(inst, p)
                     setPlayerTeam(p, nil)
                     inst.kills[p], inst.deaths[p] = 0, 0
                     setElementData(p, "dm:noReward", true)
@@ -205,6 +214,7 @@ end
 local function removePlayer(player, quitting)
     local inst = playerInst[player]
     if not inst then return end
+    killRespawn(inst, player)
     playerInst[player] = nil
     inst.players[player] = nil
     local team = inst.teamOf[player]
@@ -226,6 +236,8 @@ local function removePlayer(player, quitting)
         if count(inst.teams.A) == 0 or count(inst.teams.B) == 0 then
             endMatch(inst, count(inst.teams.A) > 0 and "A" or (count(inst.teams.B) > 0 and "B" or nil), "forfeit")
         end
+    elseif inst.state == "countdown" and inst.fixedTeams and (count(inst.teams.A) == 0 or count(inst.teams.B) == 0) then
+        endMatch(inst, count(inst.teams.A) > 0 and "A" or (count(inst.teams.B) > 0 and "B" or nil), "forfeit")
     elseif inst.state == "countdown" and count(inst.players) < inst.mode.teamSize * 2 and not inst.fixedTeams then
         killTimerSafe(inst.timer)
         inst.state = "warmup"
@@ -260,6 +272,7 @@ local function startMatch(inst)
     inst.endTick = inst.startTick + inst.mode.duration * 1000
     for p in pairs(inst.players) do
         if isElement(p) then
+            killRespawn(inst, p)
             inst.kills[p], inst.deaths[p] = 0, 0
             setPlayerTeam(p, inst.teamElems[inst.teamOf[p]])
             setElementData(p, "dm:noReward", false)
@@ -355,10 +368,13 @@ addEventHandler("onPlayerWasted", root, function()
     if not inst then return end
     local player = source
     inst.deaths[player] = (inst.deaths[player] or 0) + 1
+    if getElementData(player, "dm:inDuel") then return end
     local delay = inst.state == "match" and CFG.respawn or core:getConfig().respawnDelay
-    setTimer(function()
+    killRespawn(inst, player)
+    inst.respawnTimers[player] = setTimer(function()
+        inst.respawnTimers[player] = nil
         local cur = playerInst[player]
-        if isElement(player) and cur == inst and instances[inst.id] then
+        if isElement(player) and cur == inst and instances[inst.id] and isPedDead(player) then
             if inst.state == "match" then spawnInTeam(inst, player) else spawnWarmup(inst, player) end
         end
     end, delay, 1)

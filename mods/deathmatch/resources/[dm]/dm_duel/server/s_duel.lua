@@ -66,6 +66,8 @@ addEventHandler("duel:request", root, function(target, weaponKey, rounds)
     if not getElementData(target, "dm:ready") then notify(from, "Esse jogador ainda não entrou no jogo.", "warn") return end
     if playerDuel[from] then notify(from, "Você já está em um duelo.", "warn") return end
     if playerDuel[target] then notify(from, nick(target) .. " já está em um duelo.", "warn") return end
+    if getElementData(from, "dm:managed") then notify(from, "Saia da partida ranqueada antes de duelar.", "warn") return end
+    if getElementData(target, "dm:managed") then notify(from, nick(target) .. " está em uma partida ranqueada.", "warn") return end
     local set = weaponSet(weaponKey)
     if not set then notify(from, "Conjunto de armas inválido.", "error") return end
     rounds = tonumber(rounds) or 1
@@ -226,7 +228,7 @@ local function startDuel(from, to, weaponKey, rounds)
     local id = nextId
     local duel = {
         id = id, p1 = from, p2 = to, weaponKey = weaponKey, target = rounds,
-        dim = 1000 + (id % 60000), round = 0, state = "countdown",
+        dim = 60000 + (id % 5000), round = 0, state = "countdown",
         score = { [from] = 0, [to] = 0 },
         prevArena = { [from] = getElementData(from, "dm:arena"), [to] = getElementData(to, "dm:arena") },
     }
@@ -267,6 +269,7 @@ addEventHandler("duel:respond", root, function(id, accept)
     end
     if not isElement(from) then removeRequest(id, "offline") notify(to, "O desafiante saiu.", "error") return end
     if playerDuel[from] or playerDuel[to] then removeRequest(id, "busy") notify(to, "Um dos jogadores já está em duelo.", "warn") return end
+    if getElementData(from, "dm:managed") or getElementData(to, "dm:managed") then removeRequest(id, "busy") notify(to, "Um dos jogadores está em partida ranqueada.", "warn") return end
     removeRequest(id, "accepted", true)
     startDuel(from, to, r.weaponKey, r.rounds)
 end)

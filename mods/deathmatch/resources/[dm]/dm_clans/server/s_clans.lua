@@ -82,18 +82,6 @@ local function sendClanInfo(player)
             local r = core:getPlayerStats(p)
             data.clan.members[#data.clan.members + 1] = { name = nick(p), role = r and r.clan_role or "member", rp = r and r.rp or 0, online = true }
         end
-        -- membros offline
-        if db then
-            local qh = dbQuery(db, "SELECT name, clan_role, rp FROM players WHERE clan_id = ? ORDER BY rp DESC LIMIT 40", c.id)
-            local rows = dbPoll(qh, 200) or {}
-            local onlineNames = {}
-            for _, m in ipairs(data.clan.members) do onlineNames[m.name] = true end
-            for _, r in ipairs(rows) do
-                if not onlineNames[r.name] then
-                    data.clan.members[#data.clan.members + 1] = { name = r.name, role = r.clan_role, rp = tonumber(r.rp) or 0, online = false }
-                end
-            end
-        end
         if challenges[c.id] then
             local ch = challenges[c.id]
             local from = clans[ch.fromClanId]
@@ -112,6 +100,22 @@ local function sendClanInfo(player)
     for _, m in ipairs(MODES) do data.modes[#data.modes + 1] = { id = m.id, name = m.name, teamSize = m.teamSize } end
     data.createCost = ECO.clanCreate
     data.minClanMatch = core:getRankedConfig().minClanMatch
+    if c and db then
+        -- membros offline: consulta assíncrona, envia quando chegar
+        dbQuery(function(qh, p, d)
+            local rows = dbPoll(qh, 0) or {}
+            if not isElement(p) then return end
+            local onlineNames = {}
+            for _, m in ipairs(d.clan.members) do onlineNames[m.name] = true end
+            for _, r in ipairs(rows) do
+                if not onlineNames[r.name] then
+                    d.clan.members[#d.clan.members + 1] = { name = r.name, role = r.clan_role, rp = tonumber(r.rp) or 0, online = false }
+                end
+            end
+            triggerClientEvent(p, "clans:info", resourceRoot, d)
+        end, { player, data }, db, "SELECT name, clan_role, rp FROM players WHERE clan_id = ? ORDER BY rp DESC LIMIT 40", c.id)
+        return
+    end
     triggerClientEvent(player, "clans:info", resourceRoot, data)
 end
 
@@ -233,7 +237,10 @@ addEventHandler("clans:kick", root, function(targetName)
     if player ~= source then return end
     local ok, c, row = isOfficer(player)
     if not ok then return end
-    local target = core:findPlayer(targetName)
+    local target
+    for _, m in ipairs(onlineMembers(c.id)) do
+        if nick(m) == targetName then target = m end
+    end
     if target then
         local tc, trow = playerClan(target)
         if tc ~= c or trow.clan_role == "leader" then return end
