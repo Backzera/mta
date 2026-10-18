@@ -29,6 +29,12 @@
     <script src="client/c_scoreboard.lua" type="client" />
     <script src="client/c_help.lua" type="client" />
 
+    <!-- Shaders da interface -->
+    <file src="shaders/rounded.fx" />
+    <file src="shaders/blur.fx" />
+    <file src="shaders/aurora.fx" />
+    <file src="shaders/vignette.fx" />
+
     <!-- Assets -->
     <file src="assets/fonts/Poppins-Regular.ttf" />
     <file src="assets/fonts/Poppins-Medium.ttf" />
