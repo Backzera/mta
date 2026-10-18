@@ -33,6 +33,8 @@ local function hints(arena)
 end
 
 local function pushHud()
+    local open = UI.getOpenPanel()
+    if open and open ~= "board" then return end   -- HUD fica oculto com painel aberto: não reenvia
     if not getElementData(localPlayer, "dm:ready") then
         if lastSig ~= "off" then lastSig = "off" UI.set("hud", { visible = false }) end
         return
@@ -65,7 +67,7 @@ addEventHandler("onClientRender", root, function()
     local now = getTickCount()
     if now - fpsTick >= 1000 then fps, frames, fpsTick = frames, 0, now end
 end)
-setTimer(pushHud, 100, 0)
+setTimer(pushHud, 150, 0)
 
 addEvent("dm:onSpawn", true)
 addEventHandler("dm:onSpawn", root, function() spawnTick = getTickCount() end)

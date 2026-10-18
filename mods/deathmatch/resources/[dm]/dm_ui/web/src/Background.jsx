@@ -8,18 +8,18 @@ export default function Background({ strength = 1 }) {
     const canvas = ref.current
     const ctx = canvas.getContext('2d')
     let raf, last = 0, w = 0, h = 0
-    const parts = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random(), r: 0.6 + Math.random() * 1.8, s: 0.02 + Math.random() * 0.05, p: Math.random() * Math.PI * 2 }))
+    const parts = Array.from({ length: 36 }, () => ({ x: Math.random(), y: Math.random(), r: 0.6 + Math.random() * 1.8, s: 0.02 + Math.random() * 0.05, p: Math.random() * Math.PI * 2 }))
     const blobs = [
       { x: 0.18, y: 0.3, r: 0.55, c: '34,230,138', a: 0.22, f: 0.11 },
       { x: 0.82, y: 0.25, r: 0.5, c: '124,255,178', a: 0.14, f: 0.07 },
       { x: 0.55, y: 0.95, r: 0.7, c: '15,120,70', a: 0.26, f: 0.05 },
       { x: 0.9, y: 0.8, r: 0.45, c: '34,230,138', a: 0.12, f: 0.09 },
     ]
-    const resize = () => { w = canvas.width = Math.floor(innerWidth * 0.5); h = canvas.height = Math.floor(innerHeight * 0.5) }
+    const resize = () => { w = canvas.width = Math.floor(innerWidth * 0.3); h = canvas.height = Math.floor(innerHeight * 0.3) }
     resize(); addEventListener('resize', resize)
     const draw = (t) => {
       raf = requestAnimationFrame(draw)
-      if (t - last < 33) return   // ~30 fps é suficiente para um fundo
+      if (t - last < 66) return   // ~15 fps: o CEF do MTA rasteriza por software
       last = t
       const s = t / 1000
       ctx.clearRect(0, 0, w, h)

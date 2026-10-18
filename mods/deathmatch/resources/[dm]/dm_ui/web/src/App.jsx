@@ -29,7 +29,7 @@ export default function App() {
   const bg = screen && screen !== 'board'
   return (
     <>
-      {bg && <div className={`scene scene--${screen}`}><Background strength={screen === 'login' ? 1.3 : 1} /><div className="scene__grain" /></div>}
+      {bg && <div className={`scene scene--${screen}`}><Background strength={screen === 'login' ? 1.3 : 1} /></div>}
       <div className={`screen ${screen ? 'is-open' : ''}`} key={screen || 'none'}>
         {screen === 'hub' && st.hub && <Hub st={st.hub} />}
         {screen === 'shop' && st.shop && <Shop st={st.shop} />}

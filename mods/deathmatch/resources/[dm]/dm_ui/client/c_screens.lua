@@ -83,7 +83,7 @@ function openHub()
     local item = hub.selected and findItem(hub.selected)
     if item then cam.x, cam.y, cam.z = previewPoint(item) end
     addEventHandler("onClientRender", root, hubRender)
-    every("hub", 1000, function() UI.merge("hub", { online = #getElementsByType("player") }) UI.set("hub", hubState()) end)
+    every("hub", 2500, function() UI.set("hub", hubState()) end)
 end
 UI.onClose("hub", function()
     removeEventHandler("onClientRender", root, hubRender)
@@ -151,9 +151,17 @@ local function shopState()
 end
 function openShop()
     if not ready() then return end
-    if UI.open("shop", shopState()) then every("shop", 700, function() UI.set("shop", shopState()) end) end
+    if UI.open("shop", shopState()) then every("shop", 4000, function() UI.set("shop", shopState()) end) end
 end
 UI.onClose("shop", function() stopTimer("shop") end)
+addEventHandler("onClientElementDataChange", localPlayer, function(name)
+    if name == "dm:money" or name == "dm:perks" or name == "dm:tag" or name == "dm:vip" or name == "dm:nameColor" then
+        if UI.isOpen("shop") then UI.set("shop", shopState()) end
+        if UI.isOpen("crates") then UI.set("crates", cratesState()) end
+    elseif name == "dm:skin" or name == "dm:wskin" then
+        if UI.isOpen("crates") then UI.set("crates", cratesState()) end
+    end
+end)
 UI.on("shop", "buy", function(p) triggerServerEvent("shop:buy", localPlayer, p.cat, p.key) end)
 bindKey("F4", "down", function() UI.toggle("shop", openShop) end)
 addEvent("shop:open", true)
@@ -188,7 +196,7 @@ local function pushDuel() UI.set("duel", duelState()) end
 function openDuelPanel(target)
     if isElement(target) then duel.selected = target end
     if not ready() then return end
-    if UI.open("duel", duelState()) then every("duel", 2000, pushDuel) end
+    if UI.open("duel", duelState()) then every("duel", 3000, pushDuel) end
 end
 UI.onClose("duel", function() stopTimer("duel") duel.selected = nil end)
 UI.on("duel", "request", function(p)
@@ -374,7 +382,7 @@ end
 local reelOpen = false
 function openCratesPanel()
     if not ready() then return end
-    if UI.open("crates", cratesState()) then every("crates", 800, function() UI.set("crates", cratesState()) end) end
+    if UI.open("crates", cratesState()) then every("crates", 4000, function() UI.set("crates", cratesState()) end) end
 end
 UI.onClose("crates", function() stopTimer("crates") reelOpen = false UI.push("reelClose", {}) end)
 UI.onEscape("crates", function() if not reelOpen then UI.close("crates") end end)
@@ -432,7 +440,7 @@ local function boardState()
 end
 bindKey("tab", "down", function()
     if not ready() or UI.getOpenPanel() then return end
-    if UI.open("board", boardState(), { noCursor = true }) then every("board", 500, function() UI.set("board", boardState()) end) end
+    if UI.open("board", boardState(), { noCursor = true }) then every("board", 1500, function() UI.set("board", boardState()) end) end
 end)
 bindKey("tab", "up", function() if UI.isOpen("board") then UI.close("board") end end)
 UI.onClose("board", function() stopTimer("board") end)
