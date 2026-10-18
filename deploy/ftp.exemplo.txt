@@ -1,3 +1,0 @@
-# Copie este arquivo para deploy\ftp.local.txt e preencha com os dados de FTP do painel da hospedagem
-# (TCAdmin: Informacoes do servico / FTP). Esse arquivo NAO vai para o GitHub.
-open ftp://USUARIO:SENHA@177.54.146.12:21/ -passive=on

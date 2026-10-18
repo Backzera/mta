@@ -1,7 +1,0 @@
-<meta>
-	<info author="" name="" version="1.0.0" type="script"/>
-	
-	<script src="Arena-area.lua" type="server" />
-         <map src="Arena-mapa.map" dimension="0" />
-          <script src="portaoauto.lua" />
-</meta>

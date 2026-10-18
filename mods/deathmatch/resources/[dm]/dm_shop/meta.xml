@@ -1,6 +1,0 @@
-<meta>
-    <info author="UTG" name="DM Shop" description="Loja (F4): tags, cores de nick, VIP e extras comprados com $ do jogo" type="script" version="1.0.0" />
-    <include resource="dm_core" />
-    <script src="server/s_shop.lua" type="server" />
-    <min_mta_version server="1.5.9" client="1.5.9" />
-</meta>
