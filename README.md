@@ -113,8 +113,32 @@ privada com as tags dos clãs. Resultado anunciado para o servidor com o placar.
 - **Munição**: ao trocar de arma e pegar de novo ela volta cheia; ao matar recarrega.
 - **Nametags**: tag (staff/VIP/comprada/elo) e tag do clã destacadas acima do nick colorido, vida e colete.
 
+## Chat
+
+Estilo moderno com ícones de texto, ID e cores (o chat padrão do MTA renderiza os glifos):
+
+```
+✿ Global  ★ ✦ [1042] [UTG] Nick » mensagem      (global, padrão)
+▲ Arena   ...                                  /a <msg>   só a sua arena/dimensão
+◆ Clã     ...                                  /c <msg>   só o seu clã
+✉ PM de Nick [1042] » msg                       /pm <id ou nome> <msg>
+♛ Staff   ...                                  /staff <msg>
+```
+
+- Antes do nick: glifo da tag (♛ staff, ★ VIP, ◆ comprada), glifo do elo (● ◆ ★ ✦ ❖ ♛ ☠), `[ID]`, `[TAG]`, `[CLÃ]`.
+- Cor do nick = cor comprada/VIP; cor da mensagem muda para VIP e staff.
+- Emojis por atalho em qualquer canal: `:skull:` ☠ `:star:` ★ `:crown:` ♛ `:heart:` ♥ `:flower:` ✿ ... (`/emojis` lista todos).
+- ID público por conta (`/id`), aceito em `/pm`, `/tp`, `/kick`, `/pagar` etc. Entrada e saída anunciadas com ID.
+- Kill chat `☠ Killer » Vítima · Arma ✦ HEADSHOT`, sequências `★`, X1 `✦`, ranqueadas `★`, clã x clã `◆`, anúncios `♛`.
+Tudo em `dm_core/shared/config.lua` → `DM.chat` (canais, glifos, emojis, cores).
+
 ## Interface
 
-Paleta UTG (violeta `#8B5CF6`, ciano `#22D3EE`, dourado VIP `#F5C451`), fonte Poppins, logo em
-`dm_core/assets/img/logo.png` (canto inferior esquerdo — substitua pela sua, 640x200 PNG). Ícones em
-`assets/img`. Tudo escalonável por resolução.
+UI v2 (`dm_core/client/c_ui.lua`, copiada para os outros recursos): shaders HLSL em `dm_core/shaders/`
+(cantos arredondados com anti-aliasing e brilho, fundo desfocado em duas passagens, gradiente animado
+"aurora", vinheta), motor de animação (tweens com easing/overshoot, molas, contadores, hover, cascata),
+componentes (card de vidro, botões, abas deslizantes, barras com rastro, anéis, campos, toggles) e a
+moldura padrão de painel (`UI.panelFrame`). Paleta verde (`#22E68A` / `#7CFFB2`), dourado VIP `#F5C451`,
+fonte Poppins, logo em `dm_core/assets/img/logo.png` (canto inferior esquerdo, com nick/elo/$/vida
+empilhados em cima — substitua pela sua, 640x200 PNG). Se a placa de vídeo não compilar os shaders, tudo
+cai para primitivas dx automaticamente. Guia para novos painéis: `docs/UI_SPEC.md`.
