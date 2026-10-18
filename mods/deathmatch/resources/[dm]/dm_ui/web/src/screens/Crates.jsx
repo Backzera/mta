@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { toLua, asArray, asObj } from '../bridge.js'
 import { Frame, Btn, Tabs, Counter, Empty, Pill, rgb, rgba, money } from '../ui.jsx'
 
@@ -83,15 +83,24 @@ export default function Crates({ st, reel }) {
 function Reel({ reel, item, rar }) {
   const keys = asArray(reel.items)
   const target = reel.target || 34
-  const [go, setGo] = useState(false)
+  const trackRef = useRef(null)
+  const [tx, setTx] = useState(null)
   const [done, setDone] = useState(false)
-  useEffect(() => { const a = setTimeout(() => setGo(true), 60); const b = setTimeout(() => setDone(true), 5400); return () => { clearTimeout(a); clearTimeout(b) } }, [reel.id])
+  useEffect(() => {
+    setTx(null); setDone(false)
+    // posição final medida no DOM: centro da carta alvo alinhado com a agulha (50% da tela)
+    const a = setTimeout(() => {
+      const el = trackRef.current && trackRef.current.children[target - 1]
+      if (el) setTx(window.innerWidth / 2 - (el.offsetLeft + el.offsetWidth / 2))
+    }, 80)
+    const b = setTimeout(() => setDone(true), 5500)
+    return () => { clearTimeout(a); clearTimeout(b) }
+  }, [reel.id])
   const result = item(reel.result)
-  const cardW = 9, gap = 0.6 // vw
-  const offset = (target - 1) * (cardW + gap)
+  const start = `translateX(calc(50vw - 4.5vw))`
   return (
     <div className="reel">
-      <div className="reel__track" style={{ transform: `translateX(calc(50vw - ${cardW / 2}vw - ${go ? offset : 0}vw))`, transition: go ? 'transform 5.2s cubic-bezier(.12,.9,.14,1)' : 'none' }}>
+      <div ref={trackRef} className="reel__track" style={{ transform: tx === null ? start : `translateX(${tx}px)`, transition: tx === null ? 'none' : 'transform 5.2s cubic-bezier(.12,.9,.14,1)' }}>
         {keys.map((k, i) => { const it = item(k); return it ? <ItemCard key={i} it={it} rar={rar(it)} selected={done && i === target - 1} className="item--reel" /> : null })}
       </div>
       <div className="reel__needle" />

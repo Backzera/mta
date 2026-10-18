@@ -74,6 +74,10 @@ WEAPONS = {
 }
 
 
+# cor do rastro / traçante / clarão das skins Mítica e Ultimate (hex RRGGBB)
+FX = {"ak47_asiimov": "FF8C32", "ak47_fuel_injector": "FFB020", "ak47_fire_serpent": "FF4A1E", "m4_golden_coil": "F5C451", "m4_masterpiece": "7CC8FF"}
+
+
 def slug(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
     return re.sub(r"[^a-z0-9]+", "_", s.lower()).strip("_")
@@ -123,7 +127,10 @@ def main():
     all_items = []
     for k, n, a, r in money: all_items.append(dict(key=k, type="money", name=n, amount=a, rarity=r))
     for k, n, t, r in legacy: all_items.append(dict(key=k, type="wskin", weapon="all", name=n + " (outras armas)", texture=t, rarity=r))
-    for it in items: all_items.append(dict(key=it["key"], type="wskin", weapon=it["weapon"], name=it["name"], rarity=it["rarity"], preview=1))
+    for it in items:
+        d = dict(key=it["key"], type="wskin", weapon=it["weapon"], name=it["name"], rarity=it["rarity"], preview=1)
+        if it["key"] in FX: d["fx"] = FX[it["key"]]
+        all_items.append(d)
     for k, n, m, r in skins: all_items.append(dict(key=k, type="skin", name=n, model=m, rarity=r))
 
     # ---- caixas: peso por raridade dividido entre os itens daquela raridade
@@ -174,7 +181,9 @@ def main():
             '    <include resource="dm_core" />',
             '    <script src="server/s_crates.lua" type="server" />',
             '    <script src="client/c_skins.lua" type="client" />',
-            '    <file src="texreplace.fx" />']
+            '    <script src="client/c_fx.lua" type="client" />',
+            '    <file src="texreplace.fx" />',
+            '    <file src="fx/glow.png" />']
     meta += [f'    <file src="textures/{t}" />' for _, _, t, _ in legacy]
     meta += [f'    <file src="{f}" />' for f in files]
     meta += ['    <min_mta_version server="1.5.9" client="1.5.9" />', '</meta>']

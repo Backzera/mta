@@ -14,7 +14,7 @@
     <export function="isPanelOpen" type="client" />
 
     <!-- Build do Vite (gerado automaticamente por npm run build; não edite à mão) -->
-    <file src="dist/assets/hub-CPT8NT9D.js" />
+    <file src="dist/assets/hub-CQZBRLG3.js" />
     <file src="dist/fonts/Oswald.ttf" />
     <file src="dist/fonts/Poppins-Regular.ttf" />
     <file src="dist/fonts/Poppins-SemiBold.ttf" />
