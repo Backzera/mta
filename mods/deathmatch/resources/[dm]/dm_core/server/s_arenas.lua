@@ -13,7 +13,7 @@ local pdata        = {}   -- player -> { respawnTimer, protectTimer, freezeTimer
 
 local function getData(player)
     if not pdata[player] then
-        pdata[player] = { streak = 0, lastSpawn = 0 }
+        pdata[player] = { streak = 0, lastSpawn = 0, spawnSerial = 0, collisionFreeze = false }
     end
     return pdata[player]
 end
@@ -139,6 +139,10 @@ function spawnPlayerInArena(player, opts)
     local x, y, z, rot = sp[1], sp[2], sp[3], sp[4] or 0
     local dim = opts.dimension or arena.dimension
 
+    data.spawnSerial = (data.spawnSerial or 0) + 1
+    local spawnSerial = data.spawnSerial
+    data.collisionFreeze = opts.freeze ~= false
+
     spawnPlayer(player, x, y, z + 0.5, rot, getPlayerSkin(player), 0, dim, opts.team or getPlayerTeam(player) or nil)
     setElementInterior(player, 0)
     setElementDimension(player, dim)
@@ -149,12 +153,19 @@ function spawnPlayerInArena(player, opts)
     setPedArmor(player, opts.armor or arena.armor or 0)
     giveArenaWeapons(player, opts.weapons or arena.weapons)
 
-    -- Congela um instante para o mapa carregar
+    -- Mantém congelado enquanto o cliente espera a colisão/streaming da arena.
+    -- O cliente libera antes via dm:spawnCollisionReady. O timer é só um fallback
+    -- para nunca deixar o jogador preso se o cliente não responder.
     if opts.freeze ~= false then
         setElementFrozen(player, true)
+        local fallback = math.max(tonumber(DM.server.spawnFreeze) or 900, 7000)
         data.freezeTimer = setTimer(function()
-            if isElement(player) then setElementFrozen(player, false) end
-        end, DM.server.spawnFreeze, 1)
+            if isElement(player) and data.spawnSerial == spawnSerial and data.collisionFreeze then
+                data.collisionFreeze = false
+                setElementFrozen(player, false)
+                outputDebugString(("[dm_core] Timeout esperando colisão da arena '%s' para %s"):format(arena.id, getPlayerName(player)), 2)
+            end
+        end, fallback, 1)
     end
 
     -- Proteção contra spawn-kill
@@ -166,9 +177,26 @@ function spawnPlayerInArena(player, opts)
         end
     end
 
-    triggerClientEvent(player, "dm:onSpawn", player, arena.id)
+    triggerClientEvent(player, "dm:onSpawn", player, arena.id, spawnSerial, data.collisionFreeze)
     return true
 end
+
+-- O cliente confirma que os objetos/chão da arena já estão carregados.
+-- O serial impede uma confirmação atrasada de liberar um spawn mais novo.
+addEvent("dm:spawnCollisionReady", true)
+addEventHandler("dm:spawnCollisionReady", root, function(serial)
+    if client ~= source then return end
+    local data = getData(source)
+    if tonumber(serial) ~= tonumber(data.spawnSerial) then return end
+    if not data.collisionFreeze then return end
+
+    data.collisionFreeze = false
+    killTimerSafe(data.freezeTimer)
+    data.freezeTimer = nil
+    if isElementFrozen(source) then
+        setElementFrozen(source, false)
+    end
+end)
 
 function getArenaSpawns(arenaId)
     return arenaSpawns[arenaId], spawnSource[arenaId]

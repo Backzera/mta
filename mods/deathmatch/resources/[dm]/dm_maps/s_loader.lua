@@ -36,10 +36,20 @@ local function createObjectFrom(def, dimension, parent)
     setElementParent(obj, parent)
     setElementDimension(obj, dimension)
     setElementInterior(obj, def.interior)
+
+    -- Identifica o objeto para o cliente saber quando a geometria da arena já foi streamada.
+    if def.arenaId then
+        setElementData(obj, "dm:mapArena", def.arenaId)
+    end
+
     if def.scale ~= 1 then setObjectScale(obj, def.scale) end
     if def.alpha ~= 255 then setElementAlpha(obj, def.alpha) end
     if def.doublesided then setElementDoubleSided(obj, true) end
-    if not def.collisions then setElementCollisionsEnabled(obj, false) end
+
+    -- Não dependa do valor padrão do GTA: aplica a colisão explicitamente.
+    -- Isso evita objetos visíveis porém atravessáveis depois de trocar de dimensão.
+    setElementCollisionsEnabled(obj, def.collisions ~= false)
+
     if not def.breakable then setObjectBreakable(obj, false) end
     if def.frozen then setElementFrozen(obj, true) end
     return obj
@@ -73,6 +83,7 @@ local function loadMapFile(path, arena, parent, stats, spawns)
             local model = num(node, "model")
             if model then
                 local def = {
+                    arenaId = arena.id,
                     model = model, x = num(node, "posX", 0), y = num(node, "posY", 0), z = num(node, "posZ", 0),
                     rx = num(node, "rotX", 0), ry = num(node, "rotY", 0), rz = num(node, "rotZ", 0), lod = bool(node, "lod", false),
                     interior = num(node, "interior", 0), scale = num(node, "scale", 1), alpha = num(node, "alpha", 255),
@@ -139,7 +150,11 @@ local function loadArenaMaps(arena)
         local p = ("maps/%s_%d.map"):format(arena.id, i)
         if fileExists(p) then files[#files + 1] = p end
     end
-    if #files == 0 then return end
+    if #files == 0 then
+        setElementData(root, "dm:hasMap:" .. arena.id, false)
+        setElementData(root, "dm:mapObjectCount:" .. arena.id, 0)
+        return
+    end
 
     local parent = createElement("arena-map", "map_" .. arena.id)
     roots[arena.id] = parent
@@ -148,6 +163,9 @@ local function loadArenaMaps(arena)
     for _, path in ipairs(files) do
         loadMapFile(path, arena, parent, stats, spawns)
     end
+    setElementData(root, "dm:hasMap:" .. arena.id, stats.objects > 0)
+    setElementData(root, "dm:mapObjectCount:" .. arena.id, stats.objects)
+
     if #spawns > 0 then
         core:setArenaSpawns(arena.id, spawns, "map")
     end

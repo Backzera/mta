@@ -6,50 +6,160 @@
 local death = nil
 local spawnTick = 0
 local badSpawnReported = false
+local spawnCheckTimer = nil
+local activeSpawnSerial = 0
 
 local function arenaOf(player)
     local id = getElementData(player, "dm:arena")
     return id and DM.getArena(id) or nil
 end
 
--- Ajusta ao chão (correções pequenas; chão nativo do GTA aceita correções maiores)
-local function snapToGround()
-    local arena = arenaOf(localPlayer)
-    if not arena or getElementData(localPlayer, "dm:inDuel") then return end
-    local x, y, z = getElementPosition(localPlayer)
-    local ground = getGroundPosition(x, y, z + (arena.native and 60 or 1))
-    if ground and ground > 0 then
-        local diff = z - ground
-        local limit = arena.native and 60 or 12
-        if (diff > 1.5 and diff < limit) or (diff < -0.3 and diff > -limit) then
-            setElementPosition(localPlayer, x, y, ground + 1.0)
-        end
+local function stopSpawnCheck()
+    if spawnCheckTimer and isTimer(spawnCheckTimer) then
+        killTimer(spawnCheckTimer)
     end
+    spawnCheckTimer = nil
 end
 
--- Caiu no vazio logo após nascer -> pede reposicionamento ao servidor
+-- Quantos objetos do mapa desta arena já existem fisicamente no cliente.
+-- Só conta objetos da dimensão atual e próximos do jogador.
+local function streamedMapObjects(arenaId, radius)
+    if getElementData(root, "dm:hasMap:" .. tostring(arenaId)) ~= true then
+        return true, 0
+    end
+
+    local px, py, pz = getElementPosition(localPlayer)
+    local dim = getElementDimension(localPlayer)
+    local r2 = (radius or 180) ^ 2
+    local count = 0
+
+    for _, obj in ipairs(getElementsByType("object")) do
+        if isElement(obj)
+            and getElementDimension(obj) == dim
+            and getElementData(obj, "dm:mapArena") == arenaId
+            and isElementStreamedIn(obj) then
+
+            local ox, oy, oz = getElementPosition(obj)
+            local dx, dy, dz = ox - px, oy - py, oz - pz
+            if dx * dx + dy * dy + dz * dz <= r2 then
+                count = count + 1
+                if count >= 3 then return true, count end
+            end
+        end
+    end
+
+    return false, count
+end
+
+-- Encontra o piso REAL logo abaixo do spawn. Diferente de getGroundPosition,
+-- este raycast também enxerga objetos criados pelo dm_maps.
+local function collisionBelow()
+    local x, y, z = getElementPosition(localPlayer)
+    local hit, _, _, hitZ = processLineOfSight(
+        x, y, z + 3.0,
+        x, y, z - 100.0,
+        true,   -- prédios/chão nativo
+        false,  -- veículos
+        false,  -- players/peds
+        true,   -- objetos do mapa
+        false,  -- dummies
+        false, false, false,
+        localPlayer
+    )
+
+    if hit and hitZ and hitZ <= z + 2.5 and (z - hitZ) < 95 then
+        return hitZ
+    end
+    return nil
+end
+
+local function waitingForWorld()
+    if type(isElementWaitingForGroundToLoad) == "function" then
+        return isElementWaitingForGroundToLoad(localPlayer) == true
+    end
+    return false
+end
+
+-- Caiu no vazio depois de ser liberado -> pede reposicionamento ao servidor.
 local function checkFalling()
     if badSpawnReported or isPedDead(localPlayer) then return end
     if getElementData(localPlayer, "dm:inDuel") then return end
     if isElementFrozen(localPlayer) then return end
-    local vx, vy, vz = getElementVelocity(localPlayer)
+    local _, _, vz = getElementVelocity(localPlayer)
     if not isPedOnGround(localPlayer) and vz < -0.25 then
         badSpawnReported = true
         triggerServerEvent("dm:badSpawn", localPlayer)
     end
 end
 
+local function finishSpawnValidation(serial, groundZ, collisionFreeze)
+    if serial ~= activeSpawnSerial then return end
+    stopSpawnCheck()
+
+    if groundZ then
+        local x, y, z = getElementPosition(localPlayer)
+        local safeZ = groundZ + 1.0
+        if math.abs(z - safeZ) > 0.12 and math.abs(z - safeZ) < 95 then
+            setElementPosition(localPlayer, x, y, safeZ)
+        end
+    end
+
+    if collisionFreeze then
+        triggerServerEvent("dm:spawnCollisionReady", localPlayer, serial)
+    end
+
+    setTimer(checkFalling, 1200, 1)
+    setTimer(checkFalling, 2600, 1)
+end
+
+local function beginSpawnValidation(arenaId, serial, collisionFreeze)
+    stopSpawnCheck()
+    activeSpawnSerial = tonumber(serial) or (activeSpawnSerial + 1)
+
+    local mySerial = activeSpawnSerial
+    local started = getTickCount()
+    local timeout = 6200
+
+    local function attempt()
+        if mySerial ~= activeSpawnSerial or isPedDead(localPlayer) then
+            stopSpawnCheck()
+            return
+        end
+        if getElementData(localPlayer, "dm:arena") ~= arenaId then
+            stopSpawnCheck()
+            return
+        end
+
+        local mapReady = streamedMapObjects(arenaId, 180)
+        local groundZ = collisionBelow()
+        local worldReady = not waitingForWorld()
+
+        if mapReady and groundZ and worldReady then
+            finishSpawnValidation(mySerial, groundZ, collisionFreeze)
+            return
+        end
+
+        if getTickCount() - started >= timeout then
+            -- Timeout de segurança: usa o melhor chão encontrado, se houver,
+            -- e deixa a rede dm:badSpawn cuidar de um caso extremo.
+            finishSpawnValidation(mySerial, groundZ, collisionFreeze)
+        end
+    end
+
+    attempt()
+    if mySerial == activeSpawnSerial and not spawnCheckTimer then
+        spawnCheckTimer = setTimer(attempt, 180, 0)
+    end
+end
+
 addEvent("dm:onSpawn", true)
-addEventHandler("dm:onSpawn", root, function(arenaId)
+addEventHandler("dm:onSpawn", root, function(arenaId, serial, collisionFreeze)
     death = nil
     spawnTick = getTickCount()
     badSpawnReported = false
     UI.resetTween("bar:hud:hp")
-    setTimer(snapToGround, 400, 1)
-    setTimer(snapToGround, 1300, 1)
-    setTimer(checkFalling, 1900, 1)
-    setTimer(checkFalling, 3200, 1)
     setCameraTarget(localPlayer)
+    beginSpawnValidation(arenaId, tonumber(serial) or 0, collisionFreeze == true)
 end)
 
 addEvent("dm:onEnterArena", true)
