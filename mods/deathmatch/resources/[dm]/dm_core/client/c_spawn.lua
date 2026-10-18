@@ -8,11 +8,35 @@ local spawnTick = 0
 local badSpawnReported = false
 local spawnCheckTimer = nil
 local activeSpawnSerial = 0
+local spawnBaseZ = 0
 
 local function arenaOf(player)
     local id = getElementData(player, "dm:arena")
     return id and DM.getArena(id) or nil
 end
+
+local function forceObjectCollision(obj)
+    if not isElement(obj) or getElementType(obj) ~= "object" then return end
+    if not getElementData(obj, "dm:mapArena") then return end
+
+    setElementCollisionsEnabled(obj, true)
+
+    -- A relação player <-> objeto é client-side. Força explicitamente para
+    -- impedir ghost/collision state residual de outro resource.
+    if not getPedOccupiedVehicle(localPlayer) then
+        setElementCollisionsEnabled(localPlayer, true)
+        if type(setElementCollidableWith) == "function" then
+            setElementCollidableWith(localPlayer, obj, true)
+            setElementCollidableWith(obj, localPlayer, true)
+        end
+    end
+end
+
+addEventHandler("onClientElementStreamIn", root, function()
+    if getElementType(source) == "object" and getElementData(source, "dm:mapArena") then
+        forceObjectCollision(source)
+    end
+end)
 
 local function stopSpawnCheck()
     if spawnCheckTimer and isTimer(spawnCheckTimer) then
@@ -39,6 +63,7 @@ local function streamedMapObjects(arenaId, radius)
             and getElementData(obj, "dm:mapArena") == arenaId
             and isElementStreamedIn(obj) then
 
+            forceObjectCollision(obj)
             local ox, oy, oz = getElementPosition(obj)
             local dx, dy, dz = ox - px, oy - py, oz - pz
             if dx * dx + dy * dy + dz * dz <= r2 then
@@ -85,10 +110,14 @@ local function checkFalling()
     if badSpawnReported or isPedDead(localPlayer) then return end
     if getElementData(localPlayer, "dm:inDuel") then return end
     if isElementFrozen(localPlayer) then return end
+    local _, _, z = getElementPosition(localPlayer)
     local _, _, vz = getElementVelocity(localPlayer)
-    if not isPedOnGround(localPlayer) and vz < -0.25 then
+
+    -- Só considera spawn ruim se realmente despencou vários metros.
+    -- Isso não confunde pulo/queda normal durante a partida com "limbo".
+    if z < spawnBaseZ - 8 and not isPedOnGround(localPlayer) and vz < -0.15 then
         badSpawnReported = true
-        triggerServerEvent("dm:badSpawn", localPlayer)
+        triggerServerEvent("dm:badSpawn", localPlayer, "fell_through")
     end
 end
 
@@ -142,10 +171,17 @@ local function beginSpawnValidation(arenaId, serial, collisionFreeze)
         end
 
         if getTickCount() - started >= timeout then
-            -- Timeout de segurança: usa o melhor chão encontrado, se houver,
-            -- e deixa a rede dm:badSpawn cuidar de um caso extremo.
             completed = true
-            finishSpawnValidation(mySerial, groundZ, collisionFreeze)
+            stopSpawnCheck()
+
+            if groundZ and mapReady then
+                finishSpawnValidation(mySerial, groundZ, collisionFreeze)
+            else
+                -- Não libera o jogador no vazio. O servidor tenta um spawn
+                -- âncora e, se repetir, devolve ao lobby em vez de loopar.
+                badSpawnReported = true
+                triggerServerEvent("dm:badSpawn", localPlayer, "no_collision")
+            end
         end
     end
 
@@ -160,6 +196,21 @@ addEventHandler("dm:onSpawn", root, function(arenaId, serial, collisionFreeze)
     death = nil
     spawnTick = getTickCount()
     badSpawnReported = false
+
+    local _, _, z = getElementPosition(localPlayer)
+    spawnBaseZ = z
+
+    if not getPedOccupiedVehicle(localPlayer) then
+        setElementCollisionsEnabled(localPlayer, true)
+    end
+
+    -- Reaplica colisão nos objetos que já estavam streamed antes do spawn.
+    for _, obj in ipairs(getElementsByType("object")) do
+        if isElementStreamedIn(obj) and getElementData(obj, "dm:mapArena") == arenaId then
+            forceObjectCollision(obj)
+        end
+    end
+
     UI.resetTween("bar:hud:hp")
     setCameraTarget(localPlayer)
     beginSpawnValidation(arenaId, tonumber(serial) or 0, collisionFreeze == true)

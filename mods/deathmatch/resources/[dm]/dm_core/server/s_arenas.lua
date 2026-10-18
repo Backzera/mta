@@ -162,8 +162,9 @@ function spawnPlayerInArena(player, opts)
         data.freezeTimer = setTimer(function()
             if isElement(player) and data.spawnSerial == spawnSerial and data.collisionFreeze then
                 data.collisionFreeze = false
-                setElementFrozen(player, false)
-                outputDebugString(("[dm_core] Timeout esperando colisão da arena '%s' para %s"):format(arena.id, getPlayerName(player)), 2)
+                outputDebugString(("[dm_core] Timeout esperando colisão da arena '%s' para %s — enviando ao lobby"):format(arena.id, getPlayerName(player)), 2)
+                notifyPlayer(player, "Tempo limite ao carregar a colisão do mapa. Voltando ao lobby.", "warn", "Mapa")
+                setPlayerArena(player, "lobby", true)
             end
         end, fallback, 1)
     end
@@ -191,6 +192,8 @@ addEventHandler("dm:spawnCollisionReady", root, function(serial)
     if not data.collisionFreeze then return end
 
     data.collisionFreeze = false
+    data.badSpawns = 0
+    data.badSpawnTick = nil
     killTimerSafe(data.freezeTimer)
     data.freezeTimer = nil
     if isElementFrozen(source) then
@@ -210,6 +213,10 @@ function setPlayerArena(player, arenaId, silent, noSpawn)
     local data = getData(player)
     killTimerSafe(data.respawnTimer)
     data.streak = 0
+    if prevId ~= arenaId then
+        data.badSpawns = 0
+        data.badSpawnTick = nil
+    end
     setElementData(player, "dm:streak", 0)
     setElementData(player, "dm:arena", arenaId)
     setElementData(player, "dm:inDuel", false)
@@ -332,19 +339,41 @@ end)
 
 -- Rede de segurança: o cliente detectou que caiu no vazio logo após nascer
 addEvent("dm:badSpawn", true)
-addEventHandler("dm:badSpawn", root, function()
+addEventHandler("dm:badSpawn", root, function(reason)
     if client ~= source then return end
+
     local arena = getPlayerArena(source)
     if not arena or getElementData(source, "dm:inDuel") then return end
+    if getElementData(source, "dm:managed") then return end
+
     local data = getData(source)
     local now = getTickCount()
-    data.badSpawns = (data.badSpawnTick and now - data.badSpawnTick < 20000) and (data.badSpawns or 0) + 1 or 1
+
+    data.badSpawns = (data.badSpawnTick and now - data.badSpawnTick < 20000)
+        and (data.badSpawns or 0) + 1 or 1
     data.badSpawnTick = now
-    if data.badSpawns > 3 then return end -- evita loop
-    if getElementData(source, "dm:managed") then return end -- partidas ranqueadas cuidam do próprio spawn
+
+    -- Nunca entra em respawn infinito. Uma tentativa de âncora; na segunda
+    -- falha seguida, volta para um local seguro.
+    if data.badSpawns >= 2 then
+        outputServerLog(("[dm_core] Falha de colisão repetida em %s para %s (%s) — voltando ao lobby"):format(
+            arena.id, getPlayerVisibleName(source), tostring(reason or "sem motivo")))
+
+        data.badSpawns = 0
+        data.badSpawnTick = nil
+        notifyPlayer(source, "O mapa não carregou a colisão corretamente. Você voltou ao lobby para evitar queda infinita.", "warn", "Mapa")
+        setPlayerArena(source, "lobby", true)
+        return
+    end
+
     local list = arenaSpawns[arena.id] or arena.spawns
-    outputServerLog(("[dm_core] %s caiu no vazio na arena %s — reposicionando (spawn âncora)"):format(getPlayerVisibleName(source), arena.id))
-    spawnPlayerInArena(source, { spawn = list[1], dimension = getElementDimension(source) })
+    outputServerLog(("[dm_core] Spawn sem colisão na arena %s para %s (%s) — tentando spawn âncora"):format(
+        arena.id, getPlayerVisibleName(source), tostring(reason or "sem motivo")))
+
+    spawnPlayerInArena(source, {
+        spawn = list[1],
+        dimension = getElementDimension(source)
+    })
 end)
 
 -- Streak (usado por s_kills)
