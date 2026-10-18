@@ -58,38 +58,38 @@ DM.rp = {
 
 -- Níveis (elo) por RP
 DM.tiers = {
-    { min = 0,    name = "Bronze",   short = "BRZ", color = { 205, 127, 50 } },
-    { min = 200,  name = "Prata",    short = "PRT", color = { 192, 198, 210 } },
-    { min = 500,  name = "Ouro",     short = "OUR", color = { 245, 196, 81 } },
-    { min = 900,  name = "Platina",  short = "PLT", color = { 120, 220, 255 } },
-    { min = 1400, name = "Diamante", short = "DIA", color = { 110, 160, 255 } },
-    { min = 2000, name = "Mestre",   short = "MST", color = { 200, 110, 255 } },
-    { min = 3000, name = "Lenda",    short = "LND", color = { 255, 77, 109 } },
+    { min = 0,    name = "Bronze",   short = "BRZ", color = { 205, 127, 50 },  glyph = "●", icon = "target.png" },
+    { min = 200,  name = "Prata",    short = "PRT", color = { 192, 198, 210 }, glyph = "◆", icon = "target.png" },
+    { min = 500,  name = "Ouro",     short = "OUR", color = { 245, 196, 81 },  glyph = "★", icon = "trophy.png" },
+    { min = 900,  name = "Platina",  short = "PLT", color = { 120, 220, 255 }, glyph = "✦", icon = "trophy.png" },
+    { min = 1400, name = "Diamante", short = "DIA", color = { 110, 160, 255 }, glyph = "❖", icon = "trophy.png" },
+    { min = 2000, name = "Mestre",   short = "MST", color = { 200, 110, 255 }, glyph = "♛", icon = "crown.png" },
+    { min = 3000, name = "Lenda",    short = "LND", color = { 255, 77, 109 },  glyph = "☠", icon = "skull.png" },
 }
 
 -- TAGS de staff (grupo da ACL -> tag). Prioridade: staff > VIP > tag comprada > elo
 DM.staffTags = {
-    { group = "Admin",          text = "ADMIN",      color = { 255, 77, 109 } },
-    { group = "SuperModerator", text = "SUPERVISOR", color = { 255, 140, 66 } },
-    { group = "Moderator",      text = "MODERADOR",  color = { 86, 180, 255 } },
-    { group = "Helper",         text = "AJUDANTE",   color = { 34, 230, 138 } },
+    { group = "Admin",          text = "ADMIN",      color = { 255, 77, 109 }, glyph = "♛", icon = "crown.png" },
+    { group = "SuperModerator", text = "SUPERVISOR", color = { 255, 140, 66 }, glyph = "♚", icon = "crown.png" },
+    { group = "Moderator",      text = "MODERADOR",  color = { 86, 180, 255 }, glyph = "✪", icon = "shield.png" },
+    { group = "Helper",         text = "AJUDANTE",   color = { 34, 230, 138 }, glyph = "✚", icon = "shield.png" },
 }
 
 -- VIP (30 dias). advantages: multiplicador de $, respawn mais rápido, cor de nick, skins extras, bônus diário maior
 DM.vip = {
-    [1] = { name = "VIP Bronze", price = 60000,  days = 30, color = { 205, 127, 50 }, tag = "VIP",       daily = 2000, armor = 0 },
-    [2] = { name = "VIP Prata",  price = 150000, days = 30, color = { 192, 198, 210 }, tag = "VIP+",     daily = 3500, armor = 0 },
-    [3] = { name = "VIP Ouro",   price = 300000, days = 30, color = { 245, 196, 81 }, tag = "VIP OURO", daily = 6000, armor = 0 },
+    [1] = { name = "VIP Bronze", price = 60000,  days = 30, color = { 205, 127, 50 }, tag = "VIP",       daily = 2000, armor = 0, glyph = "★", icon = "crown.png" },
+    [2] = { name = "VIP Prata",  price = 150000, days = 30, color = { 192, 198, 210 }, tag = "VIP+",     daily = 3500, armor = 0, glyph = "★", icon = "crown.png" },
+    [3] = { name = "VIP Ouro",   price = 300000, days = 30, color = { 245, 196, 81 }, tag = "VIP OURO", daily = 6000, armor = 0, glyph = "♛", icon = "crown.png" },
 }
 
 -- LOJA (F4)
 DM.shop = {
     tags = {
-        { key = "veterano",  text = "VETERANO",  price = 15000,  color = { 120, 220, 255 } },
-        { key = "assassino", text = "ASSASSINO", price = 40000,  color = { 255, 77, 109 } },
-        { key = "sniper",    text = "SNIPER",    price = 40000,  color = { 200, 110, 255 } },
-        { key = "lenda",     text = "LENDA",     price = 100000, color = { 245, 196, 81 } },
-        { key = "custom",    text = "PERSONALIZADA", price = 150000, color = { 120, 255, 180 }, custom = true }, -- /tag <texto>
+        { key = "veterano",  text = "VETERANO",  price = 15000,  color = { 120, 220, 255 }, glyph = "✦", icon = "shield.png" },
+        { key = "assassino", text = "ASSASSINO", price = 40000,  color = { 255, 77, 109 },  glyph = "☠", icon = "skull.png" },
+        { key = "sniper",    text = "SNIPER",    price = 40000,  color = { 200, 110, 255 }, glyph = "◎", icon = "target.png" },
+        { key = "lenda",     text = "LENDA",     price = 100000, color = { 245, 196, 81 },  glyph = "♛", icon = "trophy.png" },
+        { key = "custom",    text = "PERSONALIZADA", price = 150000, color = { 120, 255, 180 }, custom = true, glyph = "✿", icon = "tag.png" }, -- /tag <texto>
     },
     nameColors = {
         { key = "verde",   name = "Verde",   price = 30000, color = { 34, 230, 138 } },

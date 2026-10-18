@@ -10,7 +10,7 @@ local function staffTag(player)
     for _, t in ipairs(DM.staffTags) do
         local g = aclGetGroup(t.group)
         if g and isObjectInACLGroup("user." .. name, g) then
-            return { text = t.text, hex = DM.rgbToHex(unpack(t.color)), kind = "staff" }
+            return { text = t.text, hex = DM.rgbToHex(unpack(t.color)), kind = "staff", glyph = t.glyph, icon = t.icon }
         end
     end
     return nil
@@ -23,18 +23,18 @@ function getPlayerTag(player)
     local vip = isPlayerVip(player)
     if vip > 0 then
         local v = DM.vip[vip]
-        return { text = v.tag, hex = DM.rgbToHex(unpack(v.color)), kind = "vip" }
+        return { text = v.tag, hex = DM.rgbToHex(unpack(v.color)), kind = "vip", glyph = v.glyph, icon = v.icon }
     end
     if row and row.tag ~= "" then
         for _, t in ipairs(DM.shop.tags) do
             if t.key == row.tag then
                 local text = t.custom and (row.custom_tag ~= "" and row.custom_tag or "UTG") or t.text
-                return { text = text, hex = DM.rgbToHex(unpack(t.color)), kind = "shop" }
+                return { text = text, hex = DM.rgbToHex(unpack(t.color)), kind = "shop", glyph = t.glyph, icon = t.icon }
             end
         end
     end
     local tier = DM.tierForRP(row and row.rp or 0)
-    return { text = tier.name:upper(), hex = DM.rgbToHex(unpack(tier.color)), kind = "tier" }
+    return { text = tier.name:upper(), hex = DM.rgbToHex(unpack(tier.color)), kind = "tier", glyph = tier.glyph, icon = tier.icon }
 end
 
 function getPlayerNameColor(player)
@@ -67,13 +67,11 @@ function formatPlayerName(player, short)
     local row = getPlayerStats(player)
     local tier = DM.tierForRP(row and row.rp or 0)
     local parts = {}
-    local kindGlyph = DM.chat.kindGlyphs[tag.kind]
-    if kindGlyph then parts[#parts + 1] = tag.hex .. kindGlyph end
-    parts[#parts + 1] = DM.rgbToHex(unpack(tier.color)) .. (DM.chat.tierGlyphs[tier.name] or "●")
     local id = getElementData(player, "dm:id")
     if id and id ~= 0 then parts[#parts + 1] = ("%s[%d]"):format(DM.chat.idColor, id) end
-    if not short and tag.kind ~= "tier" then parts[#parts + 1] = ("%s[%s]"):format(tag.hex, tag.text) end
-    if clan and clan.text then parts[#parts + 1] = ("%s[%s]"):format(clan.hex or "#969BB4", clan.text) end
+    -- tag com o emoji dentro: ♛ ADMIN · ★ VIP OURO · ☠ LENDA
+    parts[#parts + 1] = ("%s[%s %s]"):format(tag.hex, tag.glyph or (DM.chat.tierGlyphs[tier.name] or "●"), tag.text)
+    if clan and clan.text then parts[#parts + 1] = ("%s[◆ %s]"):format(clan.hex or "#969BB4", clan.text) end
     parts[#parts + 1] = getPlayerNameColor(player) .. getPlayerVisibleName(player)
     return table.concat(parts, " ")
 end

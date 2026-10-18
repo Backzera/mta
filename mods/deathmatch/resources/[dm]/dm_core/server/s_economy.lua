@@ -68,13 +68,27 @@ addCommandHandler("pagar", function(player, cmd, target, amount)
 end)
 
 -- Admin: /dar <jogador> <valor>, /setvip <jogador> <0-3> [dias], /darrp <jogador> <valor>
+-- /dar <valor>  (para você)  ·  /dar <jogador|id> <valor>
 addCommandHandler("dar", function(player, cmd, target, amount)
-    if not isPlayerAdmin(player) then return end
-    local other = target and findPlayer(target)
+    if not isPlayerAdmin(player) then notifyPlayer(player, "Só admin (grupo Admin da ACL, mesmo do painel P).", "error") return end
+    local other
+    if target and not amount and tonumber(target) and not findPlayer(target) then
+        other, amount = player, target
+    elseif target and not amount and tonumber(target) and findPlayer(target) and tonumber(target) > 100000 then
+        other, amount = player, target
+    else
+        other = target and findPlayer(target)
+    end
     amount = tonumber(amount)
-    if not other or not amount then sendServerMessage(player, "Uso: #969BB4/dar <jogador> <valor>") return end
+    if not other or not amount then sendServerMessage(player, "Uso: #969BB4/dar <valor>  ou  /dar <jogador|id> <valor>") return end
     addMoney(other, amount, "Admin", true)
-    notifyPlayer(player, ("%s recebeu %s."):format(getPlayerVisibleName(other), DM.formatMoney(amount)), "success")
+    notifyPlayer(player, ("%s recebeu %s."):format(other == player and "Você" or getPlayerVisibleName(other), DM.formatMoney(amount)), "success")
+end)
+addCommandHandler("darme", function(player, cmd, amount)
+    if not isPlayerAdmin(player) then return end
+    amount = tonumber(amount) or 100000
+    addMoney(player, amount, "Admin", true)
+    notifyPlayer(player, ("Você recebeu %s."):format(DM.formatMoney(amount)), "success")
 end)
 
 addCommandHandler("setvip", function(player, cmd, target, level, days)

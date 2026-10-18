@@ -235,19 +235,25 @@ function UI.rrect(x, y, w, h, color, radius, opts)
         return
     end
     local glow = opts.glow or 0
+    if glow < 0.5 then glow = 0 end
+    radius = math.min(radius, w / 2, h / 2)
     local r, g, b, a = toFloat4(color)
     dxSetShaderValue(shader, "sSize", w + glow * 2, h + glow * 2)
     dxSetShaderValue(shader, "sRadius", radius)
     dxSetShaderValue(shader, "sBorder", opts.border or 0)
     dxSetShaderValue(shader, "sGlow", glow)
+    dxSetShaderValue(shader, "sGlowK", glow > 0 and (3 / glow) or 1)
     dxSetShaderValue(shader, "sShine", opts.shine or 0)
     dxSetShaderValue(shader, "sColor", r, g, b, a)
     if opts.gradient then
         local r2, g2, b2, a2 = toFloat4(opts.gradient)
-        dxSetShaderValue(shader, "sGradient", opts.gradientMode or 1)
+        local mode = opts.gradientMode or 1
+        dxSetShaderValue(shader, "sGradientOn", 1)
+        dxSetShaderValue(shader, "sGradientX", mode == 2 and 1 or (mode == 3 and 0.5 or 0))
         dxSetShaderValue(shader, "sColor2", r2, g2, b2, a2)
     else
-        dxSetShaderValue(shader, "sGradient", 0)
+        dxSetShaderValue(shader, "sGradientOn", 0)
+        dxSetShaderValue(shader, "sGradientX", 0)
         dxSetShaderValue(shader, "sColor2", r, g, b, a)
     end
     if opts.border and opts.border > 0 then
@@ -589,10 +595,10 @@ function UI.card(x, y, w, h, radius, alphaMul, accentName, opts)
     radius = radius or UI.s(14)
     opts = opts or {}
     local accent = accentName ~= false and (palette[accentName or "accent"] or palette.accent) or nil
-    UI.rrect(x, y, w, h, UI.color("card", (opts.alpha or 228) * alphaMul), radius, {
-        border = 1, borderColor = tocolor(255, 255, 255, 26 * alphaMul),
+    UI.rrect(x, y, w, h, UI.color("card", (opts.alpha or 248) * alphaMul), radius, {
+        border = 1, borderColor = tocolor(255, 255, 255, 34 * alphaMul),
         glow = accent and (opts.glow or UI.s(18)) or 0, glowColor = accent and tocolor(accent[1], accent[2], accent[3], 70 * alphaMul) or nil,
-        gradient = UI.color("card2", (opts.alpha or 228) * alphaMul), gradientMode = 3, shine = 0.08,
+        gradient = UI.color("card2", (opts.alpha or 248) * alphaMul), gradientMode = 3, shine = 0.08,
     })
     if accent then
         UI.accentLine(x + radius, y, (w - radius * 2) * 0.55, UI.s(2), accent, alphaMul)
@@ -603,8 +609,8 @@ end
 function UI.glass(x, y, w, h, radius, alphaMul, hoverT)
     alphaMul = alphaMul or 1
     hoverT = hoverT or 0
-    UI.rrect(x, y, w, h, tocolor(255, 255, 255, (8 + 10 * hoverT) * alphaMul), radius or UI.s(10), {
-        border = 1, borderColor = tocolor(255, 255, 255, (18 + 40 * hoverT) * alphaMul),
+    UI.rrect(x, y, w, h, tocolor(255, 255, 255, (14 + 14 * hoverT) * alphaMul), radius or UI.s(10), {
+        border = 1, borderColor = tocolor(255, 255, 255, (28 + 50 * hoverT) * alphaMul),
     })
 end
 
@@ -621,9 +627,16 @@ function UI.tagPill(tag, x, y, h, alpha, size)
     alpha = alpha or 1
     local r, g, b = UI.hexToRGB(tag.hex)
     local solid = tag.kind == "vip" or tag.kind == "staff"
-    local w = UI.textWidth(tag.text, "bold", size or 8) + UI.s(16)
-    UI.rrect(x, y, w, h, solid and tocolor(r, g, b, 235 * alpha) or tocolor(r, g, b, 45 * alpha), h / 2, solid and { glow = UI.s(6), glowColor = tocolor(r, g, b, 90 * alpha) } or nil)
-    UI.text(tag.text, x, y, w, h, solid and tocolor(10, 14, 12, 255 * alpha) or tocolor(r, g, b, 255 * alpha), "bold", size or 8, "center", "center")
+    local icon = tag.icon and h * 0.8 or 0
+    local w = UI.textWidth(tag.text, "bold", size or 8) + UI.s(16) + (icon > 0 and icon + UI.s(4) or 0)
+    UI.rrect(x, y, w, h, solid and tocolor(r, g, b, 240 * alpha) or tocolor(r, g, b, 70 * alpha), h / 2, { border = 1, borderColor = tocolor(r, g, b, (solid and 0 or 160) * alpha), glow = solid and UI.s(6) or 0, glowColor = tocolor(r, g, b, 90 * alpha) })
+    local tc = solid and tocolor(10, 14, 12, 255 * alpha) or tocolor(r, g, b, 255 * alpha)
+    if icon > 0 then
+        UI.image(tag.icon, x + UI.s(7), y + (h - icon) / 2, icon, icon, tc)
+        UI.text(tag.text, x + UI.s(7) + icon + UI.s(3), y, w - icon - UI.s(10), h, tc, "bold", size or 8, "center", "center")
+    else
+        UI.text(tag.text, x, y, w, h, tc, "bold", size or 8, "center", "center")
+    end
     return w
 end
 
@@ -659,10 +672,10 @@ function UI.button(id, text, x, y, w, h, opts)
         UI.rrect(bx, by, bw, bh, tocolor(d[1], d[2], d[3], (205 + 50 * t) * alpha), radius, { glow = UI.s(3) + UI.s(12) * t, glowColor = tocolor(d[1], d[2], d[3], (50 + 90 * t) * alpha), shine = 0.2 })
         textColor = tocolor(255, 255, 255, 255 * alpha)
     elseif kind == "outline" then
-        UI.rrect(bx, by, bw, bh, tocolor(c[1], c[2], c[3], (10 + 40 * t) * alpha), radius, { border = 1, borderColor = tocolor(c[1], c[2], c[3], (90 + 140 * t) * alpha), glow = UI.s(10) * t, glowColor = tocolor(c[1], c[2], c[3], 60 * t * alpha) })
+        UI.rrect(bx, by, bw, bh, tocolor(c[1], c[2], c[3], (26 + 60 * t) * alpha), radius, { border = 1, borderColor = tocolor(c[1], c[2], c[3], (120 + 135 * t) * alpha), glow = UI.s(10) * t, glowColor = tocolor(c[1], c[2], c[3], 70 * t * alpha) })
         textColor = tocolor(c[1], c[2], c[3], 255 * alpha)
     else -- ghost
-        UI.rrect(bx, by, bw, bh, tocolor(255, 255, 255, 24 * t * alpha), radius)
+        UI.rrect(bx, by, bw, bh, tocolor(255, 255, 255, (10 + 30 * t) * alpha), radius, { border = 1, borderColor = tocolor(255, 255, 255, (20 + 40 * t) * alpha) })
         textColor = t > 0.5 and UI.color("text", 255 * alpha) or UI.color("muted", 255 * alpha)
     end
     local tx, tw = bx, bw
@@ -987,7 +1000,7 @@ function UI.panelFrame(state, opts)
     local w, h = opts.w * scale, opts.h * scale
     local x, y = (sw - w) / 2, (sh - h) / 2 + dy
     local pad = UI.s(28)
-    if opts.blur ~= false then UI.backdrop(a, 140) else dxDrawRectangle(0, 0, sw, sh, UI.color("bg", 150 * a)) end
+    if opts.blur ~= false then UI.backdrop(a, 170) else dxDrawRectangle(0, 0, sw, sh, UI.color("bg", 170 * a)) end
     UI.card(x, y, w, h, UI.s(18), a, opts.accent or "accent", { glow = UI.s(26) })
     local headerH = UI.s(opts.subtitle and 86 or 70)
     if opts.aurora ~= false then
