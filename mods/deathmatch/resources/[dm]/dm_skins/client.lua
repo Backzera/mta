@@ -25,17 +25,30 @@ local function loadSkins()
                 outputDebugString(("[dm_skins] Falha ao carregar TXD de %s: %s"):format(skin.name, skin.txd), 1)
             else
                 local imported = engineImportTXD(txd, skin.id)
-                local dff = imported and engineLoadDFF(skin.dff) or false
-
-                if dff and engineReplaceModel(dff, skin.id) then
-                    loadedModels[skin.id] = { txd = txd, dff = dff }
-                    loaded = loaded + 1
-                    outputDebugString(("[dm_skins] Skin carregada: %s (ID %d)."):format(skin.name, skin.id), 3)
-                else
-                    outputDebugString(("[dm_skins] Falha ao substituir o modelo de %s (ID %d)."):format(skin.name, skin.id), 1)
-                    if isElement(dff) then destroyElement(dff) end
+                if not imported then
+                    outputDebugString(("[dm_skins] Falha ao importar a TXD de %s (ID %d): %s"):format(skin.name, skin.id, skin.txd), 1)
                     if isElement(txd) then destroyElement(txd) end
-                    engineRestoreModel(skin.id)
+                else
+                    local dff = engineLoadDFF(skin.dff)
+                    if not dff then
+                        outputDebugString(("[dm_skins] Falha ao carregar o DFF de %s (ID %d): %s"):format(skin.name, skin.id, skin.dff), 1)
+                        if isElement(txd) then destroyElement(txd) end
+                    elseif not engineReplaceModel(dff, skin.id) then
+                        outputDebugString(("[dm_skins] engineReplaceModel falhou para %s (ID %d). Veja o erro acima no debugscript."):format(skin.name, skin.id), 1)
+                        if isElement(dff) then destroyElement(dff) end
+                        if isElement(txd) then destroyElement(txd) end
+                        engineRestoreModel(skin.id)
+                    else
+                        loadedModels[skin.id] = { txd = txd, dff = dff }
+                        loaded = loaded + 1
+
+                        -- Recarrega entidades que já estavam usando o modelo, especialmente o ped 304.
+                        if not engineRestreamModel(skin.id) then
+                            outputDebugString(("[dm_skins] Modelo %s (ID %d) foi substituído, mas não pôde ser atualizado via restream."):format(skin.name, skin.id), 2)
+                        end
+
+                        outputDebugString(("[dm_skins] Skin carregada: %s (ID %d)."):format(skin.name, skin.id), 3)
+                    end
                 end
             end
         end
