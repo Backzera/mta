@@ -33,7 +33,7 @@ export default function Crates({ st, reel }) {
 
   return (
     <Frame title="CAIXAS" subtitle="Abra caixas com $ e ganhe skins exclusivas, skins de arma e dinheiro. Itens repetidos devolvem metade do valor." icon="trophy.png"
-      badge={<>SALDO <Counter value={bal} format={money} dur={800} /></>} badgeColor={GOLD} onClose={() => toLua('crates', 'close')} width="66vw" height="74vh"
+      badge={<>SALDO <Counter value={bal} format={money} dur={800} /></>} badgeColor={GOLD} onClose={() => toLua('crates', 'close')} width="70vw" height="86vh"
       footer="F7 ou ESC fecha · armas no inventário · personagens no F10 · itens salvos na sua conta">
       <Tabs tabs={[['boxes', 'CAIXAS'], ['inv', 'MEU INVENTÁRIO']]} value={tab} onChange={setTab} />
       {tab === 'boxes' ? (

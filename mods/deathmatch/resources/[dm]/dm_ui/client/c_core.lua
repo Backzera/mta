@@ -153,8 +153,8 @@ addEventHandler("onClientClick", root, function(button, state, ax, ay)
 end)
 addEventHandler("onClientKey", root, function(key, press)
     if not inputActive() or not press then return end
-    if key == "mouse_wheel_up" then injectBrowserMouseWheel(browser, 40, 0)
-    elseif key == "mouse_wheel_down" then injectBrowserMouseWheel(browser, -40, 0) end
+    if key == "mouse_wheel_up" then injectBrowserMouseWheel(browser, 90, 0)
+    elseif key == "mouse_wheel_down" then injectBrowserMouseWheel(browser, -90, 0) end
 end)
 
 -- ---------- HUD ----------

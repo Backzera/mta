@@ -15,7 +15,7 @@ export default function Characters({ st }) {
   return (
     <Frame title="PERSONAGENS" icon="shield.png"
       subtitle="Suas skins de personagens, salvas na conta. Ganhe novas na Caixa de Personagens do F7."
-      badge={`${owned.length} / ${characters.length}`} width="66vw" height="74vh"
+      badge={`${owned.length} / ${characters.length}`} width="70vw" height="86vh"
       onClose={() => toLua('characters', 'close')}
       footer="F10 ou ESC fecha · a skin equipada continua na sua conta ao reconectar">
       <Tabs tabs={[[ 'owned', 'MEUS PERSONAGENS' ], [ 'all', 'TODOS OS PERSONAGENS' ]]} value={tab} onChange={setTab} />
