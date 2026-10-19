@@ -191,7 +191,10 @@ Silent aim = bala acerta um jogador a mais de 14° da direção da mira (ou qual
 30 s. Aimbot = a mira gira a mais de 900°/s (salto > 18°) e até 220 ms depois o tiro acerta um jogador, 5 vezes.
 O trapaceiro não controla o cliente das testemunhas. O servidor cruza os relatos com a **precisão real** (via
 `ac:hit` do dm_weapons: ≥ 85% de acerto e ≥ 75% de headshot nos últimos 40 tiros é impossível sem ajuda).
-Alerta: 2 testemunhas diferentes, 3 relatos ou precisão impossível. Ban automático: 3 testemunhas, ou 2 testemunhas
+**Cabeça do servidor** (`dm_weapons/client/c_damage.lua`): o dano só vale se a mira do atacante, vista pelo sync no
+cliente da vítima, aponta para a parte do corpo atingida (10° de tolerância, 28° a menos de 4 m; pistola/uzi/MP5/tec9
+podem atirar sem mirar). Silent aim redireciona a bala sem mover a mira: o acerto é anulado e 3 anulados em 20 s viram
+relato FORTE. Alerta: 2 testemunhas diferentes, 3 relatos ou precisão impossível. Ban automático: 3 testemunhas, ou 2 testemunhas
 + precisão impossível. Limiares no topo de cada arquivo. Adicione ao `mtaserver.conf`:
 `<resource src="dm_anticheat" startup="1" protected="0" />`.
 
