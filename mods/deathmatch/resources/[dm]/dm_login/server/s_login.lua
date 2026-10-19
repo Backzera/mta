@@ -1,6 +1,6 @@
 --[[
     Login / registro usando o sistema de contas do MTA.
-    Após autenticar (ou entrar como convidado) dispara "dm:playerReady" para o dm_core.
+    Após autenticar dispara "dm:playerReady" para o dm_core.
     Requer que resource.dm_login esteja no grupo Admin da ACL (function.addAccount).
 ]]
 
@@ -29,7 +29,8 @@ local function tooMany(player)
 end
 
 local function finish(player, account, remember, pass, message)
-    setElementData(player, "dm:guest", account == nil)
+    if not account or isGuestAccount(account) then return fail(player, "Entre ou crie uma conta para jogar.") end
+    setElementData(player, "dm:guest", false)
     triggerClientEvent(player, "login:result", resourceRoot, true, message, remember and pass or nil)
     triggerEvent("dm:playerReady", player)
 end
@@ -86,7 +87,7 @@ addEvent("login:guest", true)
 addEventHandler("login:guest", root, function()
     local player = client
     if player ~= source or getElementData(player, "dm:ready") then return end
-    finish(player, nil, false, nil, "Você entrou como convidado. Suas stats ficam ligadas ao seu serial.")
+    fail(player, "O acesso como convidado foi desativado. Entre ou crie uma conta para jogar.")
 end)
 
 addEventHandler("onPlayerQuit", root, function() attempts[source] = nil end)

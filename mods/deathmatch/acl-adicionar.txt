@@ -8,3 +8,9 @@
 <object name="resource.dm_core" />
 <object name="resource.dm_login" />
 <object name="resource.dm_duel" />
+
+<!-- Grupos de staff usados nas tags do chat/nametag (crie se não existirem):
+     Admin -> ADMIN · SuperModerator -> SUPERVISOR · Moderator -> MODERADOR · Helper -> AJUDANTE
+     Para criar o grupo Helper, adicione no acl.xml:
+     <group name="Helper"><acl name="Moderator"/></group>
+-->

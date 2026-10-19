@@ -1,0 +1,7 @@
+# Script do WinSCP: le a conexao de ftp.local.txt e sincroniza resources\[dm] com a hospedagem.
+# "synchronize remote" envia apenas arquivos novos ou alterados; -delete remove na host o que saiu do repo.
+option batch abort
+option confirm off
+include deploy\ftp.local.txt
+synchronize remote -delete -criteria=size -filemask="|node_modules/;web/;models/weapons/;*.md;.gitignore" "mods\deathmatch\resources\[dm]" "/mods/deathmatch/resources/[dm]"
+exit

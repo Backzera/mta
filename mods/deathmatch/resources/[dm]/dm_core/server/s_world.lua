@@ -31,6 +31,13 @@ addEventHandler("onResourceStop", resourceRoot, function()
     end
 end)
 
+-- Arma volta com munição completa ao trocar e pegar de novo
+addEventHandler("onPlayerWeaponSwitch", root, function(prevSlot, newSlot)
+    if not DM.server.refillOnSwitch then return end
+    local weapon = getPedWeapon(source)
+    if weapon and weapon > 1 then refillPlayerWeapons(source, weapon) end
+end)
+
 -- Previne que o jogador fique com armas de pickups do mundo (mantém regra da arena)
 addEventHandler("onPlayerPickupHit", root, function(pickup)
     local arena = getPlayerArena(source)

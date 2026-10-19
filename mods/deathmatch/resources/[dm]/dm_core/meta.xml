@@ -3,10 +3,13 @@
 
     <!-- Compartilhado -->
     <script src="shared/config.lua" type="shared" />
+    <script src="shared/skins_generated.lua" type="shared" />
 
     <!-- Servidor -->
     <script src="server/s_util.lua" type="server" />
     <script src="server/s_stats.lua" type="server" />
+    <script src="server/s_tags.lua" type="server" />
+    <script src="server/s_economy.lua" type="server" />
     <script src="server/s_arenas.lua" type="server" />
     <script src="server/s_kills.lua" type="server" />
     <script src="server/s_chat.lua" type="server" />
@@ -14,24 +17,37 @@
     <script src="server/s_world.lua" type="server" />
 
     <!-- Cliente -->
-    <script src="client/c_exports.lua" type="client" cache="false" />
-    <script src="client/c_ui.lua" type="client" cache="false" />
-    <script src="client/c_sounds.lua" type="client" cache="false" />
-    <script src="client/c_notify.lua" type="client" cache="false" />
-    <script src="client/c_hud.lua" type="client" cache="false" />
-    <script src="client/c_killfeed.lua" type="client" cache="false" />
-    <script src="client/c_spawn.lua" type="client" cache="false" />
-    <script src="client/c_hitmarker.lua" type="client" cache="false" />
-    <script src="client/c_nametags.lua" type="client" cache="false" />
-    <script src="client/c_arenas.lua" type="client" cache="false" />
-    <script src="client/c_scoreboard.lua" type="client" cache="false" />
-    <script src="client/c_help.lua" type="client" cache="false" />
+    <script src="client/c_exports.lua" type="client" />
+    <script src="client/c_ui.lua" type="client" />
+    <script src="client/c_sounds.lua" type="client" />
+    <script src="client/c_bridge.lua" type="client" />
+    <script src="client/c_spawn.lua" type="client" />
+    <script src="client/c_hitmarker.lua" type="client" />
+    <script src="client/c_nametags.lua" type="client" />
+    <script src="client/c_crosshair.lua" type="client" />
+
+    <!-- Shaders da interface -->
+    <file src="shaders/rounded.fx" />
+    <file src="shaders/blur.fx" />
+    <file src="shaders/aurora.fx" />
+    <file src="shaders/vignette.fx" />
 
     <!-- Assets -->
     <file src="assets/fonts/Poppins-Regular.ttf" />
     <file src="assets/fonts/Poppins-Medium.ttf" />
     <file src="assets/fonts/Poppins-SemiBold.ttf" />
     <file src="assets/fonts/Poppins-Bold.ttf" />
+    <file src="assets/img/logo.png" />
+    <file src="assets/img/skull.png" />
+    <file src="assets/img/headshot.png" />
+    <file src="assets/img/coin.png" />
+    <file src="assets/img/crown.png" />
+    <file src="assets/img/shield.png" />
+    <file src="assets/img/swords.png" />
+    <file src="assets/img/trophy.png" />
+    <file src="assets/img/target.png" />
+    <file src="assets/img/tag.png" />
+    <file src="assets/img/flame.png" />
     <file src="assets/sounds/click.wav" />
     <file src="assets/sounds/hover.wav" />
     <file src="assets/sounds/hit.wav" />
@@ -56,12 +72,39 @@
     <export function="setArenaSpawns" type="server" />
     <export function="giveArenaWeapons" type="server" />
     <export function="addPlayerStat" type="server" />
+    <export function="setPlayerStat" type="server" />
+    <export function="addMoney" type="server" />
+    <export function="takeMoney" type="server" />
+    <export function="getPlayerMoney" type="server" />
+    <export function="setPlayerVip" type="server" />
+    <export function="isPlayerVip" type="server" />
+    <export function="givePlayerPerk" type="server" />
+    <export function="playerHasPerk" type="server" />
+    <export function="refreshPlayerTag" type="server" />
+    <export function="formatPlayerName" type="server" />
+    <export function="getPlayerVisibleName" type="server" />
+    <export function="refillPlayerWeapons" type="server" />
+    <export function="getDB" type="server" />
+    <export function="getRankedModes" type="shared" />
+    <export function="getArenaPlayers" type="server" />
+    <export function="sendServerMessage" type="server" />
     <export function="getPlayerStats" type="server" />
+    <export function="savePlayerStats" type="server" />
+    <export function="resetPlayerSkin" type="server" />
     <export function="notifyPlayer" type="server" />
     <export function="isPlayerAdmin" type="server" />
     <export function="findPlayer" type="server" />
     <export function="getDuelWeaponSets" type="shared" />
     <export function="getConfig" type="shared" />
+    <export function="getRpConfig" type="shared" />
+    <export function="getEconomyConfig" type="shared" />
+    <export function="getRankedConfig" type="shared" />
+    <export function="getShopConfig" type="shared" />
+    <export function="getVipConfig" type="shared" />
+    <export function="getClanConfig" type="shared" />
+    <export function="formatMoney" type="shared" />
+    <export function="getTierForRP" type="shared" />
+    <export function="getCratesConfig" type="shared" />
     <export function="getArenaSpawns" type="server" />
     <export function="notify" type="client" />
     <export function="playUISound" type="client" />

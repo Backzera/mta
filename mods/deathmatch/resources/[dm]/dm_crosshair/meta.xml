@@ -1,0 +1,12 @@
+<meta>
+    <info author="UTG" name="UTG Crosshair" description="Mira customizável (desenho dx + salvamento por conta). O painel fica no dm_ui (F9 / /mira)." type="script" version="2.0" />
+    <min_mta_version client="1.5.9" />
+
+    <script src="client.lua" type="client" />
+    <script src="server.lua" type="server" />
+
+    <export function="getCrosshair" type="client" />
+    <export function="setCrosshair" type="client" />
+    <export function="saveCrosshair" type="client" />
+    <export function="resetCrosshair" type="client" />
+</meta>

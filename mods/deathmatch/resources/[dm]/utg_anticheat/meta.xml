@@ -1,0 +1,38 @@
+<meta>
+    <info author="UTG" name="UTG AntiCheat" version="1.0.0" type="script" description="DM/PVP/C-BUG: server-owned evidence and conservative review" />
+    <min_mta_version server="1.5.9" client="1.5.9" />
+    <script src="config/settings.lua" type="server" />
+    <script src="config/permissions.lua" type="server" />
+    <script src="config/weapons.lua" type="server" />
+    <script src="config/protected_data.lua" type="server" />
+    <script src="config/discord.lua" type="server" />
+    <script src="shared/utils.lua" type="shared" cache="false" />
+    <script src="server/core.lua" type="server" />
+    <script src="server/integration.lua" type="server" />
+    <script src="server/evidence.lua" type="server" />
+    <script src="server/punishment.lua" type="server" />
+    <script src="server/event_security.lua" type="server" />
+    <script src="server/elementdata.lua" type="server" />
+    <script src="server/combat.lua" type="server" />
+    <script src="server/movement.lua" type="server" />
+    <script src="server/weapons.lua" type="server" />
+    <script src="server/integrity.lua" type="server" />
+    <script src="server/screenshot.lua" type="server" />
+    <script src="server/discord.lua" type="server" />
+    <script src="server/staff.lua" type="server" />
+    <script src="server/witness.lua" type="server" />
+    <script src="client/core.lua" type="client" cache="false" />
+    <script src="client/aim.lua" type="client" cache="false" />
+    <script src="client/movement.lua" type="client" cache="false" />
+    <script src="client/integrity.lua" type="client" cache="false" />
+    <script src="client/witness.lua" type="client" />
+    <export function="allowTeleport" type="server" />
+    <export function="allowVelocity" type="server" />
+    <export function="allowHealth" type="server" />
+    <export function="allowArmor" type="server" />
+    <export function="allowWeapons" type="server" />
+    <aclrequest>
+        <right name="function.banPlayer" access="true" />
+        <right name="function.kickPlayer" access="true" />
+    </aclrequest>
+</meta>

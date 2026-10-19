@@ -1,0 +1,252 @@
+{
+  "base_commit": "45d8b45462e2fcd40fcb3d5438c58bec6f9b9324",
+  "remote_at_handoff": "5378cbdcc4d31c43121d61dc1fd428f3eb93be77",
+  "files": [
+    {
+      "path": "README.md",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 14067,
+      "sha256": "7afd300b7b3b2bedb500c6d60b95ce981de3f44c51ac8457dd35287b7526afba",
+      "delivery": "arquivos/README.md"
+    },
+    {
+      "path": "mods/deathmatch/mtaserver.conf",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 3909,
+      "sha256": "8fe23ee334dbe60cf9db3f93c14b3ecf94029060d41acbd67924943d2a5c9280",
+      "delivery": "patch-only: somente adicao de dm_skins ao startup; preservar config da hospedagem"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_core/client/c_bridge.lua",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 1581,
+      "sha256": "76a3bbdd47008b55a1d14c2a8767c5afbce69844d32817b19a18235e4b13f5a7",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_core/client/c_bridge.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_core/meta.xml",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 5374,
+      "sha256": "1efca7b3562a1fbdef4a9a25c3565f4677cb2d90c0bac7c57061f4eff3d0a2ef",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_core/meta.xml"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_core/server/s_arenas.lua",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 14220,
+      "sha256": "b1de67057e8111c3acb2ae7f7fa5eec8dbe03f59c4fcebb5c28abc7a76ee9603",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_core/server/s_arenas.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_core/server/s_commands.lua",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 9761,
+      "sha256": "bfd96e5d22cca223b54b8736c4ac778f5c586b3aa9e1f91e3d850909f3e09b13",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_core/server/s_commands.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_core/server/s_stats.lua",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 14116,
+      "sha256": "a3f79de46b13a50c14a8fa733f37ede288465e9ea44b3792e261ce6f479b382d",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_core/server/s_stats.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_core/shared/skins_generated.lua",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 15643,
+      "sha256": "1efa6c6b1ebfcbec8b3c15383a26a4a734319352ba3bb4c5303a71e5e5ab7821",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_core/shared/skins_generated.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_crates/server/s_crates.lua",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 11268,
+      "sha256": "7113752d71787fec997309e468a89baf3f80b1fd24384f9e10f131f7fbc5f32f",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_crates/server/s_crates.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_login/server/s_login.lua",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 4695,
+      "sha256": "dd05b5631aae86e91a5be88d80085ecb88133aefb6cfdc88d1282f65c8c358b6",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_login/server/s_login.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/client/c_build.lua",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 78,
+      "sha256": "993ea7c4b412fa49eca5e827eaebf68569e392ce4c6993978f1f0f2fc65d53e0",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/client/c_build.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/client/c_core.lua",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 13007,
+      "sha256": "fe867790dcbf54d05834c38363a2e7e134364385b0f85a5332fc8fd1f4b851ea",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/client/c_core.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/client/c_hud.lua",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 7987,
+      "sha256": "1cb82d9672c2d733debaaa282278b22d731010b892f8caa30eba984c2e927f03",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/client/c_hud.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/client/c_screens.lua",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 35960,
+      "sha256": "a4dc5f87582a3682fa414b5e37d54f4259bb9f80dd63b2c80eb3a9ce79f7db0f",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/client/c_screens.lua"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/dist/assets/hub-2iJk8s7i.js",
+      "status": "A",
+      "changed_in_newer_remote": false,
+      "bytes": 255487,
+      "sha256": "23aa528c263dcb91a52925aded96e527f82a29b98aa218609c1758fbf310ea53",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/dist/assets/hub-2iJk8s7i.js"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/dist/assets/hub-CaK_eqSb.js",
+      "status": "D",
+      "changed_in_newer_remote": false,
+      "delivery": "deleted-in-local-snapshot; consultar patch; reconstruir dist na integracao"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/dist/index.html",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 459,
+      "sha256": "57f29bdf60af8b55803963d6d63b67794d1548e1817afd1ff5b3909ea08b0b59",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/dist/index.html"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/meta.xml",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 4133,
+      "sha256": "cc1c03afe6b28781deaf91fa4cb47ba7ea6b0b438226b49eb9f5e7230a2478da",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/meta.xml"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/web/src/App.jsx",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 2458,
+      "sha256": "f6bdb631ba20ca746e0c05bac31b4681e716ca5ac91b29a8f528aae57a32d521",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/web/src/App.jsx"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/web/src/Background.jsx",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 3602,
+      "sha256": "1b8ff3e4b1e54b7d7110c4b90847664a7afe2494110917882362e935661b9b5d",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/web/src/Background.jsx"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/web/src/demo.js",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 13444,
+      "sha256": "622e0f6a6b9a16b452a16f956409e4ad231c39b84c0bba5c14f1902f08ff3285",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/web/src/demo.js"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/web/src/screens/Characters.jsx",
+      "status": "A",
+      "changed_in_newer_remote": false,
+      "bytes": 2392,
+      "sha256": "742a54e38084332d9b56edd6efcd402c25a6273f87375245e880f6f036359cbc",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/web/src/screens/Characters.jsx"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/web/src/screens/Crates.jsx",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 7533,
+      "sha256": "64aa711478572777c7d6b273db02f35ba33261d196b95ac321227de894cdc635",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/web/src/screens/Crates.jsx"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/web/src/screens/Help.jsx",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 1738,
+      "sha256": "e15f60f44e18ca7d8af8faacab4e9514a7763c9ebfeaa96d2ea05e88bdb1048e",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/web/src/screens/Help.jsx"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/web/src/screens/Login.jsx",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 3429,
+      "sha256": "22e4ec230573625fe015bd998b32d82b772098203f513abdbb494ae7df1ec513",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/web/src/screens/Login.jsx"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/web/src/styles.css",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 55744,
+      "sha256": "0036a33e932fd865b9c38a0aa52134321d528e2b622c81073e3e13bfd55877cf",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/web/src/styles.css"
+    },
+    {
+      "path": "mods/deathmatch/resources/[dm]/dm_ui/web/src/ui.jsx",
+      "status": "M",
+      "changed_in_newer_remote": false,
+      "bytes": 4934,
+      "sha256": "9b71f9a5eab1a76147a989806dd451f3f75f6a60abefe5d408389acce05b5401",
+      "delivery": "arquivos/mods/deathmatch/resources/[dm]/dm_ui/web/src/ui.jsx"
+    },
+    {
+      "path": "tools/build_skins.py",
+      "status": "M",
+      "changed_in_newer_remote": true,
+      "bytes": 11064,
+      "sha256": "99bc83984a39de3dd2b60a189915617f1ffbf1454fbb357080fa0c535027ae72",
+      "delivery": "arquivos/tools/build_skins.py"
+    },
+    {
+      "path": "tools/crate_catalog.py",
+      "status": "A",
+      "changed_in_newer_remote": false,
+      "bytes": 3234,
+      "sha256": "927ff23a4bb525b5632bc2f4e84e951057b039c538b1a5ed81bdf8474f01688c",
+      "delivery": "arquivos/tools/crate_catalog.py"
+    },
+    {
+      "path": "tools/tests/test_menu_interaction.py",
+      "status": "A",
+      "changed_in_newer_remote": false,
+      "bytes": 6209,
+      "sha256": "e90895c076e3e89e9eaa705441639f6d42844bd3270a0aa7ef03f7138ef5a87c",
+      "delivery": "arquivos/tools/tests/test_menu_interaction.py"
+    },
+    {
+      "path": "tools/tests/test_server_regressions.py",
+      "status": "A",
+      "changed_in_newer_remote": false,
+      "bytes": 12232,
+      "sha256": "04ce1474f16b3ac7644192c554c4fe2fa5af0e1cb6241523e343272cbc00a19e",
+      "delivery": "arquivos/tools/tests/test_server_regressions.py"
+    }
+  ]
+}

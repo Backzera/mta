@@ -13,7 +13,7 @@ local pdata        = {}   -- player -> { respawnTimer, protectTimer, freezeTimer
 
 local function getData(player)
     if not pdata[player] then
-        pdata[player] = { streak = 0, lastSpawn = 0 }
+        pdata[player] = { streak = 0, lastSpawn = 0, spawnSerial = 0, collisionFreeze = false }
     end
     return pdata[player]
 end
@@ -59,16 +59,53 @@ local function getPlayerSkin(player)
     return skin
 end
 
--- Entrega SOMENTE as armas da arena
+-- Aplica o padrão imediatamente, usando a mesma lista do spawn, sem respawnar
+-- o jogador nem alterar posição, vida, armas ou inventário.
+function resetPlayerSkin(player)
+    if not isElement(player) or not getPlayerStats(player) then return false end
+    setPlayerStat(player, "equip_skin", 0)
+    setElementData(player, "dm:skin", false)
+    local skin = getPlayerSkin(player)
+    if not isPedDead(player) then setElementModel(player, skin) end
+    return true
+end
+
+-- Entrega SOMENTE as armas da arena e guarda o loadout (para recarga ao trocar de arma)
 function giveArenaWeapons(player, weapons)
     if not isElement(player) then return end
     takeAllWeapons(player)
+    local loadout = {}
     for i, w in ipairs(weapons or {}) do
         giveWeapon(player, w[1], w[2], i == 1)
+        loadout[tostring(w[1])] = w[2]
     end
+    setElementData(player, "dm:loadout", loadout, false)
     if #(weapons or {}) == 0 then
         setPedWeaponSlot(player, 0)
     end
+end
+
+-- Recarrega uma arma (ou todas) para a munição do loadout
+function refillPlayerWeapons(player, weaponId)
+    if not isElement(player) then return end
+    local loadout = getElementData(player, "dm:loadout")
+    if type(loadout) ~= "table" then return end
+    for id, ammo in pairs(loadout) do
+        id = tonumber(id)
+        if id and id > 1 and (not weaponId or weaponId == id) then
+            local clip = tonumber(getWeaponProperty(id, "poor", "maximum_clip_ammo")) or 0
+            setWeaponAmmo(player, id, ammo, math.min(clip, ammo))
+        end
+    end
+end
+
+-- Tempo de respawn (VIP / perk de respawn rápido)
+function getPlayerRespawnDelay(player)
+    if getElementData(player, "dm:managed") then return DM.ranked.respawn end
+    if isPlayerVip(player) > 0 or playerHasPerk(player, "fastrespawn") then
+        return DM.server.respawnDelayVip
+    end
+    return DM.server.respawnDelay
 end
 
 local function setProtected(player, ms)
@@ -113,7 +150,11 @@ function spawnPlayerInArena(player, opts)
     local x, y, z, rot = sp[1], sp[2], sp[3], sp[4] or 0
     local dim = opts.dimension or arena.dimension
 
-    spawnPlayer(player, x, y, z + 0.5, rot, getPlayerSkin(player), 0, dim)
+    data.spawnSerial = (data.spawnSerial or 0) + 1
+    local spawnSerial = data.spawnSerial
+    data.collisionFreeze = opts.freeze ~= false
+
+    spawnPlayer(player, x, y, z + 0.5, rot, getPlayerSkin(player), 0, dim, opts.team or getPlayerTeam(player) or nil)
     setElementInterior(player, 0)
     setElementDimension(player, dim)
     setCameraInterior(player, 0)
@@ -123,12 +164,20 @@ function spawnPlayerInArena(player, opts)
     setPedArmor(player, opts.armor or arena.armor or 0)
     giveArenaWeapons(player, opts.weapons or arena.weapons)
 
-    -- Congela um instante para o mapa carregar
+    -- Mantém congelado enquanto o cliente espera a colisão/streaming da arena.
+    -- O cliente libera antes via dm:spawnCollisionReady. O timer é só um fallback
+    -- para nunca deixar o jogador preso se o cliente não responder.
     if opts.freeze ~= false then
         setElementFrozen(player, true)
+        local fallback = math.max(tonumber(DM.server.spawnFreeze) or 900, 7000)
         data.freezeTimer = setTimer(function()
-            if isElement(player) then setElementFrozen(player, false) end
-        end, DM.server.spawnFreeze, 1)
+            if isElement(player) and data.spawnSerial == spawnSerial and data.collisionFreeze then
+                data.collisionFreeze = false
+                outputDebugString(("[dm_core] Timeout esperando colisão da arena '%s' para %s — enviando ao lobby"):format(arena.id, getPlayerName(player)), 2)
+                notifyPlayer(player, "Tempo limite ao carregar a colisão do mapa. Voltando ao lobby.", "warn", "Mapa")
+                setPlayerArena(player, "lobby", true)
+            end
+        end, fallback, 1)
     end
 
     -- Proteção contra spawn-kill
@@ -136,40 +185,78 @@ function spawnPlayerInArena(player, opts)
         if arena.safe then
             setElementData(player, "dm:protected", true)
         else
-            setProtected(player, DM.server.spawnProtection)
+            setProtected(player, opts.protection or (arena.type == "ranked" and DM.ranked.protection) or DM.server.spawnProtection)
         end
     end
 
-    triggerClientEvent(player, "dm:onSpawn", player, arena.id)
+    triggerClientEvent(player, "dm:onSpawn", player, arena.id, spawnSerial, data.collisionFreeze)
     return true
 end
+
+-- O cliente confirma que os objetos/chão da arena já estão carregados.
+-- O serial impede uma confirmação atrasada de liberar um spawn mais novo.
+addEvent("dm:spawnCollisionReady", true)
+addEventHandler("dm:spawnCollisionReady", root, function(serial)
+    if client ~= source then return end
+    local data = getData(source)
+    if tonumber(serial) ~= tonumber(data.spawnSerial) then return end
+    if not data.collisionFreeze then return end
+
+    data.collisionFreeze = false
+    data.badSpawns = 0
+    data.badSpawnTick = nil
+    killTimerSafe(data.freezeTimer)
+    data.freezeTimer = nil
+    if isElementFrozen(source) then
+        setElementFrozen(source, false)
+    end
+end)
 
 function getArenaSpawns(arenaId)
     return arenaSpawns[arenaId], spawnSource[arenaId]
 end
 
 -- Coloca o jogador em uma arena (e nasce nela)
-function setPlayerArena(player, arenaId, silent)
+function setPlayerArena(player, arenaId, silent, noSpawn)
     local arena = DM.getArena(arenaId)
     if not isElement(player) or not arena then return false end
     local prevId = getElementData(player, "dm:arena")
     local data = getData(player)
     killTimerSafe(data.respawnTimer)
     data.streak = 0
+    if prevId ~= arenaId then
+        data.badSpawns = 0
+        data.badSpawnTick = nil
+    end
     setElementData(player, "dm:streak", 0)
     setElementData(player, "dm:arena", arenaId)
     setElementData(player, "dm:inDuel", false)
+    setElementData(player, "dm:managed", false)
+    setElementData(player, "dm:noReward", false)
 
-    -- Permite que outros recursos (dm_duel) reajam antes do spawn
+    -- Permite que outros recursos (dm_duel, dm_ranked) reajam antes do spawn
     triggerEvent("dm:onPlayerArenaChange", player, prevId, arenaId)
 
-    spawnPlayerInArena(player)
+    if arena.type == "ranked" then
+        -- dm_ranked cuida do spawn e das partidas
+        local res = getResourceFromName("dm_ranked")
+        if res and getResourceState(res) == "running" then
+            triggerEvent("ranked:join", player, arenaId)
+        else
+            notifyPlayer(player, "As partidas ranqueadas estão desativadas no momento.", "warn")
+            return setPlayerArena(player, "lobby", true)
+        end
+    elseif not noSpawn then
+        spawnPlayerInArena(player)
+    end
     triggerClientEvent(player, "dm:onEnterArena", player, arenaId, prevId)
 
     if not silent then
         local hex = DM.rgbToHex(unpack(arena.color))
         if arena.type == "lobby" then
             notifyPlayer(player, "Você voltou ao lobby. Pressione F2 para escolher uma arena.", "info", "Lobby")
+        elseif arena.type == "ranked" then
+            notifyPlayer(player, arena.desc, "success", arena.name)
         else
             notifyPlayer(player, arena.desc, "success", arena.name)
             sendServerMessage(player, ("Você entrou na %s%s#FFFFFF. Armas: #8B93A7%s"):format(hex, arena.name, DM.arenaWeaponList(arena)))
@@ -178,6 +265,7 @@ function setPlayerArena(player, arenaId, silent)
     return true
 end
 addEvent("dm:onPlayerArenaChange")
+addEvent("ranked:join")
 
 -- Pedido do cliente (painel F2 / comandos)
 addEvent("dm:requestArena", true)
@@ -198,11 +286,17 @@ addEvent("dm:playerReady")
 addEventHandler("dm:playerReady", root, function()
     local player = source
     if not isElement(player) then return end
+    local account = getPlayerAccount(player)
+    if not account or isGuestAccount(account) then return end
+    if not getPlayerStats(player) then
+        loadPlayerStats(player, function(p) triggerEvent("dm:playerReady", p) end)
+        return
+    end
+    if pdata[player] and getElementData(player, "dm:ready") and getPlayerArena(player) then return end
     setElementData(player, "dm:ready", true)
-    if not getPlayerStats(player) then loadPlayerStats(player) end
     setPlayerArena(player, "lobby", true)
-    notifyPlayer(player, "Bem-vindo ao " .. DM.server.name .. "! Pressione F2 para escolher uma arena.", "success", "Bem-vindo")
-    sendServerMessage(player, "#8B93A7Teclas: #FFFFFFF1 #8B93A7ajuda · #FFFFFFF2 #8B93A7arenas · #FFFFFFF3 #8B93A7duelo X1 · #FFFFFFTAB #8B93A7placar")
+    notifyPlayer(player, "Bem-vindo ao " .. DM.server.fullName .. "! Pressione F2 para escolher uma arena.", "success", "Bem-vindo")
+    sendServerMessage(player, "#969BB4Teclas: #FFFFFFF1 #969BB4ajuda · #FFFFFFF2 #969BB4arenas · #FFFFFFF3 #969BB4duelo · #FFFFFFF4 #969BB4loja · #FFFFFFF5 #969BB4ranqueadas · #FFFFFFF6 #969BB4clã · #FFFFFFTAB #969BB4placar · #FFFFFF/emojis")
 end)
 
 local function isLoginRunning()
@@ -234,12 +328,12 @@ addEventHandler("onPlayerWasted", root, function()
     if not arena then return end
     local data = getData(player)
     killTimerSafe(data.respawnTimer)
-    if getElementData(player, "dm:inDuel") then return end
+    if getElementData(player, "dm:inDuel") or getElementData(player, "dm:managed") then return end
     data.respawnTimer = setTimer(function()
-        if isElement(player) and not getElementData(player, "dm:inDuel") and getPlayerArena(player) then
+        if isElement(player) and not getElementData(player, "dm:inDuel") and not getElementData(player, "dm:managed") and getPlayerArena(player) then
             spawnPlayerInArena(player)
         end
-    end, DM.server.respawnDelay, 1)
+    end, getPlayerRespawnDelay(player), 1)
 end)
 
 addEventHandler("onPlayerQuit", root, function()
@@ -262,18 +356,41 @@ end)
 
 -- Rede de segurança: o cliente detectou que caiu no vazio logo após nascer
 addEvent("dm:badSpawn", true)
-addEventHandler("dm:badSpawn", root, function()
+addEventHandler("dm:badSpawn", root, function(reason)
     if client ~= source then return end
+
     local arena = getPlayerArena(source)
     if not arena or getElementData(source, "dm:inDuel") then return end
+    if getElementData(source, "dm:managed") then return end
+
     local data = getData(source)
     local now = getTickCount()
-    data.badSpawns = (data.badSpawnTick and now - data.badSpawnTick < 20000) and (data.badSpawns or 0) + 1 or 1
+
+    data.badSpawns = (data.badSpawnTick and now - data.badSpawnTick < 20000)
+        and (data.badSpawns or 0) + 1 or 1
     data.badSpawnTick = now
-    if data.badSpawns > 3 then return end -- evita loop
+
+    -- Nunca entra em respawn infinito. Uma tentativa de âncora; na segunda
+    -- falha seguida, volta para um local seguro.
+    if data.badSpawns >= 2 then
+        outputServerLog(("[dm_core] Falha de colisão repetida em %s para %s (%s) — voltando ao lobby"):format(
+            arena.id, getPlayerVisibleName(source), tostring(reason or "sem motivo")))
+
+        data.badSpawns = 0
+        data.badSpawnTick = nil
+        notifyPlayer(source, "O mapa não carregou a colisão corretamente. Você voltou ao lobby para evitar queda infinita.", "warn", "Mapa")
+        setPlayerArena(source, "lobby", true)
+        return
+    end
+
     local list = arenaSpawns[arena.id] or arena.spawns
-    outputServerLog(("[dm_core] %s caiu no vazio na arena %s — reposicionando (spawn âncora)"):format(getPlayerVisibleName(source), arena.id))
-    spawnPlayerInArena(source, { spawn = list[1] })
+    outputServerLog(("[dm_core] Spawn sem colisão na arena %s para %s (%s) — tentando spawn âncora"):format(
+        arena.id, getPlayerVisibleName(source), tostring(reason or "sem motivo")))
+
+    spawnPlayerInArena(source, {
+        spawn = list[1],
+        dimension = getElementDimension(source)
+    })
 end)
 
 -- Streak (usado por s_kills)

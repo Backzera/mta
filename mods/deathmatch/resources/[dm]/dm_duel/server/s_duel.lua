@@ -66,6 +66,8 @@ addEventHandler("duel:request", root, function(target, weaponKey, rounds)
     if not getElementData(target, "dm:ready") then notify(from, "Esse jogador ainda não entrou no jogo.", "warn") return end
     if playerDuel[from] then notify(from, "Você já está em um duelo.", "warn") return end
     if playerDuel[target] then notify(from, nick(target) .. " já está em um duelo.", "warn") return end
+    if getElementData(from, "dm:managed") then notify(from, "Saia da partida ranqueada antes de duelar.", "warn") return end
+    if getElementData(target, "dm:managed") then notify(from, nick(target) .. " está em uma partida ranqueada.", "warn") return end
     local set = weaponSet(weaponKey)
     if not set then notify(from, "Conjunto de armas inválido.", "error") return end
     rounds = tonumber(rounds) or 1
@@ -172,7 +174,8 @@ local function endDuel(duel, winner, reason, skipReturn)
         setTimer(function() if isElement(rootEl) then destroyElement(rootEl) end end, 4000, 1)
     end
     local loser = winner and opponent(duel, winner) or nil
-    local xp = cfg().xpDuelWin or 60
+    local rpCfg = core:getRpConfig()
+    local eco = core:getEconomyConfig()
     local winName = isElement(winner) and nick(winner) or "?"
     local loseName = isElement(loser) and nick(loser) or "?"
     local set = weaponSet(duel.weaponKey)
@@ -183,14 +186,19 @@ local function endDuel(duel, winner, reason, skipReturn)
             setElementData(p, "dm:inDuel", false)
             setElementFrozen(p, false)
             local won = p == winner
+            local rpDelta = 0
             if won then
                 core:addPlayerStat(p, "duels_won", 1)
-                core:addPlayerStat(p, "xp", xp)
+                rpDelta = rpCfg.duelWin or 5
+                core:addPlayerStat(p, "rp", rpDelta)
+                core:addMoney(p, eco.duelWin or 500, "Vitória no X1")
             elseif winner then
                 core:addPlayerStat(p, "duels_lost", 1)
+                rpDelta = rpCfg.duelLoss or -3
+                core:addPlayerStat(p, "rp", rpDelta)
             end
             local opp = opponent(duel, p)
-            triggerClientEvent(p, "duel:end", resourceRoot, won, duel.score[p] or 0, duel.score[opp] or 0, won and xp or 0, reason)
+            triggerClientEvent(p, "duel:end", resourceRoot, won, duel.score[p] or 0, duel.score[opp] or 0, rpDelta, reason, eco.duelWin or 500)
             if p ~= skipReturn then
                 local back = duel.prevArena[p] or "x1"
                 if not core:getArena(back) then back = "x1" end
@@ -204,10 +212,14 @@ local function endDuel(duel, winner, reason, skipReturn)
     end
 
     if winner then
-        local msg = ("#7C5CFF[X1] #FFFFFF%s #8B93A7venceu #FFFFFF%s #8B93A7por #FFFFFF%d x %d #8B93A7(%s)%s"):format(
+        local msg = ("#F5C451✦ X1 #8FA39A» #FFFFFF%s #8B93A7venceu #FFFFFF%s #8B93A7por #FFFFFF%d x %d #8B93A7(%s)%s"):format(
             winName, loseName, duel.score[winner] or 0, duel.score[loser] or 0, set and set.name or "?",
             reason == "forfeit" and " #FFB547— W.O." or "")
         outputChatBox(msg, root, 255, 255, 255, true)
+        -- notificação para todo o servidor com o placar
+        triggerClientEvent(root, "dm:notify", resourceRoot,
+            ("%s venceu %s por %d x %d (%s)%s"):format(winName, loseName, duel.score[winner] or 0, duel.score[loser] or 0, set and set.name or "?", reason == "forfeit" and " — W.O." or ""),
+            "info", "Duelo X1")
     end
 end
 
@@ -216,7 +228,7 @@ local function startDuel(from, to, weaponKey, rounds)
     local id = nextId
     local duel = {
         id = id, p1 = from, p2 = to, weaponKey = weaponKey, target = rounds,
-        dim = 1000 + (id % 60000), round = 0, state = "countdown",
+        dim = 60000 + (id % 5000), round = 0, state = "countdown",
         score = { [from] = 0, [to] = 0 },
         prevArena = { [from] = getElementData(from, "dm:arena"), [to] = getElementData(to, "dm:arena") },
     }
@@ -257,6 +269,7 @@ addEventHandler("duel:respond", root, function(id, accept)
     end
     if not isElement(from) then removeRequest(id, "offline") notify(to, "O desafiante saiu.", "error") return end
     if playerDuel[from] or playerDuel[to] then removeRequest(id, "busy") notify(to, "Um dos jogadores já está em duelo.", "warn") return end
+    if getElementData(from, "dm:managed") or getElementData(to, "dm:managed") then removeRequest(id, "busy") notify(to, "Um dos jogadores está em partida ranqueada.", "warn") return end
     removeRequest(id, "accepted", true)
     startDuel(from, to, r.weaponKey, r.rounds)
 end)

@@ -75,7 +75,16 @@ end)
 addCommandHandler("skin", function(player, cmd, id)
     id = tonumber(id)
     if not id or id < 0 or id > 311 or id == 0 then usage(player, "/skin <0-311>") return end
+    if not (isPlayerVip(player) > 0 or playerHasPerk(player, "skins")) then
+        local allowed = false
+        for _, s in ipairs(DM.skins) do if s == id then allowed = true break end end
+        if not allowed then
+            notifyPlayer(player, "Essa skin é exclusiva. Compre o pacote de skins na loja (F4) ou seja VIP.", "warn")
+            return
+        end
+    end
     setElementData(player, "dm:skin", id)
+    setPlayerStat(player, "equip_skin", id)
     if not isPedDead(player) then setElementModel(player, id) end
     notifyPlayer(player, "Skin alterada para " .. id .. ".", "success")
 end)
@@ -89,23 +98,26 @@ addCommandHandler("stats", function(player, cmd, target)
     end
     local s = getPlayerStats(who)
     if not s then notifyPlayer(player, "Stats ainda não carregadas.", "warn") return end
-    local level = DM.levelFromXP(s.xp)
-    local rank = DM.rankForLevel(level)
+    local tier = DM.tierForRP(s.rp)
     local kd = s.deaths > 0 and s.kills / s.deaths or s.kills
-    sendServerMessage(player, ("Stats de #FFFFFF%s #8B93A7— nível %s%d %s"):format(getPlayerVisibleName(who), DM.rgbToHex(unpack(rank.color)), level, rank.name))
-    outputChatBox(("  #8B93A7Kills: #FFFFFF%d  #8B93A7Mortes: #FFFFFF%d  #8B93A7K/D: #FFFFFF%.2f  #8B93A7Headshots: #FFFFFF%d"):format(s.kills, s.deaths, kd, s.headshots), player, 255, 255, 255, true)
-    outputChatBox(("  #8B93A7Maior sequência: #FFFFFF%d  #8B93A7Duelos: #00E5A8%dV #FF4D6D%dD  #8B93A7XP: #FFFFFF%d  #8B93A7Tempo: #FFFFFF%dh%02dm"):format(
-        s.best_streak, s.duels_won, s.duels_lost, s.xp, math.floor(s.playtime / 3600), math.floor(s.playtime % 3600 / 60)), player, 255, 255, 255, true)
+    sendServerMessage(player, ("Stats de #FFFFFF%s #969BB4— elo %s%s #969BB4(%d RP)  saldo #F5C451%s"):format(getPlayerVisibleName(who), DM.rgbToHex(unpack(tier.color)), tier.name, s.rp, DM.formatMoney(s.money)))
+    outputChatBox(("  #969BB4Kills: #FFFFFF%d  #969BB4Mortes: #FFFFFF%d  #969BB4K/D: #FFFFFF%.2f  #969BB4Headshots: #FFFFFF%d  #969BB4Maior seq.: #FFFFFF%d"):format(s.kills, s.deaths, kd, s.headshots, s.best_streak), player, 255, 255, 255, true)
+    outputChatBox(("  #969BB4Duelos: #22E68A%dV #FF4D6D%dD  #969BB4Ranqueadas: #22E68A%dV #FF4D6D%dD #969BB4(%d kills)  #969BB4Tempo: #FFFFFF%dh%02dm"):format(
+        s.duels_won, s.duels_lost, s.ranked_wins, s.ranked_losses, s.ranked_kills, math.floor(s.playtime / 3600), math.floor(s.playtime % 3600 / 60)), player, 255, 255, 255, true)
 end)
 
--- /top
-addCommandHandler("top", function(player)
-    getTopPlayers(10, function(rows)
+-- /top [rp|kills|money|duelos]
+addCommandHandler("top", function(player, cmd, what)
+    local fields = { rp = "rp", kills = "kills", money = "money", dinheiro = "money", duelos = "duels_won", x1 = "duels_won" }
+    local field = fields[(what or "rp"):lower()] or "rp"
+    local titles = { rp = "TOP 10 — elo (RP)", kills = "TOP 10 — kills", money = "TOP 10 — mais ricos", duels_won = "TOP 10 — duelos X1" }
+    getTopPlayers(field, 10, function(rows)
         if not isElement(player) then return end
-        sendServerMessage(player, "TOP 10 — mais kills")
+        sendServerMessage(player, titles[field] .. "  #969BB4(/top rp|kills|money|duelos)")
         for i, r in ipairs(rows) do
-            local level = DM.levelFromXP(tonumber(r.xp) or 0)
-            outputChatBox(("  #FFB547#%d #FFFFFF%-20s #8B93A7nível %d  kills #FFFFFF%d #8B93A7mortes #FFFFFF%d"):format(i, r.name, level, tonumber(r.kills) or 0, tonumber(r.deaths) or 0), player, 255, 255, 255, true)
+            local tier = DM.tierForRP(tonumber(r.rp) or 0)
+            outputChatBox(("  #FFB547#%d #FFFFFF%-20s %s%s #969BB4%d RP  kills #FFFFFF%d  #969BB4$ #F5C451%s  #969BB4X1 #FFFFFF%dV"):format(
+                i, r.name, DM.rgbToHex(unpack(tier.color)), tier.name, tonumber(r.rp) or 0, tonumber(r.kills) or 0, DM.formatMoney(r.money), tonumber(r.duels_won) or 0), player, 255, 255, 255, true)
         end
     end)
 end)
@@ -187,7 +199,7 @@ addCommandHandler("anuncio", function(player, cmd, ...)
     if not requireAdmin(player) then return end
     local text = table.concat({ ... }, " ")
     if text == "" then usage(player, "/anuncio <mensagem>") return end
-    outputChatBox(("#FFB547[ANÚNCIO] #FFFFFF%s"):format(DM.stripColors(text)), root, 255, 255, 255, true)
+    outputChatBox(("#FF4D6D♛ ANÚNCIO #8FA39A» #FFFFFF%s"):format(DM.stripColors(text)), root, 255, 255, 255, true)
     triggerClientEvent(root, "dm:notify", resourceRoot, DM.stripColors(text), "warn", "Anúncio")
 end)
 
@@ -197,4 +209,9 @@ addCommandHandler("admins", function(player)
         if isPlayerAdmin(p) then list[#list + 1] = getPlayerVisibleName(p) end
     end
     sendServerMessage(player, #list > 0 and ("Admins online: #FFFFFF" .. table.concat(list, ", ")) or "Nenhum admin online.")
+end)
+
+-- Limite de FPS: o servidor não limita (0); cada jogador usa o limite do próprio MTA (F8: fps_limit 0).
+addEventHandler("onResourceStart", resourceRoot, function()
+    if getFPSLimit() ~= 0 then setFPSLimit(0) end
 end)
