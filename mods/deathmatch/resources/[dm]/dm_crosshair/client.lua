@@ -4,8 +4,8 @@
     · F9 (ou /mira) abre o painel de miras no dm_ui; aqui só fica o desenho (dx) e a persistência.
     · Estilos: dot, classic, classicdot, plus, x, circle, circledot, tee.
     · A mira nativa volta sozinha com a sniper (ID 34), porque "crosshair" também controla o scope.
-    · Comportamento igual ao do GTA: a mira só aparece enquanto o jogador está mirando, em posição FIXA na tela
-      (centro + deslocamento opcional). Nada é desenhado fora da mira.
+    · Comportamento igual ao do GTA: a mira só aparece enquanto o jogador está mirando, em posição FIXA na tela,
+      no mesmo lugar da mira nativa (medido no jogo e travado) + deslocamento opcional. Nada é desenhado fora da mira.
     Exports (cliente): getCrosshair(), setCrosshair(data) [prévia ao vivo], saveCrosshair(data) [salva na conta], resetCrosshair().
 ]]
 
@@ -73,9 +73,38 @@ local function hexToColor(hex, alpha)
     return tocolor(r, g, b, alpha or 255)
 end
 
--- posição fixa (como a mira do GTA): centro da tela + deslocamento escolhido no painel
+-- Posição da mira nativa do GTA: ela NÃO fica no centro exato (câmera sobre o ombro). Em vez de uma constante,
+-- medimos no próprio jogo: projetamos o ponto de mira (getPedTargetEnd) na tela durante os primeiros frames de mira
+-- e fixamos a MEDIANA (robusta aos frames de transição da câmera). Depois de ~90 amostras a posição é travada.
+local calib = { xs = {}, ys = {}, x = nil, y = nil, locked = false, weapon = nil }
+local function median(t)
+    local c = {}
+    for i, v in ipairs(t) do c[i] = v end
+    table.sort(c)
+    local n = #c
+    if n % 2 == 1 then return c[(n + 1) / 2] end
+    return (c[n / 2] + c[n / 2 + 1]) / 2
+end
+local function resetCalib(weapon)
+    calib = { xs = {}, ys = {}, x = nil, y = nil, locked = false, weapon = weapon }
+end
+local function sampleNative()
+    local weapon = getPedWeapon(localPlayer)
+    if weapon ~= calib.weapon then resetCalib(weapon) end
+    if calib.locked then return end
+    local tx, ty, tz = getPedTargetEnd(localPlayer)
+    if not tx then return end
+    local px, py = getScreenFromWorldPosition(tx, ty, tz, 0, false)
+    if not px then return end
+    local n = #calib.xs + 1
+    calib.xs[n], calib.ys[n] = px / sw, py / sh
+    calib.x, calib.y = median(calib.xs), median(calib.ys)
+    if n >= 90 then calib.locked = true end
+end
 local function aimPosition()
-    return sw * 0.5 + settings.offsetX, sh * 0.5 + settings.offsetY
+    sampleNative()
+    local bx, by = sw * (calib.x or 0.5), sh * (calib.y or 0.5)
+    return bx + settings.offsetX, by + settings.offsetY
 end
 
 local function outlineColor() return tocolor(0, 0, 0, math.min(220, settings.opacity)) end
