@@ -11,7 +11,7 @@ mods/deathmatch/
 └── resources/[dm]/
     ├── dm_core      núcleo: arenas, spawn, armas, kills ($), stats, tags, economia, HUD, painéis, chat, comandos
     ├── dm_maps      carrega maps/<arena>.map na dimensão da arena (+ portão da M4); clona o X1 para os duelos
-    ├── dm_weapons   dano por parte do corpo (headshot x2.2, peito x0.5), sons de tiro, skins de arma
+    ├── dm_weapons   dano por parte do corpo (headshot = morte instantânea, peito x0.5), sons de tiro, skins de arma
     ├── dm_cbug      C-Bug liberado só na Arena C-Bug
     ├── dm_duel      duelo X1 (F3): pedidos, sala privada, rodadas, RP e $
     ├── dm_shop      loja (F4): tags, cores de nick, VIP, extras
@@ -110,7 +110,7 @@ privada com as tags dos clãs. Resultado anunciado para o servidor com o placar.
 ## Sistemas de combate
 
 - **Dano**: o cliente da vítima cancela o dano padrão das armas de fogo e o servidor aplica por parte do
-  corpo: cabeça x2.2 (sniper/rifle mata), peito/quadril x0.5, braços x0.8, pernas x0.7. Mortes passam
+  corpo: **cabeça = morte instantânea com qualquer arma de fogo (ignora vida e colete)**, peito/quadril x0.5, braços x0.8, pernas x0.7. Mortes passam
   por `killPed`, então killer/arma ficam corretos no kill chat. Sem fogo amigo nas ranqueadas.
 - **Kill feedback**: caveira/ícone de headshot no centro, som de headshot, `+$` ganho; killfeed no canto
   superior direito só da sua arena/dimensão; sequências com banner.

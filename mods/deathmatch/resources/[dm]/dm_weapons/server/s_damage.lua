@@ -6,9 +6,9 @@
 
 local core = exports.dm_core
 
--- Multiplicadores por parte do corpo (3 torso, 4 quadril, 5/6 braços, 7/8 pernas, 9 cabeça)
-local MULT = { [3] = 0.5, [4] = 0.5, [5] = 0.8, [6] = 0.8, [7] = 0.7, [8] = 0.7, [9] = 2.2 }
-local HEADSHOT_INSTAKILL = { [34] = true, [33] = true }       -- sniper/rifle: headshot mata
+-- Multiplicadores por parte do corpo (3 torso, 4 quadril, 5/6 braços, 7/8 pernas). Cabeça (9) não usa
+-- multiplicador: HEADSHOT É MORTE INSTANTÂNEA com qualquer arma de fogo, ignorando vida e colete.
+local MULT = { [3] = 0.5, [4] = 0.5, [5] = 0.8, [6] = 0.8, [7] = 0.7, [8] = 0.7 }
 local MAX_LOSS = { [24] = 70, [25] = 90, [26] = 80, [27] = 75, [28] = 25, [29] = 30, [32] = 25, [30] = 40, [31] = 40, [33] = 90, [34] = 120, [22] = 30, [23] = 45, [38] = 40 }
 local GUNS = {}
 for id in pairs(MAX_LOSS) do GUNS[id] = true end
@@ -44,7 +44,14 @@ addEventHandler("wep:hit", root, function(attacker, weapon, bodypart, loss)
     local mult = MULT[bodypart] or 1
     local damage = loss * mult
     local headshot = bodypart == 9
-    if headshot and HEADSHOT_INSTAKILL[weapon] then damage = 500 end
+    if headshot then
+        -- tiro na cabeça = morte, com qualquer arma, sem passar pelo colete
+        setPedArmor(victim, 0)
+        setElementHealth(victim, 1)
+        killPed(victim, attacker, weapon, bodypart)
+        triggerClientEvent(attacker, "wep:hitConfirm", resourceRoot, 100, true, victim, true)
+        return
+    end
 
     local armor = getPedArmor(victim)
     local health = getElementHealth(victim)
