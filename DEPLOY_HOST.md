@@ -88,7 +88,9 @@ Acompanhar / reenviar: aba **Actions → Deploy MTA via FTP**. Cada execução l
 - **desde** = um commit (ex.: `cc393a3`) → envia só o que mudou desde aquele commit (rápido).
 
 Não sobem para a hospedagem (não são usados pelo servidor): `web/` (fontes da interface), `models/weapons/`
-(packs crus das skins), `node_modules/`, `*.md`. No fim, no console do painel, `restart <resource>` do que mudou.
+(packs crus das skins), `node_modules/`, `*.md`. **Também nunca sobem** `mtaserver.conf`, `acl.xml`, `settings.xml`,
+bancos e banlist: a configuração da hospedagem (nome do servidor, senha, portas, contas) é sua e só muda pelo painel.
+Quando um resource novo precisar entrar na lista de startup, eu aviso a linha para você adicionar lá. No fim, no console do painel, `restart <resource>` do que mudou.
 
 ## 7. Atualizar pelo seu PC (alternativa com WinSCP)
 

@@ -66,6 +66,10 @@ jobs:
             case "$file" in
               */node_modules/*|*/web/*|*/models/weapons/*|*.md|*/.gitignore|*/.gitattributes|.gitattributes) return 0 ;;
             esac
+            # Configuração da hospedagem NUNCA é sobrescrita (nome do servidor, senha, portas, ACL, contas):
+            case "$file" in
+              mods/deathmatch/mtaserver.conf|mods/deathmatch/acl.xml|mods/deathmatch/settings.xml|mods/deathmatch/internal.db|mods/deathmatch/registry.db|mods/deathmatch/banlist.xml|mods/deathmatch/vehiclecolors.conf) return 0 ;;
+            esac
             return 1
           }
 
