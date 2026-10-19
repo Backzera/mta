@@ -203,7 +203,9 @@ cai para primitivas dx automaticamente. Guia para novos painéis: `docs/UI_SPEC.
 Toda a interface (HUD, hub de arenas F2, loja F4, duelo F3, ranqueadas F5, clãs F6, caixas F7, placar TAB,
 ajuda F1 e login) é uma página HTML/CSS/React renderizada dentro do MTA via CEF em um único browser
 transparente (`createBrowser` + `dxDrawImage`), com fundo animado verde (aurora, feixes, partículas) atrás
-dos painéis e a cena do GTA visível. O Lua (`dm_ui/client/`) cuida do browser, teclas, cursor, chat oculto,
+dos painéis e a cena do GTA visível. O fundo animado (aurora, feixes, partículas, grade) é desenhado em dx pelo Lua
+(`dm_ui/client/c_bg.lua`, GPU) por trás do browser; a página fica transparente fora do painel, então o CEF só
+repinta o que muda no painel. O Lua (`dm_ui/client/`) cuida do browser, teclas, cursor, chat oculto,
 câmera, dados reais e dos eventos já existentes dos servidores; o JS só desenha. Ponte: JS → Lua com
 `mta.triggerEvent("ui:act", tela, ação, json)`; Lua → JS com `window.ui.set/open/close/push`. Os arquivos
 servidos são estáticos (`dm_ui/dist/`, `http://mta/local/dist/index.html`), sem CDN nem servidor de

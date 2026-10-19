@@ -40,7 +40,8 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [screen])
 
-  const bg = screen && screen !== 'board'
+  // Dentro do MTA o fundo animado é desenhado em dx pelo Lua (c_bg.lua): a página fica transparente fora do painel.
+  const bg = screen && screen !== 'board' && !window.mta
   return (
     <>
       {bg && <div className={`scene scene--${screen}`}><Background strength={screen === 'login' ? 1.3 : 1} /></div>}

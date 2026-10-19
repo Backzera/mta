@@ -7,11 +7,14 @@
     <script src="client/c_core.lua" type="client" />
     <script src="client/c_hud.lua" type="client" />
     <script src="client/c_screens.lua" type="client" />
+    <script src="client/c_bg.lua" type="client" />
 
     <export function="notify" type="client" />
     <export function="setHudVisible" type="client" />
     <export function="isHudVisible" type="client" />
     <export function="isPanelOpen" type="client" />
+
+    <file src="fx/glow.png" />
 
     <!-- Build do Vite (gerado automaticamente por npm run build; não edite à mão) -->
 <!-- FILES -->

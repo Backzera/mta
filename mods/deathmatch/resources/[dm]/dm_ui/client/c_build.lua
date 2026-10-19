@@ -1,2 +1,2 @@
 -- gerado pelo build (npm run build) — não edite
-UI_BUILD = "202610191652"
+UI_BUILD = "202610191701"
