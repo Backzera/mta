@@ -3,4 +3,8 @@
     <include resource="dm_core" />
     <script src="server/s_ac.lua" type="server" />
     <script src="client/c_ac.lua" type="client" />
+    <aclrequest>
+        <right name="function.banPlayer" access="true" />
+        <right name="function.kickPlayer" access="true" />
+    </aclrequest>
 </meta>

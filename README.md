@@ -182,7 +182,8 @@ Fase 1: **rapid fire**. Tudo no servidor: conta os tiros de cada jogador por arm
 (`onPlayerWeaponFire`) e compara com a cadência máxima real da arma (propriedades `anim_loop_start/stop`,
 nível "pro") com 35% de tolerância (pistolas/shotguns 140%, porque o C-Bug acelera de verdade). Duas violações
 em 60 s marcam o jogador: alerta na tela de todos os admins (toast vermelho + som), log no console do servidor
-e lista em `/ac`. Não pune sozinho: o admin decide (`/kick`, `/ban`). Adicione ao `mtaserver.conf`:
+e lista em `/ac`. **Três violações em 60 s = ban automático** (permanente, serial + IP, anunciado no chat; admins
+nunca são banidos automaticamente). Para o ban funcionar, uma vez no console do servidor: `aclrequest allow dm_anticheat all`. Adicione ao `mtaserver.conf`:
 `<resource src="dm_anticheat" startup="1" protected="0" />`.
 
 ## Chat

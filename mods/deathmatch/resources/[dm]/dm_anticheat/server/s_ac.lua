@@ -3,8 +3,10 @@
     Tudo no servidor (não dá para burlar editando o cliente): conta os tiros de cada jogador por arma numa janela
     de 1 s (onPlayerWeaponFire) e compara com a cadência máxima real da arma, lida das propriedades do GTA
     (anim_loop_start/stop no nível "pro"), com tolerância para lag/FPS. Pistolas e shotguns, que o C-Bug acelera
-    de verdade, têm tolerância maior. Duas violações em 60 s = jogador marcado: alerta na tela de todos os admins
-    (toast + som), log no console e lista em /ac. Não pune sozinho: a decisão é do admin (/kick, /ban).
+    de verdade, têm tolerância maior. 2 violações em 60 s = jogador marcado: alerta na tela de todos os admins
+    (toast + som), log no console e lista em /ac. 3 violações em 60 s = BAN AUTOMÁTICO (serial + IP, permanente),
+    anunciado no chat. Admins nunca são banidos automaticamente (só alertados).
+    Precisa de ACL para banir: no console do servidor, uma vez: aclrequest allow dm_anticheat all
 ]]
 local core = exports.dm_core
 
@@ -12,7 +14,9 @@ local TOLERANCE_DEFAULT = 1.35      -- 35% acima da cadência máxima ainda é a
 local TOLERANCE_CBUG    = 2.4       -- pistolas/shotguns: C-Bug e animação cancelada aceleram legitimamente
 local WINDOW_MS         = 1000
 local MIN_SHOTS         = 4         -- só avalia a janela com pelo menos este número de tiros
-local VIOLATIONS_TO_FLAG = 2
+local VIOLATIONS_TO_FLAG = 2       -- alerta aos admins
+local VIOLATIONS_TO_BAN  = 3       -- ban automático (permanente, serial + IP)
+local AUTOBAN = true
 local VIOLATION_TTL     = 60000
 local ALERT_COOLDOWN    = 20000     -- não repete o alerta do mesmo jogador antes disso
 
@@ -56,6 +60,21 @@ local function alert(player, weapon, rate, limit)
     if #admins > 0 then triggerClientEvent(admins, "ac:alert", resourceRoot, "RAPID FIRE", text, player) end
 end
 
+function autoban(player, weapon, rate, limit)
+    local name = getPlayerName(player):gsub("#%x%x%x%x%x%x", "")
+    local wname = getWeaponNameFromID(weapon) or tostring(weapon)
+    local reason = ("Anti-cheat: rapid fire (%s, %.1f tiros/s, max %.1f)"):format(wname, rate, limit)
+    outputServerLog(("[ANTI-CHEAT] BAN AUTOMÁTICO: %s serial %s ip %s — %s"):format(name, getPlayerSerial(player), getPlayerIP(player), reason))
+    local admins = adminsOnline()
+    if #admins > 0 then triggerClientEvent(admins, "ac:alert", resourceRoot, "BAN AUTOMÁTICO", name .. " · " .. reason, player) end
+    outputChatBox(("#FF4D6D⚠ #FFFFFF%s #8FA39Afoi banido pelo anti-cheat: #FF4D6Drapid fire"):format(name), root, 255, 255, 255, true)
+    local ok = banPlayer(player, true, false, true, nil, reason, 0)
+    if not ok then
+        outputServerLog("[ANTI-CHEAT] banPlayer falhou: falta ACL. Rode no console: aclrequest allow dm_anticheat all")
+        kickPlayer(player, reason)
+    end
+end
+
 addEventHandler("onPlayerWeaponFire", root, function(weapon)
     if not WATCHED[weapon] then return end
     local now = getTickCount()
@@ -75,8 +94,10 @@ addEventHandler("onPlayerWeaponFire", root, function(weapon)
     while v[1] and now - v[1] > VIOLATION_TTL do table.remove(v, 1) end
     violations[source] = v
     t[#t] = nil   -- não deixa a mesma rajada gerar várias violações seguidas
-    if #v >= VIOLATIONS_TO_FLAG then
+    if #v >= VIOLATIONS_TO_BAN and AUTOBAN and not core:isPlayerAdmin(source) then
         violations[source] = {}
+        autoban(source, weapon, rate, limit)
+    elseif #v == VIOLATIONS_TO_FLAG then
         alert(source, weapon, rate, limit)
     end
 end)
