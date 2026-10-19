@@ -33,6 +33,13 @@ local SNAP_WINDOW_MS     = 320     -- o tiro que acerta tem de vir até este tem
 local MAX_DIST           = 90      -- só observa suspeitos a até esta distância da câmera
 local REPORT_SILENT      = 5       -- pontos para reportar (pontos decaem com o tempo)
 local REPORT_SNAP        = 4
+-- LOCK (aimbot suave/humanizado): a mira fica grudada na cabeça de um alvo em movimento, com erro mínimo,
+-- por várias atualizações de sync seguidas. Humano treme e atrasa; aimbot acompanha perfeito.
+local LOCK_MAX_ERR       = 1.3     -- graus de erro máximo entre a mira e a cabeça do alvo durante o lock
+local LOCK_UPDATES       = 8       -- atualizações de sync seguidas (~0,8 s) para contar 1 ponto
+local LOCK_MIN_MOVE      = 5       -- graus que o alvo tem de ter se deslocado (relativo ao atirador) no período
+local LOCK_MAX_RANGE     = 120
+local REPORT_LOCK        = 3
 local DECAY_MS           = 30000
 local REPORT_COOLDOWN    = 15000
 local WATCHED = { [22]=true,[23]=true,[24]=true,[25]=true,[26]=true,[27]=true,[28]=true,[29]=true,[30]=true,[31]=true,[32]=true,[33]=true,[34]=true,[38]=true }
@@ -54,7 +61,7 @@ local function prune(list, now)
 end
 local function observed(p)
     local o = obs[p]
-    if not o then o = { silent = {}, snap = {}, lastReport = {} } obs[p] = o end
+    if not o then o = { silent = {}, snap = {}, lockPts = {}, lastReport = {} } obs[p] = o end
     return o
 end
 local function report(p, kind, detail)
@@ -62,7 +69,7 @@ local function report(p, kind, detail)
     local now = getTickCount()
     if o.lastReport[kind] and now - o.lastReport[kind] < REPORT_COOLDOWN then return end
     o.lastReport[kind] = now
-    o[kind] = {}
+    if kind == "lock" then o.lockPts = {} else o[kind] = {} end
     triggerServerEvent("ac:report", localPlayer, p, kind, detail)
 end
 
@@ -85,6 +92,47 @@ addEventHandler("onClientRender", root, function()
                             o.lastAng, o.lastDt = ang, dtms
                             if ang >= SNAP_DEG and dtms <= SNAP_MAX_DT then o.lastSnap = now o.snapDeg = ang end
                             o.tUpd = now
+                        end
+                    end
+                    -- LOCK: mira grudada na cabeça de alguém?
+                    if o.lastAng and o.tUpd == now then
+                        local best, bestErr, bestDir = nil, 99, nil
+                        for _, tgt in ipairs(getElementsByType("player", root, true)) do
+                            if tgt ~= p and getElementDimension(tgt) == getElementDimension(p) and not isPedDead(tgt) then
+                                local hx, hy, hz = getPedBonePosition(tgt, 8)
+                                if hx and getDistanceBetweenPoints3D(sx, sy, sz, hx, hy, hz) < LOCK_MAX_RANGE then
+                                    local tx, ty, tz = norm(hx - sx, hy - sy, hz - sz)
+                                    if tx then
+                                        local err = angleBetween(dx, dy, dz, tx, ty, tz)
+                                        if err < bestErr then best, bestErr, bestDir = tgt, err, { tx, ty, tz } end
+                                    end
+                                end
+                            end
+                        end
+                        o.tgt, o.tgtErr = best, bestErr
+                        local lk = o.lock
+                        if best and bestErr <= LOCK_MAX_ERR then
+                            local vx, vy, vz = getElementVelocity(best)
+                            local moving = (vx * vx + vy * vy + vz * vz) > 0.0016   -- alvo andando/correndo
+                            if lk and lk.target == best then
+                                lk.n = lk.n + 1
+                                lk.maxErr = math.max(lk.maxErr, bestErr)
+                                lk.move = angleBetween(lk.d0[1], lk.d0[2], lk.d0[3], bestDir[1], bestDir[2], bestDir[3])
+                                if moving then lk.moved = lk.moved + 1 end
+                                if lk.n >= LOCK_UPDATES and lk.move >= LOCK_MIN_MOVE and lk.moved >= LOCK_UPDATES / 2 and not lk.counted then
+                                    lk.counted = true
+                                    prune(o.lockPts, now)
+                                    o.lockPts[#o.lockPts + 1] = now
+                                    o.lockLast = ("LOCK em %s: %d upd, erro máx %.1f°, alvo moveu %.0f°"):format(getPlayerName(best):gsub("#%x%x%x%x%x%x", ""), lk.n, lk.maxErr, lk.move)
+                                    if #o.lockPts >= REPORT_LOCK then
+                                        report(p, "lock", ("mira grudada na cabeça de alvo em movimento (%d vezes, erro < %.1f°)"):format(REPORT_LOCK, LOCK_MAX_ERR))
+                                    end
+                                end
+                            else
+                                o.lock = { target = best, n = 1, maxErr = bestErr, d0 = bestDir, move = 0, moved = 0 }
+                            end
+                        else
+                            o.lock = nil
                         end
                     end
                     o.dx, o.dy, o.dz, o.t = dx, dy, dz, now
@@ -146,6 +194,10 @@ addEventHandler("onClientRender", root, function()
             local name = getPlayerName(p):gsub("#%x%x%x%x%x%x", "")
             dxDrawText(("%s  mira: Δ%.0f° em %d ms  %s"):format(name, o.lastAng or 0, o.lastDt or 0, (o.lastSnap and getTickCount() - o.lastSnap < 1000) and "<< SALTO" or ""), 22, y, 0, 0, tocolor(124, 255, 178), 1.1, "default-bold")
             y = y + 18
+            local lk = o.lock
+            dxDrawText(("alvo: %s erro %.1f°  lock %s  pontos lock %d/%d  %s"):format(isElement(o.tgt) and getPlayerName(o.tgt):gsub("#%x%x%x%x%x%x", "") or "-", o.tgtErr or 99,
+                lk and ("%d upd / máx %.1f° / moveu %.0f°"):format(lk.n, lk.maxErr, lk.move) or "-", #(o.lockPts or {}), REPORT_LOCK, o.lockLast or ""), 34, y, 0, 0, tocolor(255, 200, 120), 1, "default")
+            y = y + 16
             for _, line in ipairs(o.log or {}) do dxDrawText(line, 34, y, 0, 0, tocolor(230, 230, 230), 1, "default") y = y + 16 end
             y = y + 8
         end

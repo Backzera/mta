@@ -124,7 +124,7 @@ local AIM_REPORTS_BAN_ACC = 4
 local ACC_MIN_SHOTS       = 40      -- precisão só é avaliada com pelo menos este número de tiros (janela móvel)
 local ACC_HIT_RATIO       = 0.85    -- acertos/tiros impossíveis de sustentar sem ajuda
 local ACC_HS_RATIO        = 0.75    -- headshots/acertos
-local KIND_NAME = { silent = "SILENT AIM", snap = "AIMBOT" }
+local KIND_NAME = { silent = "SILENT AIM", snap = "AIMBOT", lock = "AIMBOT (lock)" }
 
 local aimReports = {}   -- [suspect] = { {witness=, kind=, t=, detail=}, ... }
 
