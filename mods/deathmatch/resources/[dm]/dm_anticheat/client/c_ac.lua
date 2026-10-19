@@ -32,7 +32,12 @@ local SNAP_MAX_DT        = 260     -- ms: só vale se as duas atualizações for
 local SNAP_WINDOW_MS     = 320     -- o tiro que acerta tem de vir até este tempo depois do salto
 local MAX_DIST           = 90      -- só observa suspeitos a até esta distância da câmera
 local REPORT_SILENT      = 5       -- pontos para reportar (pontos decaem com o tempo)
-local REPORT_SNAP        = 4
+local REPORT_SNAP        = 3
+-- SNAP-ON-FIRE (aimbot que só gruda no clique): erro da mira para a cabeça da vítima alguns ms ANTES do tiro
+-- grande, e no instante do tiro quase zero. Humano que acerta já vinha perto antes.
+local SOF_BEFORE_MIN_MS, SOF_BEFORE_MAX_MS = 120, 450
+local SOF_ERR_BEFORE     = 5       -- graus: estava pelo menos isto fora da cabeça antes do tiro
+local SOF_ERR_AT_SHOT    = 1.2     -- graus: e no tiro estava dentro disto
 -- LOCK (aimbot suave/humanizado): a mira fica grudada na cabeça de um alvo em movimento, com erro mínimo,
 -- por várias atualizações de sync seguidas. Humano treme e atrasa; aimbot acompanha perfeito.
 local LOCK_MAX_ERR       = 1.3     -- graus de erro máximo entre a mira e a cabeça do alvo durante o lock
@@ -40,7 +45,7 @@ local LOCK_UPDATES       = 8       -- atualizações de sync seguidas (~0,8 s) p
 local LOCK_MIN_MOVE      = 5       -- graus que o alvo tem de ter se deslocado (relativo ao atirador) no período
 local LOCK_MAX_RANGE     = 120
 local REPORT_LOCK        = 3
-local DECAY_MS           = 30000
+local DECAY_MS           = 90000
 local REPORT_COOLDOWN    = 15000
 local WATCHED = { [22]=true,[23]=true,[24]=true,[25]=true,[26]=true,[27]=true,[28]=true,[29]=true,[30]=true,[31]=true,[32]=true,[33]=true,[34]=true,[38]=true }
 
@@ -110,6 +115,9 @@ addEventHandler("onClientRender", root, function()
                             end
                         end
                         o.tgt, o.tgtErr = best, bestErr
+                        o.errHist = o.errHist or {}
+                        o.errHist[#o.errHist + 1] = { t = now, tgt = best, err = bestErr }
+                        while o.errHist[1] and now - o.errHist[1].t > 800 do table.remove(o.errHist, 1) end
                         -- estatísticas para o /acdebug (janela de 60 s)
                         o.st = o.st or { upd = 0, under = 0, minErr = 99, t0 = now }
                         if now - o.st.t0 > 60000 then o.st = { upd = 0, under = 0, minErr = 99, t0 = now } end
@@ -165,12 +173,6 @@ addEventHandler("onClientPlayerWeaponFire", root, function(weapon, ammo, clip, h
     local hitPlayer = isElement(hitElement) and getElementType(hitElement) == "player"
     local ang = angleBetween(o.dx, o.dy, o.dz, bx, by, bz)
     local snapRecent = o.lastSnap and now - o.lastSnap <= SNAP_WINDOW_MS
-    o.log = o.log or {}
-    o.sh = o.sh or { hits = 0, hitDev = 0, miss = 0, missDev = 0 }
-    if hitPlayer then o.sh.hits, o.sh.hitDev = o.sh.hits + 1, o.sh.hitDev + ang else o.sh.miss, o.sh.missDev = o.sh.miss + 1, o.sh.missDev + ang end
-    table.insert(o.log, 1, ("%s %s desvio %.0f° %s%s"):format(getWeaponNameFromID(weapon) or weapon, hitPlayer and "ACERTOU jogador" or "errou",
-        ang, snapRecent and ("SALTO " .. math.floor(o.snapDeg or 0) .. "° ") or "", ("sil %d/%d snap %d/%d"):format(#o.silent, REPORT_SILENT, #o.snap, REPORT_SNAP)))
-    while #o.log > 6 do table.remove(o.log) end
 
     -- SILENT AIM: bala em jogador longe da direção da mira
     if (hitPlayer and ang > SILENT_ANGLE_HIT) or ang > SILENT_ANGLE_FAR then
@@ -180,8 +182,33 @@ addEventHandler("onClientPlayerWeaponFire", root, function(weapon, ammo, clip, h
             report(source, "silent", ("%s · desvio médio > %d° em %d tiros"):format(getWeaponNameFromID(weapon) or weapon, SILENT_ANGLE_HIT, REPORT_SILENT))
         end
     end
-    -- AIMBOT (snap): salto brusco de mira seguido de tiro que acerta jogador
-    if hitPlayer and snapRecent then
+    -- AIMBOT (snap-on-fire): antes do tiro a mira estava longe da cabeça da vítima; no tiro, em cima dela
+    local sof = false
+    if hitPlayer then
+        local hx2, hy2, hz2 = getPedBonePosition(hitElement, 8)
+        if hx2 then
+            local tx, ty, tz = norm(hx2 - sx, hy2 - sy, hz2 - sz)
+            local errNow = tx and angleBetween(o.dx, o.dy, o.dz, tx, ty, tz) or 99
+            local errBefore, nBefore = 0, 0
+            for _, h in ipairs(o.errHist or {}) do
+                local age = now - h.t
+                if age >= SOF_BEFORE_MIN_MS and age <= SOF_BEFORE_MAX_MS and h.tgt == hitElement then
+                    nBefore = nBefore + 1
+                    if h.err > errBefore then errBefore = h.err end
+                end
+            end
+            o.sofLast = ("antes %.1f° → no tiro %.1f°"):format(errBefore, errNow)
+            if nBefore > 0 and errNow <= SOF_ERR_AT_SHOT and errBefore >= SOF_ERR_BEFORE then sof = true end
+        end
+    end
+    o.log = o.log or {}
+    o.sh = o.sh or { hits = 0, hitDev = 0, miss = 0, missDev = 0 }
+    if hitPlayer then o.sh.hits, o.sh.hitDev = o.sh.hits + 1, o.sh.hitDev + ang else o.sh.miss, o.sh.missDev = o.sh.miss + 1, o.sh.missDev + ang end
+    table.insert(o.log, 1, ("%s %s desvio %.0f° %s%s"):format(getWeaponNameFromID(weapon) or weapon, hitPlayer and "ACERTOU jogador" or "errou",
+        ang, (snapRecent and ("SALTO " .. math.floor(o.snapDeg or 0) .. "° ") or "") .. (hitPlayer and o.sofLast and (o.sofLast .. (sof and " SNAP-ON-FIRE " or " ")) or ""), ("sil %d/%d snap %d/%d"):format(#o.silent, REPORT_SILENT, #o.snap, REPORT_SNAP)))
+    while #o.log > 6 do table.remove(o.log) end
+    -- AIMBOT (snap): salto brusco de mira seguido de tiro que acerta jogador, ou snap-on-fire
+    if hitPlayer and (snapRecent or sof) then
         o.lastSnap = nil
         prune(o.snap, now)
         o.snap[#o.snap + 1] = now
