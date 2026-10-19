@@ -192,7 +192,7 @@ Estilo moderno com ícones de texto, ID e cores (o chat padrão do MTA renderiza
 - Cor do nick = cor comprada/VIP; cor da mensagem muda para VIP e staff.
 - Emojis por atalho em qualquer canal: `:skull:` ☠ `:star:` ★ `:crown:` ♛ `:heart:` ♥ `:flower:` ✿ ... (`/emojis` lista todos).
 - ID público por conta (`/id`), aceito em `/pm`, `/tp`, `/kick`, `/pagar` etc. Entrada e saída anunciadas com ID.
-- Kill chat `☠ Killer » Vítima · Arma ✦ HEADSHOT`, sequências `★`, X1 `✦`, ranqueadas `★`, clã x clã `◆`, anúncios `♛`.
+- Kills aparecem só no killfeed da interface (não no chat); sequências `★`, X1 `✦`, ranqueadas `★`, clã x clã `◆`, anúncios `♛`.
 Tudo em `dm_core/shared/config.lua` → `DM.chat` (canais, glifos, emojis, cores).
 
 ## Interface

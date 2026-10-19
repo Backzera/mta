@@ -49,12 +49,8 @@ addEventHandler("onPlayerWasted", root, function(ammo, killer, weapon, bodypart)
             refillPlayerWeapons(killer)
         end
 
-        -- Kill chat (só para quem está na mesma arena/dimensão)
-        local hs = headshot and " #FFB547✦ HEADSHOT" or ""
-        for _, p in ipairs(arenaPlayers) do
-            outputChatBox(("#FF4D6D☠ #FFFFFF%s #8FA39A» #FFFFFF%s #8FA39A· #7CFFB2%s%s"):format(
-                killerName, victimName, weaponName, hs), p, 255, 255, 255, true)
-        end
+        -- Kill chat desativado: a morte aparece só no killfeed da interface (canto superior direito),
+        -- para não encher o chat. Sequências (★) continuam no chat.
 
         triggerClientEvent(arenaPlayers, "dm:onKill", resourceRoot, killerName, victimName, weapon, headshot, killer, victim)
         triggerClientEvent(killer, "dm:onKillReward", resourceRoot, victimName, money, headshot, streak)
