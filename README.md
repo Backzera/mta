@@ -168,6 +168,14 @@ jogador está mirando, em posição fixa na tela (nunca segue o alvo). **SALVAR*
 (`dm_crosshair/client.lua`) e a sniper sempre usa o scope original do jogo. A tela fica em
 `dm_ui/web/src/screens/Crosshair.jsx` (presets em `PRESETS`; a prévia SVG usa a mesma geometria do dx).
 
+## Soul particles (morte por arma com rastro)
+
+Quando um jogador morre por uma AK-47 ou M4 com skin **Mítica ou Ultimate** equipada pelo matador (as armas que têm
+ponta e rastro), a alma da vítima se desprende do corpo na **cor do rastro do matador** (cor da skin, cor escolhida
+ou RGB): a silhueta do ped brilha nos ossos, um anel de energia abre no chão e centenas de partículas luminosas
+sobem em espiral, pulsam e se dissipam em ~3 s. Tudo em `dm_crates/client/c_fx.lua` (`SOUL_*`), desenhado com
+`dxDrawMaterialLine3D` a partir de `getPedBonePosition`, só para mortes a até 140 m da câmera e na mesma dimensão.
+
 ## Chat
 
 Estilo moderno com ícones de texto, ID e cores (o chat padrão do MTA renderiza os glifos):

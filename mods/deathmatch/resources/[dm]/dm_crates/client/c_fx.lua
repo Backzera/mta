@@ -199,3 +199,122 @@ addEventHandler("onClientResourceStart", resourceRoot, function()
     glow = dxCreateTexture("fx/glow.png", "argb", true, "clamp")
 end)
 addEventHandler("onClientPlayerQuit", root, function() trails[source] = nil end)
+
+-- ============================================================
+-- SOUL PARTICLES: quando um jogador morre por uma arma com rastro (skin Mítica/Ultimate),
+-- a "alma" dele se desprende do corpo na cor do rastro do matador: a silhueta do ped vira
+-- centenas de partículas luminosas que sobem, giram e se dissipam em ~3 s.
+-- Só para armas com ponta/rastro (AK-47 e M4 com skin Mítica ou Ultimate equipada pelo matador).
+-- ============================================================
+local SOUL_BONES = { 1, 2, 3, 4, 5, 6, 7, 8, 21, 22, 23, 24, 25, 26, 31, 32, 33, 34, 35, 36, 41, 42, 43, 44, 51, 52, 53, 54 }
+local SOUL_DURATION, SOUL_EMIT_MS, SOUL_MAX_PARTS, SOUL_PER_FRAME = 3200, 1000, 360, 7
+local souls = {}
+
+local function killerTrail(killer, weapon)
+    if not killer or not isElement(killer) or getElementType(killer) ~= "player" then return nil end
+    local wkey = WEAPON_KEY[weapon]
+    if not wkey then return nil end
+    local e = getElementData(killer, "dm:wskin")
+    if type(e) ~= "table" or not e[wkey] then return nil end
+    local it = item(e[wkey])
+    if not it or not TRAIL_RARITY[it.rarity] then return nil end
+    local r, g, b = chosenColor(killer)
+    if not r then r, g, b = colorOf(it) end
+    return r, g, b, e.trail == "rgb"
+end
+
+addEventHandler("onClientPlayerWasted", root, function(killer, weapon)
+    local r, g, b, isRgb = killerTrail(killer, weapon)
+    if not r then return end
+    if getElementDimension(source) ~= getElementDimension(localPlayer) then return end
+    local x, y, z = getElementPosition(source)
+    local cx, cy, cz = getCameraMatrix()
+    if getDistanceBetweenPoints3D(x, y, z, cx, cy, cz) > 140 then return end
+    souls[#souls + 1] = { victim = source, t0 = getTickCount(), last = getTickCount(), r = r, g = g, b = b, isRgb = isRgb,
+        parts = {}, cx = x, cy = y, cz = z, seed = math.random() * 6.28 }
+end)
+
+local function soulBone(s)
+    local v = s.victim
+    if isElement(v) then
+        local bone = SOUL_BONES[math.random(#SOUL_BONES)]
+        local x, y, z = getPedBonePosition(v, bone)
+        if x then s.cx, s.cy, s.cz = getElementPosition(v) return x, y, z end
+    end
+    return s.cx + (math.random() - 0.5) * 0.5, s.cy + (math.random() - 0.5) * 0.5, s.cz + (math.random() - 0.5) * 1.6
+end
+
+addEventHandler("onClientRender", root, function()
+    if #souls == 0 or not glow then return end
+    local now = getTickCount()
+    for i = #souls, 1, -1 do
+        local s = souls[i]
+        local age = now - s.t0
+        local dt = math.min(0.1, (now - s.last) / 1000)
+        s.last = now
+        local t = now / 1000
+        if age > SOUL_DURATION then
+            table.remove(souls, i)
+        else
+            local r, g, b = s.r, s.g, s.b
+            if s.isRgb then r, g, b = rainbow(0) end
+            -- fase 1: a alma se desprende do corpo (silhueta brilhante nos ossos + emissão de partículas)
+            if age < SOUL_EMIT_MS then
+                local f = 1 - age / SOUL_EMIT_MS
+                for _ = 1, SOUL_PER_FRAME do
+                    if #s.parts >= SOUL_MAX_PARTS then break end
+                    local x, y, z = soulBone(s)
+                    local a = math.random() * 6.28
+                    local spread = 0.15 + math.random() * 0.45
+                    s.parts[#s.parts + 1] = {
+                        x = x, y = y, z = z,
+                        vx = math.cos(a) * spread, vy = math.sin(a) * spread, vz = 0.25 + math.random() * 0.9,
+                        size = 0.06 + math.random() * 0.16, life = 1300 + math.random() * 1600, born = now,
+                        ph = math.random() * 6.28, core = math.random() < 0.3,
+                    }
+                end
+                if isElement(s.victim) then
+                    for _, bone in ipairs(SOUL_BONES) do
+                        local x, y, z = getPedBonePosition(s.victim, bone)
+                        if x then
+                            local sz = 0.22 * (0.6 + 0.4 * math.sin(t * 9 + bone)) * (0.5 + 0.5 * f)
+                            dxDrawMaterialLine3D(x, y, z - sz, x, y, z + sz, glow, sz * 2, tocolor(r, g, b, 120 * f))
+                        end
+                    end
+                end
+            end
+            -- anel de energia no chão
+            if age < 900 then
+                local f = 1 - age / 900
+                local ring = 0.4 + (1 - f) * 2.6
+                dxDrawMaterialLine3D(s.cx, s.cy, s.cz - 0.95, s.cx, s.cy, s.cz - 0.93, glow, ring, tocolor(r, g, b, 90 * f))
+            end
+            -- fase 2: as partículas sobem em espiral, pulsam e se dissipam
+            local swirl = 0.6 + 0.4 * math.sin(s.seed)
+            for j = #s.parts, 1, -1 do
+                local p = s.parts[j]
+                local pa = now - p.born
+                if pa > p.life then
+                    table.remove(s.parts, j)
+                else
+                    local lf = pa / p.life
+                    p.vz = p.vz + 0.55 * dt
+                    local ang = t * 2.2 * swirl + p.ph
+                    p.x = p.x + (p.vx + math.cos(ang) * 0.35) * dt
+                    p.y = p.y + (p.vy + math.sin(ang) * 0.35) * dt
+                    p.z = p.z + p.vz * dt
+                    local fade = lf < 0.15 and lf / 0.15 or (1 - (lf - 0.15) / 0.85)
+                    local tw = 0.7 + 0.3 * math.sin(t * 11 + p.ph)
+                    local sz = p.size * (1.1 - 0.5 * lf) * tw
+                    local pr, pg, pb = r, g, b
+                    if s.isRgb then pr, pg, pb = rainbow(p.ph / 6.28) end
+                    dxDrawMaterialLine3D(p.x, p.y, p.z - sz, p.x, p.y, p.z + sz, glow, sz * 2, tocolor(pr, pg, pb, 210 * fade))
+                    if p.core then
+                        dxDrawMaterialLine3D(p.x, p.y, p.z - sz * 0.35, p.x, p.y, p.z + sz * 0.35, glow, sz * 0.7, tocolor(255, 255, 255, 230 * fade))
+                    end
+                end
+            end
+        end
+    end
+end)
+addEventHandler("onClientPlayerQuit", root, function() for _, s in ipairs(souls) do if s.victim == source then s.victim = nil end end end)
