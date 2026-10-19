@@ -515,7 +515,12 @@ addEvent("crosshair:openPanel", false)
 addEventHandler("crosshair:openPanel", localPlayer, function() UI.toggle("crosshair", openCrosshairPanel) end)
 addEvent("crosshair:refreshPanel", false)
 addEventHandler("crosshair:refreshPanel", localPlayer, function() if UI.isOpen("crosshair") then UI.set("crosshair", crosshairState()) end end)
-bindKey("F9", "down", function() UI.toggle("crosshair", openCrosshairPanel) end)
+-- F9 é a janela de ajuda nativa do MTA: cancelamos a tecla em onClientKey (antes do MTA processar) e abrimos o painel.
+addEventHandler("onClientKey", root, function(key, press)
+    if key ~= "F9" then return end
+    cancelEvent()
+    if press then UI.toggle("crosshair", openCrosshairPanel) end
+end)
 
 -- ============================================================
 -- PLACAR (TAB, segurar)
