@@ -40,6 +40,9 @@ class MenuTests(unittest.TestCase):
             function getElementData(p,k) return p[k] end
             function getElementDimension() return 0 end
             function setElementDimension() end function setCameraMatrix() end function setCameraTarget() end
+            function getElementPosition() return 0,0,10 end function getElementRotation() return 0,0,0 end
+            function setElementPosition() end function setElementRotation() end function setElementFrozen() end
+            function getDistanceBetweenPoints3D() return 0 end
             function getElementsByType() return {localPlayer} end
             function getWeaponNameFromID(id) return tostring(id) end
             function isElement(v) return type(v)=='table' end
@@ -74,7 +77,7 @@ class MenuTests(unittest.TestCase):
             binds.F10()
             assert(UI.isOpen('characters'))
             assert(states.characters.owned[1]=='skin_miku')
-            assert(#states.characters.items==13)
+            assert(#states.characters.items==11)
             for _,it in ipairs(states.characters.items) do assert(it.type=='skin') end
             actions['characters:equip']({key='ak47_asiimov'})
             assert(#sent==0)

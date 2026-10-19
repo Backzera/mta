@@ -2,7 +2,7 @@
     <info author="Backzera" name="DM Skins" description="Carregamento das 7 skins personalizadas para o inventário de caixas" type="script" version="1.1.0" />
     <script src="client.lua" type="client" />
 
-    <!-- IDs usados pelos itens skin_miku até skin_naruto_bijuu -->
+    <!-- IDs usados pelos itens skin_miku até skin_tanjiro -->
     <file src="1/DFF_Normal/M077SonicMiku.dff" />
     <file src="1/Textures(TXD)/M077SonicMiku.txd" />
     <file src="2/DFF_Normal/M082SakuraMiku.dff" />
@@ -11,12 +11,8 @@
     <file src="3/Zoro.txd" />
     <file src="4/Lufy.dff" />
     <file src="4/Lufy.txd" />
-    <file src="5/Usada_Pekora.dff" />
-    <file src="5/Usada_Pekora.txd" />
     <file src="6/TanjiroDS.dff" />
     <file src="6/TanjiroDS.txd" />
-    <file src="7/Naruto_Bijuu.dff" />
-    <file src="7/Naruto_Bijuu.txd" />
 
     <min_mta_version client="1.5.9" />
 </meta>

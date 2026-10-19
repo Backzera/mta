@@ -168,7 +168,7 @@ class ServerTests(unittest.TestCase):
 
     def test_every_custom_character_can_be_awarded_and_saved(self):
         self.login()
-        keys = ['miku', 'sakura_miku', 'zoro', 'luffy', 'usada_pekora', 'tanjiro', 'naruto_bijuu']
+        keys = ['miku', 'sakura_miku', 'zoro', 'luffy', 'tanjiro']
         for name in keys:
             key = 'skin_' + name
             self.lua.globals().testKey = key

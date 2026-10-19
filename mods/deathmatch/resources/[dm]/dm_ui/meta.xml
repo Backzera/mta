@@ -17,7 +17,7 @@
     <file src="fx/glow.png" />
 
     <!-- Build do Vite (gerado automaticamente por npm run build; não edite à mão) -->
-    <file src="dist/assets/hub-CAyC9W9B.js" />
+    <file src="dist/assets/hub-CKdqLGLH.js" />
     <file src="dist/fonts/Oswald.ttf" />
     <file src="dist/fonts/Poppins-Regular.ttf" />
     <file src="dist/fonts/Poppins-SemiBold.ttf" />
@@ -28,10 +28,8 @@
     <file src="dist/img/logo.png" />
     <file src="dist/img/pskins/skin_luffy.png" />
     <file src="dist/img/pskins/skin_miku.png" />
-    <file src="dist/img/pskins/skin_naruto_bijuu.png" />
     <file src="dist/img/pskins/skin_sakura_miku.png" />
     <file src="dist/img/pskins/skin_tanjiro.png" />
-    <file src="dist/img/pskins/skin_usada_pekora.png" />
     <file src="dist/img/pskins/skin_zoro.png" />
     <file src="dist/img/shield.png" />
     <file src="dist/img/skull.png" />

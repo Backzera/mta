@@ -1,13 +1,11 @@
--- DM Skins: carrega os 7 modelos personalizados para IDs de ped usados pelo inventário de caixas.
+-- DM Skins: carrega os 5 modelos personalizados para IDs de ped usados pelo inventário de caixas.
 -- Miku e Sakura usam as variantes DFF_Normal; as animações extras do Modloader não são ativadas.
 local SKINS = {
     { id = 298, name = "Hatsune Miku", dff = "1/DFF_Normal/M077SonicMiku.dff", txd = "1/Textures(TXD)/M077SonicMiku.txd" },
     { id = 299, name = "Sakura Miku", dff = "2/DFF_Normal/M082SakuraMiku.dff", txd = "2/Textures(TXD)/M082SakuraMiku.txd" },
     { id = 300, name = "Roronoa Zoro", dff = "3/Zoro.dff", txd = "3/Zoro.txd" },
     { id = 301, name = "Monkey D. Luffy", dff = "4/Lufy.dff", txd = "4/Lufy.txd" },
-    { id = 302, name = "Usada Pekora", dff = "5/Usada_Pekora.dff", txd = "5/Usada_Pekora.txd" },
     { id = 303, name = "Tanjiro Kamado", dff = "6/TanjiroDS.dff", txd = "6/TanjiroDS.txd" },
-    { id = 304, name = "Naruto Bijuu", dff = "7/Naruto_Bijuu.dff", txd = "7/Naruto_Bijuu.txd" },
 }
 
 local loadedModels = {}

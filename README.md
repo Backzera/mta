@@ -136,8 +136,8 @@ a textura da skin (vista lateral para armas, frontal para personagens), sem depe
 
 Skins de personagem: pastas em `dm_skins/<n>/` (dff + txd) listadas em `PED_SKINS` no `build_skins.py`, com
 nome, raridade e o **ID do ped** que substituem (fora de `DM.skins` e sem repetir; o script confere). Atenção:
-os `.txd` de personagem são grandes (150 MB no total) e todo jogador baixa ao entrar — se o download ficar
-lento, remova os maiores (Usada Pekora tem 43 MB).
+os `.txd` de personagem são grandes (~95 MB no total) e todo jogador baixa ao entrar — se o download ficar
+lento, remova os maiores (Usada Pekora e Naruto Bijuu já foram retirados por isso).
 
 Raridades: Comum, Rara, Épica, Lendária, Mítica, Ultimate (AK Fire Serpent e M4 Masterpiece).
 Caixas: Munição $5.000 (ultimate 0,01%), Tática $15.000 (0,1%), Elite $40.000 (1%); repetidos devolvem

@@ -30,9 +30,7 @@ PED_PREVIEWS = {
     "skin_sakura_miku": ("2", "DFF_Normal/M082SakuraMiku.dff", "Textures(TXD)/M082SakuraMiku.txd"),
     "skin_zoro": ("3", "Zoro.dff", "Zoro.txd"),
     "skin_luffy": ("4", "Lufy.dff", "Lufy.txd"),
-    "skin_usada_pekora": ("5", "Usada_Pekora.dff", "Usada_Pekora.txd"),
     "skin_tanjiro": ("6", "TanjiroDS.dff", "TanjiroDS.txd"),
-    "skin_naruto_bijuu": ("7", "Naruto_Bijuu.dff", "Naruto_Bijuu.txd"),
 }
 # ícones de armas sem skin: modelos do dm_armas (id da arma -> arquivo)
 ARMAS_ICONS = {23: "silenced", 24: "desert_eagle", 25: "shotgspa", 29: "mp5lng", 34: "sniper", 16: "grenade", 4: "knifecur"}
@@ -173,9 +171,7 @@ def main():
         ("skin_sakura_miku", "Sakura Miku", 299, "epica"),
         ("skin_zoro", "Roronoa Zoro", 300, "epica"),
         ("skin_luffy", "Monkey D. Luffy", 301, "epica"),
-        ("skin_usada_pekora", "Usada Pekora", 302, "lendaria"),
         ("skin_tanjiro", "Tanjiro Kamado", 303, "rara"),
-        ("skin_naruto_bijuu", "Naruto Bijuu", 304, "lendaria"),
     ]
 
     def lua_item(d):
