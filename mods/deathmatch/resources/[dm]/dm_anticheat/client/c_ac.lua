@@ -110,6 +110,14 @@ addEventHandler("onClientRender", root, function()
                             end
                         end
                         o.tgt, o.tgtErr = best, bestErr
+                        -- estatísticas para o /acdebug (janela de 60 s)
+                        o.st = o.st or { upd = 0, under = 0, minErr = 99, t0 = now }
+                        if now - o.st.t0 > 60000 then o.st = { upd = 0, under = 0, minErr = 99, t0 = now } end
+                        if best then
+                            o.st.upd = o.st.upd + 1
+                            if bestErr <= LOCK_MAX_ERR then o.st.under = o.st.under + 1 end
+                            if bestErr < o.st.minErr then o.st.minErr = bestErr end
+                        end
                         local lk = o.lock
                         if best and bestErr <= LOCK_MAX_ERR then
                             local vx, vy, vz = getElementVelocity(best)
@@ -158,6 +166,8 @@ addEventHandler("onClientPlayerWeaponFire", root, function(weapon, ammo, clip, h
     local ang = angleBetween(o.dx, o.dy, o.dz, bx, by, bz)
     local snapRecent = o.lastSnap and now - o.lastSnap <= SNAP_WINDOW_MS
     o.log = o.log or {}
+    o.sh = o.sh or { hits = 0, hitDev = 0, miss = 0, missDev = 0 }
+    if hitPlayer then o.sh.hits, o.sh.hitDev = o.sh.hits + 1, o.sh.hitDev + ang else o.sh.miss, o.sh.missDev = o.sh.miss + 1, o.sh.missDev + ang end
     table.insert(o.log, 1, ("%s %s desvio %.0f° %s%s"):format(getWeaponNameFromID(weapon) or weapon, hitPlayer and "ACERTOU jogador" or "errou",
         ang, snapRecent and ("SALTO " .. math.floor(o.snapDeg or 0) .. "° ") or "", ("sil %d/%d snap %d/%d"):format(#o.silent, REPORT_SILENT, #o.snap, REPORT_SNAP)))
     while #o.log > 6 do table.remove(o.log) end
@@ -197,6 +207,11 @@ addEventHandler("onClientRender", root, function()
             local lk = o.lock
             dxDrawText(("alvo: %s erro %.1f°  lock %s  pontos lock %d/%d  %s"):format(isElement(o.tgt) and getPlayerName(o.tgt):gsub("#%x%x%x%x%x%x", "") or "-", o.tgtErr or 99,
                 lk and ("%d upd / máx %.1f° / moveu %.0f°"):format(lk.n, lk.maxErr, lk.move) or "-", #(o.lockPts or {}), REPORT_LOCK, o.lockLast or ""), 34, y, 0, 0, tocolor(255, 200, 120), 1, "default")
+            y = y + 16
+            local st, sh = o.st or { upd = 0, under = 0, minErr = 99 }, o.sh or { hits = 0, hitDev = 0, miss = 0, missDev = 0 }
+            dxDrawText(("60s: %d upd mirando alguém, %d com erro < %.1f° (%.0f%%), menor erro %.1f°  |  tiros: %d acertos (desvio médio %.1f°), %d erros (desvio médio %.1f°)"):format(
+                st.upd, st.under, LOCK_MAX_ERR, st.upd > 0 and st.under / st.upd * 100 or 0, st.minErr,
+                sh.hits, sh.hits > 0 and sh.hitDev / sh.hits or 0, sh.miss, sh.miss > 0 and sh.missDev / sh.miss or 0), 34, y, 0, 0, tocolor(255, 240, 160), 1, "default")
             y = y + 16
             for _, line in ipairs(o.log or {}) do dxDrawText(line, 34, y, 0, 0, tocolor(230, 230, 230), 1, "default") y = y + 16 end
             y = y + 8
