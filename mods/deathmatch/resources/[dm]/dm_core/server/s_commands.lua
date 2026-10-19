@@ -210,3 +210,8 @@ addCommandHandler("admins", function(player)
     end
     sendServerMessage(player, #list > 0 and ("Admins online: #FFFFFF" .. table.concat(list, ", ")) or "Nenhum admin online.")
 end)
+
+-- Limite de FPS: o servidor não limita (0); cada jogador usa o limite do próprio MTA (F8: fps_limit 0).
+addEventHandler("onResourceStart", resourceRoot, function()
+    if getFPSLimit() ~= 0 then setFPSLimit(0) end
+end)
