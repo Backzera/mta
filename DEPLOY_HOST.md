@@ -71,7 +71,26 @@ No console também dá para testar na mão: `refresh` → `start dm_core` → `s
   Sem isso a interface (CEF) não aparece; o jogo avisa no chat e `/uidebug` mostra o estado.
 - `/debugscript 3` mostra `[dm_ui] criando browser` → `browser criado` → `documento pronto` quando tudo carregou.
 
-## 6. Atualizar em um clique (sem baixar zip)
+## 6. Deploy automático pelo GitHub (recomendado — zero cliques)
+
+O repositório tem o workflow `.github/workflows/deploy-ftp.yml`. **Todo push no branch `claude/modest-cray-8tz6fw`
+envia por FTP para a hospedagem só os arquivos de `mods/deathmatch/` que mudaram** (e apaga lá o que saiu do repo).
+Nada para instalar no seu PC.
+
+Configuração única: GitHub → repositório → **Settings → Secrets and variables → Actions → New repository secret**,
+crie `FTP_HOST` (IP ou host do FTP, com `:porta` se não for a 21), `FTP_USERNAME`, `FTP_PASSWORD` e `FTP_REMOTE_ROOT`
+(pasta raiz do servidor no FTP; use `/` se o FTP já abre direto na pasta que contém `mods/`).
+
+Acompanhar / reenviar: aba **Actions → Deploy MTA via FTP**. Cada execução lista `UPLOAD arquivo` e termina com
+`Enviados: N | Falharam: N`. Se alguma falhar, ou para forçar um reenvio, clique em **Run workflow**:
+
+- campo **desde** vazio → envia **tudo** de `mods/deathmatch/` (demora, ~250 MB);
+- **desde** = um commit (ex.: `cc393a3`) → envia só o que mudou desde aquele commit (rápido).
+
+Não sobem para a hospedagem (não são usados pelo servidor): `web/` (fontes da interface), `models/weapons/`
+(packs crus das skins), `node_modules/`, `*.md`. No fim, no console do painel, `restart <resource>` do que mudou.
+
+## 7. Atualizar pelo seu PC (alternativa com WinSCP)
 
 Instale uma vez o **Git para Windows** e o **WinSCP**, clone o repositório (`git clone <url-do-repo>`), copie
 `deploy\ftp.exemplo.txt` para `deploy\ftp.local.txt` e preencha com usuário, senha, IP e porta do FTP que o
