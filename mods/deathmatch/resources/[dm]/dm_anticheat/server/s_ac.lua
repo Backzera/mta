@@ -128,6 +128,7 @@ local ACC_HIT_RATIO       = 0.85    -- acertos/tiros impossíveis de sustentar s
 local ACC_HS_RATIO        = 0.75    -- headshots/acertos
 local KIND_NAME = { silent = "SILENT AIM", snap = "AIMBOT", lock = "AIMBOT (lock)", rapid = "RAPID FIRE" }
 local RAPID_REPORTS_BAN = 2        -- cadência é objetiva: 2 relatos de testemunha banem
+local SILENT_STRONG_BAN = 2        -- silent aim: 2 relatos FORTES (qualquer testemunha) banem; 1 forte + precisão também
 local SINGLE_WITNESS_REPORTS_BAN = 6 -- aimbot/silent: 1 testemunha sozinha bane com 6 relatos em 3 min
 
 local aimReports = {}   -- [suspect] = { {witness=, kind=, t=, detail=}, ... }
@@ -169,9 +170,9 @@ local function evaluateAim(suspect, kind, latestDetail)
     local list = aimReports[suspect] or {}
     while list[1] and now - list[1].t > AIM_REPORT_TTL do table.remove(list, 1) end
     aimReports[suspect] = list
-    local witnesses, total = {}, 0
+    local witnesses, total, strongN = {}, 0, 0
     for _, r in ipairs(list) do
-        if r.kind == kind then total = total + 1 witnesses[r.witness] = true end
+        if r.kind == kind then total = total + 1 witnesses[r.witness] = true if r.strong then strongN = strongN + 1 end end
     end
     local nWit = 0
     for _ in pairs(witnesses) do nWit = nWit + 1 end
@@ -182,6 +183,7 @@ local function evaluateAim(suspect, kind, latestDetail)
     local isAdmin = core:isPlayerAdmin(suspect)
     local banNow = nWit >= AIM_WITNESSES_BAN or (nWit >= AIM_WITNESSES_ALERT and badAcc) or (total >= AIM_REPORTS_BAN_ACC and badAcc) or total >= SINGLE_WITNESS_REPORTS_BAN
     if kind == "rapid" then banNow = total >= RAPID_REPORTS_BAN end
+    if kind == "silent" and (strongN >= SILENT_STRONG_BAN or (strongN >= 1 and badAcc)) then banNow = true end
     if banNow and AUTOBAN and not isAdmin then
         aimReports[suspect] = {}
         local reason = ("Anti-cheat: %s (%d testemunhas%s)"):format(KIND_NAME[kind], nWit, badAcc and ", " .. accText or "")
@@ -204,14 +206,14 @@ local function evaluateAim(suspect, kind, latestDetail)
 end
 
 addEvent("ac:report", true)
-addEventHandler("ac:report", root, function(suspect, kind, detail)
+addEventHandler("ac:report", root, function(suspect, kind, detail, strong)
     local witness = client
     if not witness or witness ~= source then return end
     if not isElement(suspect) or getElementType(suspect) ~= "player" or suspect == witness then return end
     if not KIND_NAME[kind] then return end
     if getElementDimension(suspect) ~= getElementDimension(witness) then return end
     local list = aimReports[suspect] or {}
-    list[#list + 1] = { witness = witness, kind = kind, t = getTickCount(), detail = tostring(detail or "") }
+    list[#list + 1] = { witness = witness, kind = kind, t = getTickCount(), detail = tostring(detail or ""), strong = strong == true }
     aimReports[suspect] = list
     evaluateAim(suspect, kind, tostring(detail or ""))
 end)

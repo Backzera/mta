@@ -32,6 +32,10 @@ local SNAP_MAX_DT        = 260     -- ms: só vale se as duas atualizações for
 local SNAP_WINDOW_MS     = 320     -- o tiro que acerta tem de vir até este tempo depois do salto
 local MAX_DIST           = 90      -- só observa suspeitos a até esta distância da câmera
 local REPORT_SILENT      = 5       -- pontos para reportar (pontos decaem com o tempo)
+-- SILENT AIM "FORTE" (relato que bane com 2 ocorrências): em 20 s, 10 balas a mais de 14° da mira,
+-- ou 5 balas a mais de 30°, ou 3 acertos em jogador SEM ESTAR MIRANDO (silent aim atira sem mira)
+local SILENT_STRONG_WINDOW = 20000
+local SILENT_STRONG_14, SILENT_STRONG_30, SILENT_STRONG_NOAIM = 10, 5, 3
 local REPORT_SNAP        = 3
 -- SNAP-ON-FIRE (aimbot que só gruda no clique): erro da mira para a cabeça da vítima alguns ms ANTES do tiro
 -- grande, e no instante do tiro quase zero. Humano que acerta já vinha perto antes.
@@ -84,13 +88,14 @@ local function observed(p)
     if not o then o = { silent = {}, snap = {}, lockPts = {}, lastReport = {} } obs[p] = o end
     return o
 end
-local function report(p, kind, detail)
+local function report(p, kind, detail, strong)
     local o = observed(p)
     local now = getTickCount()
-    if o.lastReport[kind] and now - o.lastReport[kind] < REPORT_COOLDOWN then return end
-    o.lastReport[kind] = now
-    if kind == "lock" then o.lockPts = {} else o[kind] = {} end
-    triggerServerEvent("ac:report", localPlayer, p, kind, detail)
+    local key = strong and (kind .. "!") or kind
+    if o.lastReport[key] and now - o.lastReport[key] < REPORT_COOLDOWN then return end
+    o.lastReport[key] = now
+    if kind == "lock" then o.lockPts = {} elseif not strong then o[kind] = {} end
+    triggerServerEvent("ac:report", localPlayer, p, kind, detail, strong == true)
 end
 
 -- direção de mira dos outros jogadores a cada frame → velocidade angular
@@ -211,6 +216,17 @@ addEventHandler("onClientPlayerWeaponFire", root, function(weapon, ammo, clip, h
     local ang = angleBetween(o.dx, o.dy, o.dz, bx, by, bz)
     local snapRecent = o.lastSnap and now - o.lastSnap <= SNAP_WINDOW_MS
 
+    -- SILENT AIM forte: contagens em 20 s (balas > 14°, balas > 30°, acertos em jogador sem estar mirando)
+    o.ss = o.ss or { t0 = now, n14 = 0, n30 = 0, noaim = 0 }
+    if now - o.ss.t0 > SILENT_STRONG_WINDOW then o.ss = { t0 = now, n14 = 0, n30 = 0, noaim = 0 } end
+    local aiming = getPedControlState(source, "aim_weapon") or getPedTask(source, "secondary", 0) == "TASK_SIMPLE_USE_GUN"
+    if hitPlayer and ang > SILENT_ANGLE_HIT then o.ss.n14 = o.ss.n14 + 1 end
+    if ang > SILENT_ANGLE_FAR then o.ss.n30 = o.ss.n30 + 1 end
+    if hitPlayer and not aiming then o.ss.noaim = o.ss.noaim + 1 end
+    if o.ss.n14 >= SILENT_STRONG_14 or o.ss.n30 >= SILENT_STRONG_30 or o.ss.noaim >= SILENT_STRONG_NOAIM then
+        report(source, "silent", ("FORTE: %d balas em jogador > %d°, %d balas > %d°, %d acertos sem mirar, em 20 s"):format(o.ss.n14, SILENT_ANGLE_HIT, o.ss.n30, SILENT_ANGLE_FAR, o.ss.noaim), true)
+        o.ss = { t0 = now, n14 = 0, n30 = 0, noaim = 0 }
+    end
     -- SILENT AIM: bala em jogador longe da direção da mira
     if (hitPlayer and ang > SILENT_ANGLE_HIT) or ang > SILENT_ANGLE_FAR then
         prune(o.silent, now)
