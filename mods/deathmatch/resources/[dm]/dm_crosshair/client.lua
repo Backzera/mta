@@ -73,38 +73,12 @@ local function hexToColor(hex, alpha)
     return tocolor(r, g, b, alpha or 255)
 end
 
--- Posição da mira nativa do GTA: ela NÃO fica no centro exato (câmera sobre o ombro). Em vez de uma constante,
--- medimos no próprio jogo: projetamos o ponto de mira (getPedTargetEnd) na tela durante os primeiros frames de mira
--- e fixamos a MEDIANA (robusta aos frames de transição da câmera). Depois de ~90 amostras a posição é travada.
-local calib = { xs = {}, ys = {}, x = nil, y = nil, locked = false, weapon = nil }
-local function median(t)
-    local c = {}
-    for i, v in ipairs(t) do c[i] = v end
-    table.sort(c)
-    local n = #c
-    if n % 2 == 1 then return c[(n + 1) / 2] end
-    return (c[n / 2] + c[n / 2 + 1]) / 2
-end
-local function resetCalib(weapon)
-    calib = { xs = {}, ys = {}, x = nil, y = nil, locked = false, weapon = weapon }
-end
-local function sampleNative()
-    local weapon = getPedWeapon(localPlayer)
-    if weapon ~= calib.weapon then resetCalib(weapon) end
-    if calib.locked then return end
-    local tx, ty, tz = getPedTargetEnd(localPlayer)
-    if not tx then return end
-    local px, py = getScreenFromWorldPosition(tx, ty, tz, 0, false)
-    if not px then return end
-    local n = #calib.xs + 1
-    calib.xs[n], calib.ys[n] = px / sw, py / sh
-    calib.x, calib.y = median(calib.xs), median(calib.ys)
-    if n >= 90 then calib.locked = true end
-end
+-- Posição da mira nativa do GTA na terceira pessoa: o jogo desenha a mira em
+-- (largura * 0.53, altura * 0.40) — CCamera::m_f3rdPersonCHairMultX/Y — não no centro da tela.
+-- Posição fixa, igual à do jogo; os deslocamentos do painel F9 somam por cima.
+local NATIVE_X, NATIVE_Y = 0.53, 0.40
 local function aimPosition()
-    sampleNative()
-    local bx, by = sw * (calib.x or 0.5), sh * (calib.y or 0.5)
-    return bx + settings.offsetX, by + settings.offsetY
+    return sw * NATIVE_X + settings.offsetX, sh * NATIVE_Y + settings.offsetY
 end
 
 local function outlineColor() return tocolor(0, 0, 0, math.min(220, settings.opacity)) end
