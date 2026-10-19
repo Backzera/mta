@@ -79,6 +79,11 @@ function openHub()
     if not UI.open("hub", hubState()) then return end
     hub.camStart = getTickCount()
     hub.origDim = getElementDimension(localPlayer)
+    -- Enquanto a câmera passeia pelas arenas (outra dimensão, longe do jogador) o mundo ao redor dele deixa de ser
+    -- carregado e ele cairia no vazio. Congela e guarda a posição para devolver ao fechar.
+    hub.origPos = { getElementPosition(localPlayer) }
+    hub.origRot = select(3, getElementRotation(localPlayer))
+    setElementFrozen(localPlayer, true)
     hub.selected = getElementData(localPlayer, "dm:arena")
     local item = hub.selected and findItem(hub.selected)
     hub.item = item
@@ -86,11 +91,33 @@ function openHub()
     addEventHandler("onClientRender", root, hubRender)
     every("hub", 2500, function() UI.set("hub", hubState()) end)
 end
+local function hubRestore()
+    stopTimer("hubUnfreeze")
+    if hub.origPos then
+        local x, y, z = unpack(hub.origPos)
+        local cx, cy, cz = getElementPosition(localPlayer)
+        if getDistanceBetweenPoints3D(x, y, z, cx, cy, cz) > 1.5 then
+            setElementPosition(localPlayer, x, y, z)
+            if hub.origRot then setElementRotation(localPlayer, 0, 0, hub.origRot) end
+        end
+        hub.origPos = nil
+    end
+    setElementFrozen(localPlayer, false)
+end
 UI.onClose("hub", function()
     removeEventHandler("onClientRender", root, hubRender)
     stopTimer("hub")
     setElementDimension(localPlayer, hub.origDim)
     setCameraTarget(localPlayer)
+    -- volta à posição original e espera o mundo carregar de novo em volta do jogador antes de descongelar
+    if hub.origPos then setElementPosition(localPlayer, unpack(hub.origPos)) end
+    stopTimer("hubUnfreeze")
+    timers["hubUnfreeze"] = setTimer(hubRestore, 450, 1)
+end)
+addEventHandler("onClientResourceStop", resourceRoot, function() setElementFrozen(localPlayer, false) end)
+-- o servidor mandou o jogador para uma arena/partida: libera na hora
+addEventHandler("onClientElementDataChange", localPlayer, function(name)
+    if name == "dm:arena" and timers["hubUnfreeze"] then hub.origPos = nil hubRestore() end
 end)
 UI.on("hub", "select", function(p) hub.selected, hub.item = p.id, findItem(p.id) end)
 UI.on("hub", "enter", function(p)
