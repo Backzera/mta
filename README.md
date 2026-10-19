@@ -183,7 +183,16 @@ Fase 1: **rapid fire**. Tudo no servidor: conta os tiros de cada jogador por arm
 nível "pro") com 35% de tolerância (pistolas/shotguns 140%, porque o C-Bug acelera de verdade). Duas violações
 em 60 s marcam o jogador: alerta na tela de todos os admins (toast vermelho + som), log no console do servidor
 e lista em `/ac`. **Três violações em 60 s = ban automático** (permanente, serial + IP, anunciado no chat; admins
-nunca são banidos automaticamente). Para o ban funcionar, uma vez no console do servidor: `aclrequest allow dm_anticheat all`. Adicione ao `mtaserver.conf`:
+nunca são banidos automaticamente). Para o ban funcionar, uma vez no console do servidor: `aclrequest allow dm_anticheat all`.
+
+Fase 2: **aimbot e silent aim por testemunhas** (`client/c_ac.lua`). Cada cliente observa os *outros* jogadores pelo
+sync do MTA: direção da mira (`getPedTargetStart/End`) e ponto de impacto de cada tiro (`onClientPlayerWeaponFire`).
+Silent aim = bala acerta um jogador a mais de 14° da direção da mira (ou qualquer coisa a mais de 30°), 6 vezes em
+30 s. Aimbot = a mira gira a mais de 900°/s (salto > 18°) e até 220 ms depois o tiro acerta um jogador, 5 vezes.
+O trapaceiro não controla o cliente das testemunhas. O servidor cruza os relatos com a **precisão real** (via
+`ac:hit` do dm_weapons: ≥ 85% de acerto e ≥ 75% de headshot nos últimos 40 tiros é impossível sem ajuda).
+Alerta: 2 testemunhas diferentes, 3 relatos ou precisão impossível. Ban automático: 3 testemunhas, ou 2 testemunhas
++ precisão impossível. Limiares no topo de cada arquivo. Adicione ao `mtaserver.conf`:
 `<resource src="dm_anticheat" startup="1" protected="0" />`.
 
 ## Chat

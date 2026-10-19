@@ -1,5 +1,10 @@
 --[[
-    UTG Anti-Cheat — fase 1: RAPID FIRE.
+    UTG Anti-Cheat — servidor.
+    · RAPID FIRE (abaixo).
+    · AIMBOT / SILENT AIM: relatos das TESTEMUNHAS (c_ac.lua: outros clientes observam a mira e as balas do suspeito via
+      sync) cruzados com a PRECISÃO real medida aqui (tiros x acertos x headshots, via dm_weapons "ac:hit").
+      Alerta: relatos de 2 testemunhas diferentes (ou 3 relatos) em 3 min, OU precisão impossível.
+      Ban automático: alerta + precisão suspeita juntos, ou 3 testemunhas diferentes.
     Tudo no servidor (não dá para burlar editando o cliente): conta os tiros de cada jogador por arma numa janela
     de 1 s (onPlayerWeaponFire) e compara com a cadência máxima real da arma, lida das propriedades do GTA
     (anim_loop_start/stop no nível "pro"), com tolerância para lag/FPS. Pistolas e shotguns, que o C-Bug acelera
@@ -39,6 +44,8 @@ local function rateOf(weapon)
 end
 
 local shots, violations, flagged, lastAlert = {}, {}, {}, {}
+local acc = {}          -- [player] = { shots = {t...}, hits = {t...}, hs = {t...} } (precisão; definido abaixo)
+local accOf, trim
 
 local function adminsOnline()
     local out = {}
@@ -78,6 +85,7 @@ end
 addEventHandler("onPlayerWeaponFire", root, function(weapon)
     if not WATCHED[weapon] then return end
     local now = getTickCount()
+    do local a = accOf(source) a.shots[#a.shots + 1] = now trim(a.shots, ACC_MIN_SHOTS) end
     local s = shots[source]
     if not s or s.weapon ~= weapon then s = { weapon = weapon, t = {} } shots[source] = s end
     local t = s.t
@@ -102,7 +110,101 @@ addEventHandler("onPlayerWeaponFire", root, function(weapon)
     end
 end)
 
-addEventHandler("onPlayerQuit", root, function() shots[source], violations[source], flagged[source], lastAlert[source] = nil, nil, nil, nil end)
+addEventHandler("onPlayerQuit", root, function()
+    shots[source], violations[source], flagged[source], lastAlert[source], aimReports[source], acc[source] = nil, nil, nil, nil, nil, nil
+    for _, list in pairs(aimReports) do for i = #list, 1, -1 do if list[i].witness == source then table.remove(list, i) end end end
+end)
+
+-- ---------------------------------------------------------------- AIMBOT / SILENT AIM
+local AIM_REPORT_TTL     = 180000
+local AIM_WITNESSES_ALERT = 2
+local AIM_REPORTS_ALERT   = 3
+local AIM_WITNESSES_BAN   = 3
+local ACC_MIN_SHOTS       = 40      -- precisão só é avaliada com pelo menos este número de tiros (janela móvel)
+local ACC_HIT_RATIO       = 0.85    -- acertos/tiros impossíveis de sustentar sem ajuda
+local ACC_HS_RATIO        = 0.75    -- headshots/acertos
+local KIND_NAME = { silent = "SILENT AIM", snap = "AIMBOT" }
+
+local aimReports = {}   -- [suspect] = { {witness=, kind=, t=, detail=}, ... }
+
+accOf = function(p)
+    local a = acc[p]
+    if not a then a = { shots = {}, hits = {}, hs = {} } acc[p] = a end
+    return a
+end
+trim = function(list, max) while #list > max do table.remove(list, 1) end end
+-- precisão suspeita? (janela móvel dos últimos ACC_MIN_SHOTS tiros)
+local function suspiciousAccuracy(p)
+    local a = acc[p]
+    if not a or #a.shots < ACC_MIN_SHOTS then return false end
+    local since = a.shots[1]
+    local hits, hs = 0, 0
+    for _, t in ipairs(a.hits) do if t >= since then hits = hits + 1 end end
+    for _, t in ipairs(a.hs) do if t >= since then hs = hs + 1 end end
+    local hitRatio, hsRatio = hits / #a.shots, hits > 0 and hs / hits or 0
+    if hitRatio >= ACC_HIT_RATIO and hsRatio >= ACC_HS_RATIO then
+        return true, ("%d%% de acerto, %d%% headshot em %d tiros"):format(hitRatio * 100, hsRatio * 100, #a.shots)
+    end
+    return false
+end
+
+-- acertos confirmados pelo dm_weapons (evento local do servidor)
+addEvent("ac:hit")
+addEventHandler("ac:hit", root, function(attacker, victim, weapon, headshot)
+    if not isElement(attacker) then return end
+    local a = accOf(attacker)
+    local now = getTickCount()
+    a.hits[#a.hits + 1] = now
+    if headshot then a.hs[#a.hs + 1] = now end
+    trim(a.hits, ACC_MIN_SHOTS) trim(a.hs, ACC_MIN_SHOTS)
+end)
+
+local function evaluateAim(suspect, kind, latestDetail)
+    local now = getTickCount()
+    local list = aimReports[suspect] or {}
+    while list[1] and now - list[1].t > AIM_REPORT_TTL do table.remove(list, 1) end
+    aimReports[suspect] = list
+    local witnesses, total = {}, 0
+    for _, r in ipairs(list) do
+        if r.kind == kind then total = total + 1 witnesses[r.witness] = true end
+    end
+    local nWit = 0
+    for _ in pairs(witnesses) do nWit = nWit + 1 end
+    local badAcc, accText = suspiciousAccuracy(suspect)
+    local name = getPlayerName(suspect):gsub("#%x%x%x%x%x%x", "")
+    local id = tonumber(getElementData(suspect, "dm:id")) or 0
+    local text = ("%s [%d] · %s · %d testemunha(s), %d relato(s)%s"):format(name, id, latestDetail or "", nWit, total, badAcc and (" · " .. accText) or "")
+    local isAdmin = core:isPlayerAdmin(suspect)
+    if (nWit >= AIM_WITNESSES_BAN or (nWit >= AIM_WITNESSES_ALERT and badAcc)) and AUTOBAN and not isAdmin then
+        aimReports[suspect] = {}
+        local reason = ("Anti-cheat: %s (%d testemunhas%s)"):format(KIND_NAME[kind], nWit, badAcc and ", " .. accText or "")
+        outputServerLog(("[ANTI-CHEAT] BAN AUTOMÁTICO: %s serial %s ip %s — %s"):format(name, getPlayerSerial(suspect), getPlayerIP(suspect), reason))
+        local admins = adminsOnline()
+        if #admins > 0 then triggerClientEvent(admins, "ac:alert", resourceRoot, "BAN AUTOMÁTICO", name .. " · " .. reason, suspect) end
+        outputChatBox(("#FF4D6D⚠ #FFFFFF%s #8FA39Afoi banido pelo anti-cheat: #FF4D6D%s"):format(name, KIND_NAME[kind]:lower()), root, 255, 255, 255, true)
+        if not banPlayer(suspect, true, false, true, nil, reason, 0) then kickPlayer(suspect, reason) end
+    elseif nWit >= AIM_WITNESSES_ALERT or total >= AIM_REPORTS_ALERT or badAcc then
+        if lastAlert[suspect] and now - lastAlert[suspect] < ALERT_COOLDOWN then return end
+        lastAlert[suspect] = now
+        flagged[suspect] = { text = KIND_NAME[kind] .. " · " .. text, t = now, count = (flagged[suspect] and flagged[suspect].count or 0) + 1 }
+        outputServerLog(("[ANTI-CHEAT] %s: %s (serial %s)"):format(KIND_NAME[kind], text, getPlayerSerial(suspect)))
+        local admins = adminsOnline()
+        if #admins > 0 then triggerClientEvent(admins, "ac:alert", resourceRoot, KIND_NAME[kind], text, suspect) end
+    end
+end
+
+addEvent("ac:report", true)
+addEventHandler("ac:report", root, function(suspect, kind, detail)
+    local witness = client
+    if not witness or witness ~= source then return end
+    if not isElement(suspect) or getElementType(suspect) ~= "player" or suspect == witness then return end
+    if not KIND_NAME[kind] then return end
+    if getElementDimension(suspect) ~= getElementDimension(witness) then return end
+    local list = aimReports[suspect] or {}
+    list[#list + 1] = { witness = witness, kind = kind, t = getTickCount(), detail = tostring(detail or "") }
+    aimReports[suspect] = list
+    evaluateAim(suspect, kind, tostring(detail or ""))
+end)
 
 -- /ac: lista os jogadores marcados nesta sessão (admin)
 addCommandHandler("ac", function(player)

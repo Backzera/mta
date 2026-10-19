@@ -50,6 +50,7 @@ addEventHandler("wep:hit", root, function(attacker, weapon, bodypart, loss)
         setElementHealth(victim, 1)
         killPed(victim, attacker, weapon, bodypart)
         triggerClientEvent(attacker, "wep:hitConfirm", resourceRoot, 100, true, victim, true)
+        triggerEvent("ac:hit", attacker, attacker, victim, weapon, true)   -- anti-cheat: precisão
         return
     end
 
@@ -69,6 +70,7 @@ addEventHandler("wep:hit", root, function(attacker, weapon, bodypart, loss)
         setElementHealth(victim, health)
     end
     triggerClientEvent(attacker, "wep:hitConfirm", resourceRoot, math.floor(loss * mult + 0.5), headshot, victim, health <= 1)
+    triggerEvent("ac:hit", attacker, attacker, victim, weapon, false)   -- anti-cheat: precisão
 end)
 
 addEventHandler("onPlayerQuit", root, function() lastHit[source] = nil end)
