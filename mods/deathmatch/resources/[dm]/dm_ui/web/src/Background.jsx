@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 
 // Fundo vivo do servidor: aurora verde, feixes de luz, partículas subindo e grade sutil.
 // Desenhado em canvas (leve), por cima da cena do GTA (que continua visível, escurecida em verde).
-export default function Background({ strength = 1 }) {
+function Background({ strength = 1 }) {
   const ref = useRef(null)
   useEffect(() => {
     const canvas = ref.current
@@ -72,3 +72,4 @@ export default function Background({ strength = 1 }) {
   }, [strength])
   return <canvas ref={ref} className="bgfx" />
 }
+export default React.memo(Background)

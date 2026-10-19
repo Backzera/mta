@@ -18,8 +18,8 @@ local function meInfo()
     return { name = nick(localPlayer), tier = tier.name:upper(), tierColor = tier.color, money = money(), rp = rp }
 end
 local timers = {}
-local function every(name, ms, fn) timers[name] = setTimer(fn, ms, 0) end
 local function stopTimer(name) if timers[name] and isTimer(timers[name]) then killTimer(timers[name]) end timers[name] = nil end
+local function every(name, ms, fn) stopTimer(name) timers[name] = setTimer(fn, ms, 0) end
 
 -- ============================================================
 -- HUB (F2): arenas + ranqueadas, câmera no local selecionado
@@ -63,7 +63,7 @@ local function previewPoint(item)
 end
 local cam = { x = 0, y = 0, z = 0, tx = 0, ty = 0, tz = 0 }
 local function hubRender()
-    local item = hub.selected and findItem(hub.selected)
+    local item = hub.item
     if not item then return end
     local px, py, pz, dim = previewPoint(item)
     if getElementDimension(localPlayer) ~= dim then setElementDimension(localPlayer, dim) end
@@ -81,6 +81,7 @@ function openHub()
     hub.origDim = getElementDimension(localPlayer)
     hub.selected = getElementData(localPlayer, "dm:arena")
     local item = hub.selected and findItem(hub.selected)
+    hub.item = item
     if item then cam.x, cam.y, cam.z = previewPoint(item) end
     addEventHandler("onClientRender", root, hubRender)
     every("hub", 2500, function() UI.set("hub", hubState()) end)
@@ -91,7 +92,7 @@ UI.onClose("hub", function()
     setElementDimension(localPlayer, hub.origDim)
     setCameraTarget(localPlayer)
 end)
-UI.on("hub", "select", function(p) hub.selected = p.id end)
+UI.on("hub", "select", function(p) hub.selected, hub.item = p.id, findItem(p.id) end)
 UI.on("hub", "enter", function(p)
     local item = findItem(p.id)
     UI.close("hub")
@@ -154,14 +155,6 @@ function openShop()
     if UI.open("shop", shopState()) then every("shop", 4000, function() UI.set("shop", shopState()) end) end
 end
 UI.onClose("shop", function() stopTimer("shop") end)
-addEventHandler("onClientElementDataChange", localPlayer, function(name)
-    if name == "dm:money" or name == "dm:perks" or name == "dm:tag" or name == "dm:vip" or name == "dm:nameColor" then
-        if UI.isOpen("shop") then UI.set("shop", shopState()) end
-        if UI.isOpen("crates") then UI.set("crates", cratesState()) end
-    elseif name == "dm:skin" or name == "dm:wskin" then
-        if UI.isOpen("crates") then UI.set("crates", cratesState()) end
-    end
-end)
 UI.on("shop", "buy", function(p) triggerServerEvent("shop:buy", localPlayer, p.cat, p.key) end)
 bindKey("F4", "down", function() UI.toggle("shop", openShop) end)
 addEvent("shop:open", true)
@@ -370,6 +363,7 @@ bindKey("F6", "down", function() UI.toggle("clans", openClanPanel) end)
 -- ============================================================
 -- CAIXAS (F7)
 -- ============================================================
+local openingBox = false
 local function cratesState()
     local C = core:getCratesConfig()
     local owned = {}
@@ -386,7 +380,7 @@ local function cratesState()
     for _, it in ipairs(C.items) do
         if it.type == "wskin" and (it.rarity == "mitica" or it.rarity == "ultimate") and hasPerk("item:" .. it.key) then hasTrail = true end
     end
-    return { money = money(), rarities = C.rarities, items = items, boxes = C.boxes, owned = owned, hasTrail = hasTrail,
+    return { money = money(), rarities = C.rarities, items = items, boxes = C.boxes, owned = owned, hasTrail = hasTrail, opening = openingBox,
         trail = type(eq) == "table" and eq.trail or false,
         equippedSkin = tonumber(getElementData(localPlayer, "dm:skin")) or 0, equippedW = type(eq) == "table" and eq or {} }
 end
@@ -398,12 +392,24 @@ end
 UI.onClose("crates", function() stopTimer("crates") reelOpen = false UI.push("reelClose", {}) end)
 UI.onEscape("crates", function() if not reelOpen then UI.close("crates") end end)
 UI.on("crates", "close", function() if not reelOpen then UI.close("crates") end end)
-UI.on("crates", "open", function(p) triggerServerEvent("crates:open", localPlayer, p.box) end)
+UI.on("crates", "open", function(p)
+    if openingBox or reelOpen or not UI.isOpen("crates") or type(p.box) ~= "string" then return end
+    openingBox = p.box
+    UI.merge("crates", { opening = openingBox })
+    triggerServerEvent("crates:open", localPlayer, p.box)
+end)
+addEvent("crates:openFailed", true)
+addEventHandler("crates:openFailed", root, function()
+    openingBox = false
+    UI.merge("crates", { opening = false })
+end)
 UI.on("crates", "equip", function(p) triggerServerEvent("crates:equip", localPlayer, p.key) end)
 UI.on("crates", "trail", function(p) triggerServerEvent("crates:trail", localPlayer, p.value) end)
 UI.on("crates", "reelClose", function() reelOpen = false UI.push("reelClose", {}) end)
 addEvent("crates:result", true)
 addEventHandler("crates:result", root, function(boxKey, itemKey, duplicate)
+    openingBox = false
+    UI.set("crates", cratesState())
     local C = core:getCratesConfig()
     local box
     for _, b in ipairs(C.boxes) do if b.key == boxKey then box = b end end
@@ -421,6 +427,56 @@ end)
 bindKey("F7", "down", function() if UI.isOpen("crates") then if not reelOpen then UI.close("crates") end else UI.toggle("crates", openCratesPanel) end end)
 addEvent("crates:openPanel", true)
 addEventHandler("crates:openPanel", root, function() openCratesPanel() end)
+
+-- PERSONAGENS (F10): mantém os mesmos itens e a mesma posse salva na conta.
+local function charactersState()
+    local C = core:getCratesConfig()
+    local items, owned = {}, {}
+    for _, it in ipairs(C.items) do
+        if it.type == "skin" then
+            items[#items + 1] = { key = it.key, type = it.type, name = it.name, rarity = it.rarity, model = it.model, preview = it.preview }
+            if hasPerk("item:" .. it.key) then owned[#owned + 1] = it.key end
+        end
+    end
+    return { items = items, owned = owned, rarities = C.rarities,
+        equippedSkin = tonumber(getElementData(localPlayer, "dm:skin")) or 0 }
+end
+function openCharactersPanel()
+    if ready() then UI.open("characters", charactersState()) end
+end
+UI.on("characters", "equip", function(p)
+    if not UI.isOpen("characters") then return end
+    if p.key == "skin:none" then triggerServerEvent("crates:equip", localPlayer, p.key) return end
+    for _, it in ipairs(core:getCratesConfig().items) do
+        if it.type == "skin" and it.key == p.key then
+            triggerServerEvent("crates:equip", localPlayer, it.key)
+            return
+        end
+    end
+end)
+UI.on("characters", "boxes", function() UI.close("characters") openCratesPanel() end)
+UI.on("crates", "characters", function()
+    if reelOpen or openingBox then return end
+    UI.close("crates") openCharactersPanel()
+end)
+bindKey("F10", "down", function() UI.toggle("characters", openCharactersPanel) end)
+addCommandHandler("personagens", function() UI.toggle("characters", openCharactersPanel) end)
+
+-- Declarado depois dos construtores locais: antes cratesState era resolvido como
+-- global inexistente, abortando a atualização até o próximo timer de 4 segundos.
+local inventoryKeys = { ["dm:money"] = true, ["dm:perks"] = true, ["dm:skin"] = true, ["dm:wskin"] = true }
+local shopKeys = { ["dm:money"] = true, ["dm:perks"] = true, ["dm:tag"] = true, ["dm:vip"] = true, ["dm:nameColor"] = true }
+addEventHandler("onClientElementDataChange", localPlayer, function(name)
+    if inventoryKeys[name] then
+        UI.defer("inventory", function()
+            if UI.isOpen("crates") then UI.set("crates", cratesState()) end
+            if UI.isOpen("characters") then UI.set("characters", charactersState()) end
+        end)
+    end
+    if shopKeys[name] then
+        UI.defer("shop", function() if UI.isOpen("shop") then UI.set("shop", shopState()) end end)
+    end
+end)
 
 -- ============================================================
 -- PLACAR (TAB, segurar)
@@ -522,13 +578,6 @@ UI.on("login", "register", function(p)
     login.message, login.mtype = "Criando conta...", "info"
     UI.set("login", loginState())
     triggerServerEvent("login:register", localPlayer, loginUser, tostring(p.pass or ""), p.remember == true)
-end)
-UI.on("login", "guest", function()
-    if login.busy then return end
-    login.busy = true
-    login.message, login.mtype = "Entrando como convidado...", "info"
-    UI.set("login", loginState())
-    triggerServerEvent("login:guest", localPlayer)
 end)
 UI.on("login", "close", function() end)   -- login não fecha pelo ESC/JS
 addEvent("login:show", true)

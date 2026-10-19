@@ -41,6 +41,7 @@ Arena AK47/, Arena CBUG/, Arena M4/, Arena X1/   mapas originais (já copiados p
 | F1    | Ajuda                 | F4    | Loja (tags, cores, VIP, extras)|
 | F2    | Arenas                | F5    | Partidas ranqueadas            |
 | F3    | Duelo X1              | F6    | Clã                            |
+| F7    | Caixas e inventário de armas | F10 | Personagens                 |
 | TAB   | Placar (tags, clã, elo, RP, K/D) | Y / N | Aceitar / recusar duelo |
 
 Comandos: `/arena <id>` `/lobby` `/duelo <jogador>` `/stats` `/top rp|kills|money|duelos` `/saldo`
@@ -141,6 +142,19 @@ Raridades: Comum, Rara, Épica, Lendária, Mítica, Ultimate (AK Fire Serpent e 
 Caixas: Munição $5.000 (ultimate 0,01%), Tática $15.000 (0,1%), Elite $40.000 (1%); repetidos devolvem
 metade. Uma skin equipada por arma (AK-47, M4, outras). Para adicionar packs: coloque as pastas, edite
 os dicionários `AK`/`M4` do script com nome e raridade, rode o script e depois `npm run build` no `dm_ui/web`.
+
+Personagens ficam no painel F10 (também `/personagens`), com as abas Meus Personagens e Todos os
+Personagens. A Caixa de Personagens fica no mesmo painel F7 e custa $15.000: rara 55%, épica 30%,
+lendária 12% e mítica 3%. As outras três caixas continuam com armas e dinheiro, sem personagens.
+As chaves dos itens e a posse nas contas permanecem iguais; não há migração de banco de dados.
+As definições das caixas ficam em `tools/crate_catalog.py`, compartilhadas com `build_skins.py`.
+Para atualizar somente as caixas, sem regenerar modelos/imagens: `python tools/crate_catalog.py` (requer `lupa`).
+
+Atualizações de equipamento/rastro são enviadas no próximo frame após a sincronização do servidor,
+sem depender do timer de quatro segundos. A câmera do F2 mantém o cenário selecionado em memória;
+o HUD não reenvia estados idênticos nem consulta o catálogo de skins a cada atualização.
+Testes locais: `python -m unittest discover -s tools/tests -v`. A validação de desempenho dentro do
+CEF do MTA deve ser feita após reiniciar o servidor e reconectar.
 
 ## Chat
 

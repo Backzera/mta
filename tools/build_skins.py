@@ -199,18 +199,6 @@ def main():
             assert it["model"] not in seen, f"ID {it['model']} repetido: {seen[it['model']]} e {it['key']}"
             seen[it["model"]] = it["key"]
 
-    # ---- caixas: peso por raridade dividido entre os itens daquela raridade
-    boxes = [
-        dict(key="municao", name="Caixa de Munição", price=5000, color=(124, 255, 178), icon="target.png",
-             desc="Barata e viciante: skins comuns e raras, com uma chance pequena de algo grande.",
-             tiers=dict(comum=72, rara=22, epica=5, lendaria=0.9, mitica=0.09, ultimate=0.01)),
-        dict(key="tatica", name="Caixa Tática", price=15000, color=(86, 180, 255), icon="shield.png",
-             desc="Skins raras e épicas com chance real de lendária.",
-             tiers=dict(comum=25, rara=45, epica=24, lendaria=5, mitica=0.9, ultimate=0.1)),
-        dict(key="elite", name="Caixa de Elite", price=40000, color=(245, 196, 81), icon="trophy.png",
-             desc="Só o topo: épicas, lendárias, míticas e a chance da ULTIMATE.",
-             tiers=dict(rara=20, epica=50, lendaria=24, mitica=5, ultimate=1)),
-    ]
     out = ['-- GERADO por tools/build_skins.py — não edite à mão (edite o script e rode de novo)',
            'DM.crates.rarities = {',
            '    comum    = { name = "Comum",    color = { 150, 165, 155 } },',
@@ -226,18 +214,9 @@ def main():
         out.append(f'    {wkey} = {{ model = {w["model"]}, texture = "{w["texture"]}", label = "{w["label"]}" }},')
     out += ['}', 'DM.crates.skinMode = "player"   -- "player": cada jogador vê a skin de cada um; "local": você vê a sua em todas as armas do tipo', 'DM.crates.items = {']
     for d in all_items: out.append(lua_item(d))
-    out += ['}', 'DM.crates.boxes = {']
-    for b in boxes:
-        pool = []
-        for tier, weight in b["tiers"].items():
-            # dinheiro só entra nas raridades baixas da caixa (comum/rara) para não "roubar" os pesos altos
-            cand = [it for it in all_items if it["rarity"] == tier and (it["type"] != "money" or tier in ("comum", "rara"))]
-            if not cand: continue
-            for it in cand: pool.append((it["key"], round(weight / len(cand), 5)))
-        out.append(f'    {{ key = "{b["key"]}", name = "{b["name"]}", price = {b["price"]}, color = {{ {b["color"][0]}, {b["color"][1]}, {b["color"][2]} }}, icon = "{b["icon"]}",')
-        out.append(f'      desc = "{b["desc"]}",')
-        out.append('      pool = { ' + ", ".join(f'{{ item = "{k}", weight = {w} }}' for k, w in pool) + ' } },')
     out.append('}')
+    from crate_catalog import render_boxes
+    out.extend(render_boxes(all_items).splitlines())
     gen = os.path.join(ROOT, "dm_core", "shared", "skins_generated.lua")
     open(gen, "w", encoding="utf-8").write("\n".join(out) + "\n")
 

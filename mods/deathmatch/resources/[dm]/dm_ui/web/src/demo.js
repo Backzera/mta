@@ -74,6 +74,13 @@ export function run(screen) {
     login: { message: 'Bem-vindo de volta, hehenr! Clique em ENTRAR para jogar.', type: 'success', user: 'hehenr', pass: '12345678', remember: true },
     help: {},
   }
+  // A prévia também respeita a separação usada pelo catálogo real do servidor.
+  const characters = data.crates.items.filter((it) => it.type === 'skin')
+  const characterKeys = new Set(characters.map((it) => it.key))
+  data.crates.boxes = data.crates.boxes.map((b) => ({ ...b, pool: b.pool.filter((p) => !characterKeys.has(p.item)) }))
+  data.crates.boxes.push({ key: 'personagens', name: 'Caixa de Personagens', price: 15000, color: rgb(190, 110, 255), icon: 'shield.png',
+    desc: 'Somente skins de personagens. Equipe seus prêmios no painel F10.', pool: characters.map((it) => ({ item: it.key, weight: 1 })) })
+  data.characters = { items: characters, owned: data.crates.owned.filter((key) => characterKeys.has(key)), rarities: data.crates.rarities, equippedSkin: data.crates.equippedSkin }
   if (screen === 'inv') { ui.open('crates', data.crates); return }
   if (screen === 'reel') {
     ui.open('crates', data.crates)

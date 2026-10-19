@@ -4,11 +4,8 @@
     dm:wskin = { ak47 = key, m4 = key, all = key } (salvo em equip_wskin como JSON).
 ]]
 local core = exports.dm_core
-local CRATES
-
 local function cfg()
-    if not CRATES then CRATES = core:getCratesConfig() end
-    return CRATES
+    return core:getCratesConfig()
 end
 local function item(key)
     for _, it in ipairs(cfg().items) do if it.key == key then return it end end
@@ -20,6 +17,7 @@ local function nick(p) return (getPlayerName(p):gsub("#%x%x%x%x%x%x", "")) end
 local RARITY_RANK = { comum = 1, rara = 2, epica = 3, lendaria = 4, mitica = 5, ultimate = 6 }
 
 local function pick(b)
+    if type(b.pool) ~= "table" or #b.pool == 0 then return nil end
     local total = 0
     for _, d in ipairs(b.pool) do total = total + d.weight end
     local r = math.random() * total
@@ -53,15 +51,22 @@ end
 addEvent("crates:open", true)
 addEventHandler("crates:open", root, function(boxKey)
     local player = client
-    if player ~= source or not getElementData(player, "dm:ready") then return end
+    if player ~= source then return end
+    local function failed() triggerClientEvent(player, "crates:openFailed", resourceRoot) end
+    if not getElementData(player, "dm:ready") or not core:getPlayerStats(player) then failed() return end
     local b = box(boxKey)
-    if not b then return end
-    if not core:takeMoney(player, b.price) then
-        core:notifyPlayer(player, ("Saldo insuficiente. A %s custa %s."):format(b.name, core:formatMoney(b.price)), "error", "Caixas")
+    if not b then failed() return end
+    local it = pick(b)
+    if not it then
+        core:notifyPlayer(player, "Esta caixa está indisponível. Nenhum valor foi cobrado.", "error", "Caixas")
+        failed()
         return
     end
-    local it = pick(b)
-    if not it then return end
+    if not core:takeMoney(player, b.price) then
+        core:notifyPlayer(player, ("Saldo insuficiente. A %s custa %s."):format(b.name, core:formatMoney(b.price)), "error", "Caixas")
+        failed()
+        return
+    end
     local duplicate = false
     if it.type == "money" then
         core:addMoney(player, it.amount, "Caixa", true)
@@ -70,9 +75,15 @@ addEventHandler("crates:open", root, function(boxKey)
             duplicate = true
             core:addMoney(player, math.floor(b.price * 0.5), "Item repetido", true)
         else
-            core:givePlayerPerk(player, "item:" .. it.key)
+            if not core:givePlayerPerk(player, "item:" .. it.key) then
+                core:addMoney(player, b.price, "Estorno da caixa", true)
+                core:notifyPlayer(player, "Não foi possível entregar o prêmio. Valor devolvido.", "error", "Caixas")
+                failed()
+                return
+            end
         end
     end
+    core:savePlayerStats(player)
     triggerClientEvent(player, "crates:result", resourceRoot, boxKey, it.key, duplicate)
     local rank = RARITY_RANK[it.rarity] or 0
     local rname = (cfg().rarities[it.rarity] and cfg().rarities[it.rarity].name or it.rarity):upper()
@@ -87,7 +98,7 @@ end)
 addEvent("crates:trail", true)
 addEventHandler("crates:trail", root, function(value)
     local player = client
-    if player ~= source then return end
+    if player ~= source or not getElementData(player, "dm:ready") then return end
     if not ownsTrailSkin(player) and not core:isPlayerAdmin(player) then core:notifyPlayer(player, "Você precisa de uma skin Mítica ou Ultimate.", "warn", "Rastro") return end
     local e = getEquipped(player)
     if value == "rgb" then e.trail = "rgb"
@@ -100,10 +111,9 @@ end)
 addEvent("crates:equip", true)
 addEventHandler("crates:equip", root, function(key)
     local player = client
-    if player ~= source then return end
+    if player ~= source or not getElementData(player, "dm:ready") or type(key) ~= "string" then return end
     if key == "skin:none" then
-        core:setPlayerStat(player, "equip_skin", 0)
-        setElementData(player, "dm:skin", false)
+        if not core:resetPlayerSkin(player) then return end
         core:notifyPlayer(player, "Skin padrão (aleatória) equipada.", "info", "Caixas")
         return
     end
@@ -144,21 +154,27 @@ end)
 
 -- Ao carregar as stats, aplica o que estava equipado
 addEvent("dm:onStatsLoaded")
-addEventHandler("dm:onStatsLoaded", root, function()
-    local row = core:getPlayerStats(source)
+local function restoreEquipped(player)
+    local row = core:getPlayerStats(player)
     if not row then return end
-    if (tonumber(row.equip_skin) or 0) > 0 then setElementData(source, "dm:skin", tonumber(row.equip_skin)) end
+    local model = tonumber(row.equip_skin) or 0
+    setElementData(player, "dm:skin", model > 0 and model or false)
+    if model > 0 and getElementData(player, "dm:ready") and not isPedDead(player) then setElementModel(player, model) end
     local saved = row.equip_wskin
     if saved and saved ~= "" then
-        local e = saved:sub(1, 1) == "[" and fromJSON(saved) or { all = saved }
+        local e = (saved:sub(1, 1) == "[" or saved:sub(1, 1) == "{") and fromJSON(saved) or { all = saved }
         local clean = {}
         for w, k in pairs(type(e) == "table" and e or {}) do if w == "trail" or item(k) then clean[w] = k end end
         local n = 0
         for _ in pairs(clean) do n = n + 1 end
-        setElementData(source, "dm:wskin", n > 0 and clean or false)
+        setElementData(player, "dm:wskin", n > 0 and clean or false)
     else
-        setElementData(source, "dm:wskin", false)
+        setElementData(player, "dm:wskin", false)
     end
+end
+addEventHandler("dm:onStatsLoaded", root, function() restoreEquipped(source) end)
+addEventHandler("onResourceStart", resourceRoot, function()
+    for _, player in ipairs(getElementsByType("player")) do restoreEquipped(player) end
 end)
 
 addCommandHandler("caixas", function(player) triggerClientEvent(player, "crates:openPanel", resourceRoot) end)
@@ -209,7 +225,7 @@ addCommandHandler("darskin", function(player, _, a, b)
         for _, it in ipairs(cfg().items) do
             if it.type ~= "money" and not core:playerHasPerk(target, "item:" .. it.key) then core:givePlayerPerk(target, "item:" .. it.key) n = n + 1 end
         end
-        core:notifyPlayer(target, ("%d itens adicionados ao inventário (F7)."):format(n), "success", "Skins")
+        core:notifyPlayer(target, ("%d itens adicionados: armas no F7, personagens no F10."):format(n), "success", "Skins")
         if target ~= player then core:notifyPlayer(player, ("%d itens dados para %s."):format(n, nick(target)), "success", "Skins") end
         return
     end

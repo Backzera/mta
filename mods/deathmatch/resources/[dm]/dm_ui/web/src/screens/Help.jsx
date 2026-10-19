@@ -4,7 +4,7 @@ import { Frame } from '../ui.jsx'
 
 const KEYS = [
   ['F1', 'Esta ajuda'], ['F2', 'Arenas e ranqueadas'], ['F3', 'Duelo X1'], ['F4', 'Loja'], ['F5', 'Ranqueadas'], ['F6', 'Clã'], ['F7', 'Caixas'],
-  ['TAB', 'Placar'], ['Y / N', 'Aceitar / recusar duelo'], ['ESC', 'Fechar painel'],
+  ['F10', 'Personagens'], ['TAB', 'Placar'], ['Y / N', 'Aceitar / recusar duelo'], ['ESC', 'Fechar painel'],
 ]
 const COMMANDS = [
   ['/arena <nome>', 'Entrar em uma arena'], ['/lobby', 'Voltar ao lobby'], ['/duelo <jogador>', 'Desafiar no X1'],

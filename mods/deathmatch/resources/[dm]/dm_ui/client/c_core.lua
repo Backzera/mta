@@ -17,6 +17,17 @@ local current = nil         -- tela aberta
 local hudVisible = true
 local chatPending = false  -- painel aberto antes da página carregar: chat fica visível até lá
 local lastOpen = {}       -- [tela] = últimos dados (para reabrir se a página recarregar)
+local lastPayload = {}
+local deferred = {}
+
+-- Agrupa mudanças de element data no mesmo frame, sem esperar pelo timer do painel.
+function UI.defer(key, fn) deferred[key] = fn end
+addEventHandler("onClientPreRender", root, function()
+    if not next(deferred) then return end
+    local work = deferred
+    deferred = {}
+    for _, fn in pairs(work) do fn() end
+end)
 
 setElementData(localPlayer, "dm:hubCEF", true, false)
 
@@ -32,9 +43,16 @@ function UI.isReady() return ready end
 function UI.set(key, value)
     if current == key then lastOpen[key] = value end
     if not ready and key == "hud" then return end   -- não enche a fila antes de a página carregar
-    js(("window.ui.set(%q,%s)"):format(key, toJSON(value or {})))
+    local payload = toJSON(value or {})
+    if ready and lastPayload[key] == payload then return end
+    if ready then lastPayload[key] = payload end
+    js(("window.ui.set(%q,%s)"):format(key, payload))
 end
-function UI.merge(key, value) js(("window.ui.merge(%q,%s)"):format(key, toJSON(value or {}))) end
+function UI.merge(key, value)
+    lastPayload[key] = nil
+    if lastOpen[key] then for k, v in pairs(value or {}) do lastOpen[key][k] = v end end
+    js(("window.ui.merge(%q,%s)"):format(key, toJSON(value or {})))
+end
 function UI.push(kind, value) js(("window.ui.push(%q,%s)"):format(kind, toJSON(value or {}))) end
 function UI.js(code) js(code) end
 
@@ -65,6 +83,7 @@ function UI.open(name, data, opts)
     if ready then showChat(false) else chatPending = true end
     toggleAllControls(false, true, false)
     lastOpen[name] = data or {}
+    lastPayload[name] = nil
     js(("window.ui.open(%q,%s)"):format(name, toJSON(data or {})))
     if browser and ready and not opts.noCursor then focusBrowser(browser) end
     if openFns[name] then openFns[name]() end
@@ -193,6 +212,7 @@ local function createUIBrowser()
         end
         local first = not ready
         ready = true
+        lastPayload = {}
         readyTick = getTickCount()
         diag("documento pronto: " .. tostring(url))
         if chatPending then chatPending = false showChat(false) end

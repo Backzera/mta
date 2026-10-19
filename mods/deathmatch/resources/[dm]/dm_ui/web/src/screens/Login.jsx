@@ -50,7 +50,6 @@ export default function Login({ st }) {
         )}
         <label className="toggle"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /><i /><span>Manter conectado neste computador</span></label>
         <Btn kind="primary" disabled={d.busy} onClick={submit}>{d.busy ? 'AGUARDE...' : tab === 'register' ? 'CRIAR CONTA' : 'ENTRAR'}</Btn>
-        <Btn kind="outline" disabled={d.busy} onClick={() => !d.busy && toLua('login', 'guest')}>Jogar como convidado</Btn>
         {msg && <p className={`login__msg is-${msg.type || 'info'}`}>{msg.text}</p>}
         <small className="login__hint">ENTER confirma · TAB troca de campo</small>
       </div>

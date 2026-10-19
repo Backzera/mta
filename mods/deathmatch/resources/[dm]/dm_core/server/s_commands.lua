@@ -84,6 +84,7 @@ addCommandHandler("skin", function(player, cmd, id)
         end
     end
     setElementData(player, "dm:skin", id)
+    setPlayerStat(player, "equip_skin", id)
     if not isPedDead(player) then setElementModel(player, id) end
     notifyPlayer(player, "Skin alterada para " .. id .. ".", "success")
 end)

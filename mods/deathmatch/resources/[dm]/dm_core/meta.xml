@@ -89,6 +89,8 @@
     <export function="getArenaPlayers" type="server" />
     <export function="sendServerMessage" type="server" />
     <export function="getPlayerStats" type="server" />
+    <export function="savePlayerStats" type="server" />
+    <export function="resetPlayerSkin" type="server" />
     <export function="notifyPlayer" type="server" />
     <export function="isPlayerAdmin" type="server" />
     <export function="findPlayer" type="server" />

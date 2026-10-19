@@ -10,11 +10,13 @@ export function Counter({ value, format = (v) => v, dur = 600 }) {
   const ref = useRef(value || 0)
   useEffect(() => {
     const from = ref.current, to = value || 0, start = performance.now()
+    if (from === to) return
     let raf
     const step = (t) => {
       const p = Math.min(1, (t - start) / dur)
       const e = 1 - Math.pow(1 - p, 3)
-      setShown(from + (to - from) * e)
+      ref.current = from + (to - from) * e
+      setShown(ref.current)
       if (p < 1) raf = requestAnimationFrame(step)
       else ref.current = to
     }

@@ -9,6 +9,7 @@ local db
 local stats = {}        -- player -> row (cache)
 local sessionStart = {} -- player -> tick
 local loading = {}      -- player -> key em carregamento
+local loadCallbacks = {} -- callbacks aguardando o mesmo carregamento
 
 local INT_COLUMNS = { "kills", "deaths", "headshots", "best_streak", "duels_won", "duels_lost", "money", "rp",
     "ranked_wins", "ranked_losses", "ranked_kills", "vip", "vip_until", "clan_id", "daily_last", "playtime", "first_seen", "last_seen", "equip_skin" }
@@ -78,6 +79,7 @@ function givePlayerPerk(player, key)
     row._perks[key] = true
     row.perks = toJSON(row._perks)
     pushStatsToClient(player)
+    savePlayerStats(player)
     return true
 end
 
@@ -129,12 +131,13 @@ end
 function loadPlayerStats(player, callback)
     if not db or not isElement(player) then return end
     local key = getStatsKey(player)
+    if loading[player] ~= key then loadCallbacks[player] = {} end
+    if callback then table.insert(loadCallbacks[player], callback) end
     if loading[player] == key then return end
     loading[player] = key
     sessionStart[player] = getTickCount()
     dbQuery(function(qh, p, k)
         local result = dbPoll(qh, 0)
-        if loading[p] == k then loading[p] = nil end
         if not isElement(p) then return end
         if getStatsKey(p) ~= k then return end
         local row
@@ -143,8 +146,8 @@ function loadPlayerStats(player, callback)
             for _, col in ipairs(INT_COLUMNS) do row[col] = tonumber(row[col]) or 0 end
             for _, col in ipairs(TEXT_COLUMNS) do if type(row[col]) ~= "string" then row[col] = "" end end
             row.name = getPlayerVisibleName(p)
-            row.uid = (tonumber(row.uid) or 0) + 1000
-            finishLoad(p, row, callback)
+            row.uid = tonumber(row.uid) or 0
+            finishLoad(p, row)
         else
             row = newRow(k, p)
             dbExec(db, "INSERT OR IGNORE INTO players (key, name, first_seen, last_seen) VALUES (?, ?, ?, ?)",
@@ -153,21 +156,26 @@ function loadPlayerStats(player, callback)
             dbQuery(function(qh2, p2, row2)
                 local res2 = dbPoll(qh2, 0)
                 if not isElement(p2) then return end
-                row2.uid = (res2 and res2[1] and tonumber(res2[1].uid) or 0) + 1000
-                finishLoad(p2, row2, callback)
+                if getStatsKey(p2) ~= row2.key then return end
+                row2.uid = res2 and res2[1] and tonumber(res2[1].uid) or 0
+                finishLoad(p2, row2)
             end, { p, row }, db, "SELECT rowid AS uid FROM players WHERE key = ?", k)
         end
     end, { player, key }, db, "SELECT rowid AS uid, * FROM players WHERE key = ?", key)
 end
 addEvent("dm:onStatsLoaded")
 
-function finishLoad(player, row, callback)
+function finishLoad(player, row)
+    loading[player] = nil
     row._perks = decodePerks(row.perks)
     stats[player] = row
+    setElementData(player, "dm:skin", row.equip_skin > 0 and row.equip_skin or false)
     setElementData(player, "dm:id", row.uid or 0)
     pushStatsToClient(player)
     triggerEvent("dm:onStatsLoaded", player, row._new == true)
-    if callback then callback(player, row) end
+    local callbacks = loadCallbacks[player] or {}
+    loadCallbacks[player] = nil
+    for _, callback in ipairs(callbacks) do callback(player, row) end
 end
 
 function getPlayerId(player)
@@ -200,6 +208,7 @@ function setPlayerStat(player, field, value)
     if not row or row[field] == nil then return false end
     row[field] = value
     pushStatsToClient(player)
+    if field == "equip_skin" or field == "equip_wskin" then savePlayerStats(player) end
     return true
 end
 
@@ -314,6 +323,7 @@ addEventHandler("onPlayerQuit", root, function()
     stats[source] = nil
     sessionStart[source] = nil
     loading[source] = nil
+    loadCallbacks[source] = nil
 end)
 
 addEventHandler("onPlayerLogin", root, function()
@@ -323,7 +333,6 @@ addEventHandler("onPlayerLogin", root, function()
 end)
 
 addEventHandler("onPlayerLogout", root, function()
-    if stats[source] then savePlayerStats(source) end
-    stats[source] = nil
-    loadPlayerStats(source)
+    -- Jogar exige uma conta; desconectar do servidor continua permitido.
+    cancelEvent()
 end)

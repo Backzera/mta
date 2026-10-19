@@ -6,6 +6,21 @@ local core = exports.dm_core
 local fps, frames, fpsTick = 0, 0, getTickCount()
 local spawnTick = 0
 local lastSig = nil
+local skinCatalog, skinByKey
+local population = { tick = -1000, online = 0, counts = {} }
+local function refreshPopulation()
+    local now = getTickCount()
+    if now - population.tick < 1000 then return end
+    local players, counts = getElementsByType("player"), {}
+    for _, p in ipairs(players) do
+        local key = tostring(getElementData(p, "dm:arena")) .. ":" .. getElementDimension(p)
+        counts[key] = (counts[key] or 0) + 1
+    end
+    population = { tick = now, online = #players, counts = counts }
+end
+addEventHandler("onClientResourceStart", root, function(res)
+    if getResourceName(res) == "dm_core" then skinCatalog, skinByKey = nil, nil end
+end)
 
 local function nick(p) return (getPlayerName(p):gsub("#%x%x%x%x%x%x", "")) end
 local WEAPON_ICONS = { [4] = true, [16] = true, [23] = true, [24] = true, [25] = true, [29] = true, [30] = true, [31] = true, [34] = true }
@@ -17,12 +32,14 @@ local function skinInfo(player, weapon)
     if not wkey then return false end
     local e = getElementData(player, "dm:wskin")
     if type(e) ~= "table" or not e[wkey] then return false end
-    local C = core:getCratesConfig()
-    for _, it in ipairs(C.items) do
-        if it.key == e[wkey] then
-            local r = C.rarities[it.rarity]
-            return { name = (it.name:gsub("^[^|]*| ", "")), rarity = r and r.name or it.rarity, color = r and hexColor(r.color) or "#FFFFFF", preview = it.preview or false, trail = e.trail or false }
-        end
+    if not skinCatalog then
+        skinCatalog, skinByKey = core:getCratesConfig(), {}
+        for _, it in ipairs(skinCatalog.items) do skinByKey[it.key] = it end
+    end
+    local it = skinByKey[e[wkey]]
+    if it then
+        local r = skinCatalog.rarities[it.rarity]
+        return { name = (it.name:gsub("^[^|]*| ", "")), rarity = r and r.name or it.rarity, color = r and hexColor(r.color) or "#FFFFFF", preview = it.preview or false, trail = e.trail or false }
     end
     return false
 end
@@ -36,16 +53,14 @@ end
 local function arenaInfo()
     local arena = core:getPlayerArena(localPlayer)
     if not arena then return false end
-    local players, dim = 0, getElementDimension(localPlayer)
-    for _, p in ipairs(getElementsByType("player")) do
-        if getElementData(p, "dm:arena") == arena.id and getElementDimension(p) == dim then players = players + 1 end
-    end
+    refreshPopulation()
+    local players = population.counts[tostring(arena.id) .. ":" .. getElementDimension(localPlayer)] or 0
     return { id = arena.id, name = arena.name, color = arena.color, players = players, safe = arena.safe == true, type = arena.type }
 end
 
 local function hints(arena)
     if not arena or UI.getOpenPanel() then return {} end
-    if arena.type == "lobby" then return { { "F2", "Jogar" }, { "F3", "Duelo" }, { "F4", "Loja" }, { "F6", "Clã" }, { "F7", "Caixas" }, { "TAB", "Placar" } } end
+    if arena.type == "lobby" then return { { "F2", "Jogar" }, { "F3", "Duelo" }, { "F4", "Loja" }, { "F6", "Clã" }, { "F7", "Caixas" }, { "F10", "Personagens" }, { "TAB", "Placar" } } end
     if arena.type == "duel" then return { { "F3", "Desafiar" }, { "F2", "Arenas" }, { "/lobby", "Voltar" } } end
     return {}
 end
@@ -58,6 +73,7 @@ local function pushHud()
         return
     end
     local rp = tonumber(getElementData(localPlayer, "dm:rp")) or 0
+    refreshPopulation()
     local tier = core:getTierForRP(rp)
     local weapon = getPedWeapon(localPlayer)
     local clip, total = getPedAmmoInClip(localPlayer), getPedTotalAmmo(localPlayer)
@@ -74,7 +90,7 @@ local function pushHud()
         weaponIcon = WEAPON_ICONS[weapon] and (weapon .. ".png") or false, skin = skinInfo(localPlayer, weapon),
         clipSize = tonumber(getWeaponProperty(weapon, "pro", "maximum_clip_ammo")) or math.max(clip, 1), hasAmmo = weapon > 1 and total > 0,
         streak = tonumber(getElementData(localPlayer, "dm:streak")) or 0,
-        arena = arena, server = core:getConfig().fullName, online = #getElementsByType("player"), fps = fps, ping = getPlayerPing(localPlayer),
+        arena = arena, server = core:getConfig().fullName, online = population.online, fps = fps, ping = getPlayerPing(localPlayer),
         protected = prot, protectedTotal = protTotal, hints = hints(arena), dead = isPedDead(localPlayer),
         duel = DuelLive and DuelLive() or false, ranked = RankedLive and RankedLive() or false,
     }

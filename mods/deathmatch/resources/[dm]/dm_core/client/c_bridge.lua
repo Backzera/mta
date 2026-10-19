@@ -22,7 +22,7 @@ addEvent("ui:notify")
 for _, ev in ipairs({ "dm:notify", "dm:toggleHelp", "dm:onMoney", "dm:onKill", "dm:onKillReward", "dm:onStreak", "dm:tierChange",
     "shop:open", "shop:result", "duel:openPanel", "duel:incoming", "duel:requestRemoved", "duel:outgoing", "duel:outgoingRemoved",
     "duel:start", "duel:round", "duel:fight", "duel:score", "duel:end", "ranked:info", "ranked:state", "ranked:spectate", "ranked:start", "ranked:end",
-    "clans:info", "crates:result", "crates:openPanel", "login:show", "login:result" }) do
+    "clans:info", "crates:result", "crates:openFailed", "crates:openPanel", "login:show", "login:result" }) do
     addEvent(ev, true)
 end
 function isPanelOpen() return UI.getOpenPanel() ~= nil end

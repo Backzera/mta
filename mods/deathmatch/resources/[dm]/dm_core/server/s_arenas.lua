@@ -59,6 +59,17 @@ local function getPlayerSkin(player)
     return skin
 end
 
+-- Aplica o padrão imediatamente, usando a mesma lista do spawn, sem respawnar
+-- o jogador nem alterar posição, vida, armas ou inventário.
+function resetPlayerSkin(player)
+    if not isElement(player) or not getPlayerStats(player) then return false end
+    setPlayerStat(player, "equip_skin", 0)
+    setElementData(player, "dm:skin", false)
+    local skin = getPlayerSkin(player)
+    if not isPedDead(player) then setElementModel(player, skin) end
+    return true
+end
+
 -- Entrega SOMENTE as armas da arena e guarda o loadout (para recarga ao trocar de arma)
 function giveArenaWeapons(player, weapons)
     if not isElement(player) then return end
@@ -275,8 +286,14 @@ addEvent("dm:playerReady")
 addEventHandler("dm:playerReady", root, function()
     local player = source
     if not isElement(player) then return end
+    local account = getPlayerAccount(player)
+    if not account or isGuestAccount(account) then return end
+    if not getPlayerStats(player) then
+        loadPlayerStats(player, function(p) triggerEvent("dm:playerReady", p) end)
+        return
+    end
+    if pdata[player] and getElementData(player, "dm:ready") and getPlayerArena(player) then return end
     setElementData(player, "dm:ready", true)
-    if not getPlayerStats(player) then loadPlayerStats(player) end
     setPlayerArena(player, "lobby", true)
     notifyPlayer(player, "Bem-vindo ao " .. DM.server.fullName .. "! Pressione F2 para escolher uma arena.", "success", "Bem-vindo")
     sendServerMessage(player, "#969BB4Teclas: #FFFFFFF1 #969BB4ajuda · #FFFFFFF2 #969BB4arenas · #FFFFFFF3 #969BB4duelo · #FFFFFFF4 #969BB4loja · #FFFFFFF5 #969BB4ranqueadas · #FFFFFFF6 #969BB4clã · #FFFFFFTAB #969BB4placar · #FFFFFF/emojis")

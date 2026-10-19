@@ -4,9 +4,9 @@ import { toLua, asArray, asObj } from '../bridge.js'
 import { Frame, Btn, Tabs, Counter, Empty, Pill, rgb, rgba, money } from '../ui.jsx'
 
 const GOLD = [245, 196, 81]
-const RARITY_ORDER = ['comum', 'rara', 'epica', 'lendaria', 'mitica', 'ultimate']
+export const RARITY_ORDER = ['comum', 'rara', 'epica', 'lendaria', 'mitica', 'ultimate']
 
-function ItemCard({ it, rar, selected, children, className = '' }) {
+export function ItemCard({ it, rar, selected, children, className = '' }) {
   const rc = rar.color
   const art = it.preview ? `./img/${it.preview}` : it.type === 'wskin' && it.texture ? `./img/wskins/${it.texture}` : null
   return (
@@ -28,16 +28,16 @@ export default function Crates({ st, reel }) {
   const rar = (it) => rarities[it.rarity] || rarities.comum || { name: 'Comum', color: [150, 165, 155] }
   const [tab, setTab] = useState('boxes')
   const bal = d.money || 0
-  const inv = items.filter((i) => i.type !== 'money' && owned.includes(i.key)).sort((a, b) => RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity))
+  const inv = items.filter((i) => i.type === 'wskin' && owned.includes(i.key)).sort((a, b) => RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity))
   const eqW = asObj(d.equippedW)
 
   return (
     <Frame title="CAIXAS" subtitle="Abra caixas com $ e ganhe skins exclusivas, skins de arma e dinheiro. Itens repetidos devolvem metade do valor." icon="trophy.png"
       badge={<>SALDO <Counter value={bal} format={money} dur={800} /></>} badgeColor={GOLD} onClose={() => toLua('crates', 'close')} width="66vw" height="74vh"
-      footer="F7 ou ESC fecha · skins de arma são texturas por jogador · skins exclusivas ficam salvas na sua conta">
+      footer="F7 ou ESC fecha · armas no inventário · personagens no F10 · itens salvos na sua conta">
       <Tabs tabs={[['boxes', 'CAIXAS'], ['inv', 'MEU INVENTÁRIO']]} value={tab} onChange={setTab} />
       {tab === 'boxes' ? (
-        <div className="boxes">
+        <div className={`boxes ${boxes.length === 4 ? 'boxes--four' : ''}`}>
           {boxes.map((b, i) => {
             const total = asArray(b.pool).reduce((s, p) => s + p.weight, 0)
             const byR = {}
@@ -49,19 +49,19 @@ export default function Crates({ st, reel }) {
                 <h3>{b.name}</h3>
                 <p>{b.desc}</p>
                 <div className="box__odds">
-                  {RARITY_ORDER.filter((r) => byR[r]).map((r) => <Pill key={r} color={(rarities[r] || {}).color}>{(rarities[r] || {}).name} {Math.round((byR[r] / total) * 100)}%</Pill>)}
+                  {RARITY_ORDER.filter((r) => byR[r]).map((r) => <Pill key={r} color={(rarities[r] || {}).color}>{(rarities[r] || {}).name} {((byR[r] / total) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%</Pill>)}
                 </div>
-                <Btn kind="primary" color={GOLD} disabled={bal < b.price || !!reel} onClick={() => toLua('crates', 'open', { box: b.key })}>ABRIR · {money(b.price)}</Btn>
+                <Btn kind="primary" color={GOLD} disabled={bal < b.price || !!reel || !!d.opening} onClick={() => toLua('crates', 'open', { box: b.key })}>{d.opening === b.key ? 'ABRINDO...' : <>ABRIR · {money(b.price)}</>}</Btn>
               </article>
             )
           })}
         </div>
       ) : (
         <div className="inv">
-          {inv.length === 0 && <Empty>Você ainda não tem itens. Abra uma caixa!</Empty>}
+          {inv.length === 0 && <Empty>Você ainda não tem skins de armas. Abra uma caixa!</Empty>}
           <div className="inv__grid">
             {inv.map((it) => {
-              const eq = (it.type === 'skin' && d.equippedSkin === it.model) || (it.type === 'wskin' && eqW[it.weapon || 'all'] === it.key)
+              const eq = eqW[it.weapon || 'all'] === it.key
               return (
                 <ItemCard key={it.key} it={it} rar={rar(it)} selected={eq}>
                   <Btn kind={eq ? 'ghost' : 'outline'} onClick={() => toLua('crates', 'equip', { key: it.key })}>{eq ? 'EQUIPADA ✓' : 'EQUIPAR'}</Btn>
@@ -71,7 +71,7 @@ export default function Crates({ st, reel }) {
           </div>
           {d.hasTrail && <TrailPicker value={d.trail} />}
           <div className="hrow">
-            <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'skin:none' })}>SKIN PADRÃO</Btn>
+            <Btn kind="ghost" onClick={() => toLua('crates', 'characters')}>PERSONAGENS · F10</Btn>
             <Btn kind="ghost" onClick={() => toLua('crates', 'equip', { key: 'wskin:none' })}>ARMAS PADRÃO</Btn>
             <span className="hint">Uma skin por arma (AK-47, M4, outras). Clique na skin equipada para remover.</span>
           </div>

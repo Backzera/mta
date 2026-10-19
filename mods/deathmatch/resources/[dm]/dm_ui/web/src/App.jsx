@@ -7,10 +7,23 @@ import Duel from './screens/Duel.jsx'
 import Ranked from './screens/Ranked.jsx'
 import Clans from './screens/Clans.jsx'
 import Crates from './screens/Crates.jsx'
+import Characters from './screens/Characters.jsx'
 import Scoreboard from './screens/Scoreboard.jsx'
 import Help from './screens/Help.jsx'
 import Login from './screens/Login.jsx'
 import Hud from './screens/Hud.jsx'
+
+// Eventos do HUD/toasts não precisam reconstruir o menu nem seus listeners.
+const Panel = React.memo(function Panel({ screen, data, reel, server }) {
+  if (screen === 'help') return <Help server={server} />
+  if (screen === 'clans') return <Clans st={data} />
+  if (screen === 'login') return <Login st={data} />
+  if (!data) return null
+  const screens = { hub: Hub, shop: Shop, duel: Duel, ranked: Ranked, characters: Characters, board: Scoreboard }
+  if (screen === 'crates') return <Crates st={data} reel={reel} />
+  const Component = screens[screen]
+  return Component ? <Component st={data} /> : null
+})
 
 export default function App() {
   const [st, setSt] = useState(() => ({}))
@@ -31,15 +44,7 @@ export default function App() {
     <>
       {bg && <div className={`scene scene--${screen}`}><Background strength={screen === 'login' ? 1.3 : 1} /></div>}
       <div className={`screen ${screen ? 'is-open' : ''}`} key={screen || 'none'}>
-        {screen === 'hub' && st.hub && <Hub st={st.hub} />}
-        {screen === 'shop' && st.shop && <Shop st={st.shop} />}
-        {screen === 'duel' && st.duel && <Duel st={st.duel} />}
-        {screen === 'ranked' && st.ranked && <Ranked st={st.ranked} />}
-        {screen === 'clans' && <Clans st={st.clans} />}
-        {screen === 'crates' && st.crates && <Crates st={st.crates} reel={feed.reel} />}
-        {screen === 'board' && st.board && <Scoreboard st={st.board} />}
-        {screen === 'help' && <Help server={hud && hud.server} />}
-        {screen === 'login' && <Login st={st.login} />}
+        <Panel screen={screen} data={st[screen]} reel={screen === 'crates' ? feed.reel : null} server={hud && hud.server} />
       </div>
       {hud && <Hud h={hud} feed={feed} duelIncoming={st.duel ? st.duel.incoming : []} screen={screen} />}
     </>

@@ -313,6 +313,7 @@ select.input { appearance: none; }
 
 /* ============ CAIXAS (F7) ============ */
 .boxes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2vw; }
+.boxes--four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .box { position: relative; display: flex; flex-direction: column; align-items: center; gap: .5vw; padding: 1.6vw 1.2vw 1.2vw; border-radius: 1vw; border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--c) 14%, transparent), rgba(0,0,0,.3)); overflow: hidden; text-align: center; animation: rise .45s var(--ease) both; transition: .25s var(--ease); }
 .box:hover { transform: translateY(-4px); box-shadow: 0 1vw 2.5vw rgba(0,0,0,.4), 0 0 2vw color-mix(in srgb, var(--c) 35%, transparent); }
 .box__glow { position: absolute; top: -40%; left: 50%; width: 120%; height: 80%; transform: translateX(-50%); background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 40%, transparent), transparent); pointer-events: none; }
@@ -453,3 +454,10 @@ select.input { appearance: none; }
 @media (max-aspect-ratio: 14/9) {
   .list { width: 30vw; } .detail { width: 42vw; } .shop { grid-template-columns: 17vw 1fr; } .shop__grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Resposta mais rápida mantendo cores, brilhos e animações existentes. */
+.btn, .close, .tabs__btn, .chipbtn, .seg__btn { transition-duration: 90ms; }
+.btn:active:not(:disabled), .chipbtn:active, .seg__btn:active { filter: brightness(1.18); }
+.tabs__line { transition-duration: 120ms; }
+.screen.is-open > .frame, .hub, .shop { animation-duration: 160ms; }
+.row, .shop__cell, .mode, .box, .help li { animation-delay: 0ms !important; animation-duration: 160ms; }
