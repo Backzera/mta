@@ -215,7 +215,7 @@ local function createUIBrowser()
         lastPayload = {}
         readyTick = getTickCount()
         diag("documento pronto: " .. tostring(url))
-        if chatPending then chatPending = false showChat(false) end
+        if chatPending then chatPending = false if current then showChat(false) end end   -- só esconde se ainda há painel aberto
         for _, code in ipairs(queue) do executeBrowserJavascript(browser, code) end
         queue = {}
         -- garante que a tela aberta antes do carregamento apareça (a fila pode ter sido podada) e receba o teclado
@@ -260,6 +260,16 @@ addCommandHandler("uidebug", function()
     outputChatBox(("#7CFFB2[dm_ui] browser=%s criado=%s pronto=%s url=%s res=%dx%d"):format(tostring(browser ~= nil), tostring(created), tostring(ready), browser and tostring(getBrowserURL(browser)) or "-", sw, sh), 255, 255, 255, true)
     if browser then outputChatBox(("#7CFFB2[dm_ui] carregando=%s titulo=%s"):format(tostring(isBrowserLoading(browser)), tostring(getBrowserTitle(browser))), 255, 255, 255, true) end
 end)
+
+-- Vigia: sem painel aberto, chat (tecla T), cursor e controles têm que estar liberados. Se qualquer resource
+-- deixar o estado preso (login fechado pelo servidor, resource reiniciado com painel aberto), isto conserta em até 1 s.
+setTimer(function()
+    if current or UI.getOpenPanel() then return end
+    if not isChatVisible() then showChat(true) end
+    if isCursorShowing() and not isMainMenuActive() then showCursor(false) end
+    if not isControlEnabled("fire") then toggleAllControls(true, true, true) end
+    if browser and isElement(browser) and isBrowserFocused(browser) then focusBrowser(nil) end
+end, 1000, 0)
 
 addEvent("ui:ready")
 addEventHandler("onClientResourceStart", resourceRoot, function()
