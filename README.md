@@ -176,6 +176,15 @@ ou RGB): a silhueta do ped brilha nos ossos, um anel de energia abre no chão e 
 sobem em espiral, pulsam e se dissipam em ~3 s. Tudo em `dm_crates/client/c_fx.lua` (`SOUL_*`), desenhado com
 `dxDrawMaterialLine3D` a partir de `getPedBonePosition`, só para mortes a até 140 m da câmera e na mesma dimensão.
 
+## Anti-cheat (`dm_anticheat`)
+
+Fase 1: **rapid fire**. Tudo no servidor: conta os tiros de cada jogador por arma numa janela de 1 s
+(`onPlayerWeaponFire`) e compara com a cadência máxima real da arma (propriedades `anim_loop_start/stop`,
+nível "pro") com 35% de tolerância (pistolas/shotguns 140%, porque o C-Bug acelera de verdade). Duas violações
+em 60 s marcam o jogador: alerta na tela de todos os admins (toast vermelho + som), log no console do servidor
+e lista em `/ac`. Não pune sozinho: o admin decide (`/kick`, `/ban`). Adicione ao `mtaserver.conf`:
+`<resource src="dm_anticheat" startup="1" protected="0" />`.
+
 ## Chat
 
 Estilo moderno com ícones de texto, ID e cores (o chat padrão do MTA renderiza os glifos):

@@ -1,0 +1,6 @@
+<meta>
+    <info author="UTG" name="UTG Anti-Cheat" description="Detecções server-side com alerta na tela dos admins. Fase 1: rapid fire." type="script" version="1.0" />
+    <include resource="dm_core" />
+    <script src="server/s_ac.lua" type="server" />
+    <script src="client/c_ac.lua" type="client" />
+</meta>
