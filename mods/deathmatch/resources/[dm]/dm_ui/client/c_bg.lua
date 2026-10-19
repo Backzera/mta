@@ -48,35 +48,36 @@ local function draw()
     local s = now / 1000
     local A = alpha
 
-    -- escurecimento verde da cena (mais escuro embaixo, como o gradiente da página)
+    -- Mistura NORMAL (nunca "add"): somar luz por cima do céu/areia claros do GTA estoura em branco.
+    -- 1) escurecimento verde da cena (como o gradiente .scene da página: 78% em cima, 90% embaixo)
     dxDrawRectangle(0, 0, sw, sh, tocolor(5, 14, 9, 200 * A))
-    dxDrawRectangle(0, sh * 0.5, sw, sh * 0.5, tocolor(5, 14, 9, 25 * A))
+    dxDrawRectangle(0, sh * 0.55, sw, sh * 0.45, tocolor(5, 14, 9, 30 * A))
     if not glow then return end
-
-    dxSetBlendMode("add")
-    -- aurora: 4 manchas de luz que respiram devagar
+    -- 2) brilho verde-escuro subindo do rodapé (radial-gradient at 50% 110%)
+    local r0 = sw * 0.62
+    dxDrawImage(sw * 0.5 - r0, sh * 1.1 - r0 * 0.75, r0 * 2, r0 * 1.5, glow, 0, 0, 0, tocolor(10, 150, 90, 95 * A))
+    -- 3) aurora: 4 manchas de luz que respiram devagar (alpha baixo, mistura normal)
     for _, b in ipairs(blobs) do
         local x = (b.x + math.sin(s * b.f * 2 + b.r) * 0.08) * sw
         local y = (b.y + math.cos(s * b.f * 1.6 + b.a) * 0.06) * sh
         local r = b.r * math.max(sw, sh) * (1 + math.sin(s * b.f) * 0.08)
-        dxDrawImage(x - r, y - r, r * 2, r * 2, glow, 0, 0, 0, tocolor(b.c[1], b.c[2], b.c[3], 255 * b.a * strength * A))
+        dxDrawImage(x - r, y - r, r * 2, r * 2, glow, 0, 0, 0, tocolor(b.c[1], b.c[2], b.c[3], 255 * b.a * 0.55 * strength * A))
     end
-    -- feixes de luz girando devagar (sprite esticado e rotacionado)
+    -- 4) feixes de luz girando devagar (sprite esticado e rotacionado)
     for i = 0, 3 do
         local rot = 20 + i * 4 + math.sin(s * 0.08 + i) * 2
         local w, h = sw * 0.07, sh * 2.2
-        dxDrawImage(sw * 0.75 - w / 2 - i * sw * 0.03, -sh * 0.3, w, h, glow, rot, 0, -h * 0.4, tocolor(124, 255, 178, 26 * strength * A))
+        dxDrawImage(sw * 0.75 - w / 2 - i * sw * 0.03, -sh * 0.3, w, h, glow, rot, 0, -h * 0.4, tocolor(124, 255, 178, 14 * strength * A))
     end
-    -- partículas subindo
+    -- 5) partículas subindo
     for _, p in ipairs(parts) do
         p.y = p.y - p.s * dt
         if p.y < -0.02 then p.y, p.x = 1.02, math.random() end
         local tw = 0.4 + 0.6 * math.abs(math.sin(s * 1.3 + p.p))
         local x = p.x * sw + math.sin(s * 0.7 + p.p) * 18
-        dxDrawImage(x - p.r * 2, p.y * sh - p.r * 2, p.r * 4, p.r * 4, glow, 0, 0, 0, tocolor(160, 255, 200, 140 * tw * strength * A))
+        dxDrawImage(x - p.r * 2, p.y * sh - p.r * 2, p.r * 4, p.r * 4, glow, 0, 0, 0, tocolor(160, 255, 200, 110 * tw * strength * A))
     end
-    dxSetBlendMode("blend")
-    -- grade sutil em perspectiva
+    -- 6) grade sutil em perspectiva
     local col = tocolor(124, 255, 178, 9 * strength * A)
     local step = math.max(28, sw / 24)
     local off = (s * 6) % step
