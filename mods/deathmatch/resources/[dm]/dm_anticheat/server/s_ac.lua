@@ -82,7 +82,9 @@ function autoban(player, weapon, rate, limit)
     end
 end
 
+local sawFireEvent = false
 addEventHandler("onPlayerWeaponFire", root, function(weapon)
+    if not sawFireEvent then sawFireEvent = true outputServerLog("[ANTI-CHEAT] onPlayerWeaponFire está chegando ao servidor") end
     if not WATCHED[weapon] then return end
     local now = getTickCount()
     do local a = accOf(source) a.shots[#a.shots + 1] = now trim(a.shots, ACC_MIN_SHOTS) end
@@ -124,7 +126,9 @@ local AIM_REPORTS_BAN_ACC = 4
 local ACC_MIN_SHOTS       = 40      -- precisão só é avaliada com pelo menos este número de tiros (janela móvel)
 local ACC_HIT_RATIO       = 0.85    -- acertos/tiros impossíveis de sustentar sem ajuda
 local ACC_HS_RATIO        = 0.75    -- headshots/acertos
-local KIND_NAME = { silent = "SILENT AIM", snap = "AIMBOT", lock = "AIMBOT (lock)" }
+local KIND_NAME = { silent = "SILENT AIM", snap = "AIMBOT", lock = "AIMBOT (lock)", rapid = "RAPID FIRE" }
+local RAPID_REPORTS_BAN = 2        -- cadência é objetiva: 2 relatos de testemunha banem
+local SINGLE_WITNESS_REPORTS_BAN = 6 -- aimbot/silent: 1 testemunha sozinha bane com 6 relatos em 3 min
 
 local aimReports = {}   -- [suspect] = { {witness=, kind=, t=, detail=}, ... }
 
@@ -176,7 +180,9 @@ local function evaluateAim(suspect, kind, latestDetail)
     local id = tonumber(getElementData(suspect, "dm:id")) or 0
     local text = ("%s [%d] · %s · %d testemunha(s), %d relato(s)%s"):format(name, id, latestDetail or "", nWit, total, badAcc and (" · " .. accText) or "")
     local isAdmin = core:isPlayerAdmin(suspect)
-    if (nWit >= AIM_WITNESSES_BAN or (nWit >= AIM_WITNESSES_ALERT and badAcc) or (total >= AIM_REPORTS_BAN_ACC and badAcc)) and AUTOBAN and not isAdmin then
+    local banNow = nWit >= AIM_WITNESSES_BAN or (nWit >= AIM_WITNESSES_ALERT and badAcc) or (total >= AIM_REPORTS_BAN_ACC and badAcc) or total >= SINGLE_WITNESS_REPORTS_BAN
+    if kind == "rapid" then banNow = total >= RAPID_REPORTS_BAN end
+    if banNow and AUTOBAN and not isAdmin then
         aimReports[suspect] = {}
         local reason = ("Anti-cheat: %s (%d testemunhas%s)"):format(KIND_NAME[kind], nWit, badAcc and ", " .. accText or "")
         outputServerLog(("[ANTI-CHEAT] BAN AUTOMÁTICO: %s serial %s ip %s — %s"):format(name, getPlayerSerial(suspect), getPlayerIP(suspect), reason))

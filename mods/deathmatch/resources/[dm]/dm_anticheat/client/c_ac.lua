@@ -47,6 +47,21 @@ local LOCK_MAX_RANGE     = 120
 local REPORT_LOCK        = 3
 local DECAY_MS           = 90000
 local REPORT_COOLDOWN    = 15000
+-- RAPID FIRE pelas testemunhas (o evento de disparo do servidor depende do bullet sync e pode não chegar)
+local RF_TOL_DEFAULT, RF_TOL_CBUG = 1.35, 2.4
+local RF_WINDOW_MS, RF_MIN_SHOTS, RF_WINDOWS_TO_REPORT = 1000, 6, 2
+local RF_CBUG = { [22]=true,[23]=true,[24]=true,[25]=true,[26]=true,[27]=true }
+local rfMax = {}
+local function rfLimit(weapon)
+    if not rfMax[weapon] then
+        local a = tonumber(getWeaponProperty(weapon, "pro", "anim_loop_start")) or 0
+        local b = tonumber(getWeaponProperty(weapon, "pro", "anim_loop_stop")) or 0
+        local interval = b - a
+        if interval <= 0.02 then interval = 0.1 end
+        rfMax[weapon] = (1 / interval) * (RF_CBUG[weapon] and RF_TOL_CBUG or RF_TOL_DEFAULT)
+    end
+    return rfMax[weapon]
+end
 local WATCHED = { [22]=true,[23]=true,[24]=true,[25]=true,[26]=true,[27]=true,[28]=true,[29]=true,[30]=true,[31]=true,[32]=true,[33]=true,[34]=true,[38]=true }
 
 local obs = {}   -- [player] = { dx,dy,dz, t, angSpeed, lastSnap, silent = {pts}, snap = {pts}, lastReport = {} }
@@ -161,6 +176,28 @@ end)
 -- tiro de outro jogador: compara a bala com a mira dele
 addEventHandler("onClientPlayerWeaponFire", root, function(weapon, ammo, clip, hx, hy, hz, hitElement)
     if source == localPlayer or not WATCHED[weapon] then return end
+    -- rapid fire: tiros deste jogador na última janela de 1 s
+    do
+        local o = observed(source)
+        local now = getTickCount()
+        if o.rfWeapon ~= weapon then o.rfWeapon, o.rf = weapon, {} end
+        local t = o.rf
+        t[#t + 1] = now
+        while t[1] and now - t[1] > RF_WINDOW_MS do table.remove(t, 1) end
+        if #t >= RF_MIN_SHOTS then
+            local rate = (#t - 1) / (math.max(now - t[1], 1) / 1000)
+            local limit = rfLimit(weapon)
+            o.rfRate, o.rfLimit = rate, limit
+            if rate > limit then
+                o.rfBad = (o.rfBad or 0) + 1
+                t[#t] = nil
+                if o.rfBad >= RF_WINDOWS_TO_REPORT * RF_MIN_SHOTS then
+                    o.rfBad = 0
+                    report(source, "rapid", ("%s · %.1f tiros/s (máx. %.1f)"):format(getWeaponNameFromID(weapon) or weapon, rate, limit))
+                end
+            end
+        end
+    end
     local o = obs[source]
     if not o or not o.dx or getTickCount() - (o.t or 0) > 300 then return end
     local now = getTickCount()
@@ -229,7 +266,7 @@ addEventHandler("onClientRender", root, function()
     for p, o in pairs(obs) do
         if isElement(p) and o.t and getTickCount() - o.t < 5000 then
             local name = getPlayerName(p):gsub("#%x%x%x%x%x%x", "")
-            dxDrawText(("%s  mira: Δ%.0f° em %d ms  %s"):format(name, o.lastAng or 0, o.lastDt or 0, (o.lastSnap and getTickCount() - o.lastSnap < 1000) and "<< SALTO" or ""), 22, y, 0, 0, tocolor(124, 255, 178), 1.1, "default-bold")
+            dxDrawText(("%s  mira: Δ%.0f° em %d ms  %s   cadência: %.1f tiros/s (máx %.1f)"):format(name, o.lastAng or 0, o.lastDt or 0, (o.lastSnap and getTickCount() - o.lastSnap < 1000) and "<< SALTO" or "", o.rfRate or 0, o.rfLimit or 0), 22, y, 0, 0, tocolor(124, 255, 178), 1.1, "default-bold")
             y = y + 18
             local lk = o.lock
             dxDrawText(("alvo: %s erro %.1f°  lock %s  pontos lock %d/%d  %s"):format(isElement(o.tgt) and getPlayerName(o.tgt):gsub("#%x%x%x%x%x%x", "") or "-", o.tgtErr or 99,
