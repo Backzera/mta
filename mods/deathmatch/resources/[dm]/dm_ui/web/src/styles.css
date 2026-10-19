@@ -491,5 +491,6 @@ select.input { appearance: none; }
 .xrange input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 1.2vw; background: transparent; cursor: pointer; margin: 0; }
 .xrange input[type=range]::-webkit-slider-runnable-track { height: .3vw; border-radius: 999px; background: rgba(255,255,255,.12); border: 1px solid var(--line); }
 .xrange input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: .95vw; height: .95vw; margin-top: -.36vw; border-radius: 50%; background: rgb(var(--g)); box-shadow: 0 0 .7vw rgba(var(--g), .8); border: 2px solid #0b140f; }
+.xh__two { display: grid; grid-template-columns: 1fr 1fr; gap: .8vw; }
 .xh__toggles { display: flex; gap: 1.2vw; flex-wrap: wrap; margin-top: .2vw; }
 .xh__acts { margin-top: auto; flex-wrap: wrap; }

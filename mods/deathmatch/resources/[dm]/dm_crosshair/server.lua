@@ -1,5 +1,5 @@
 -- Persistência das configurações de mira por conta MTA.
-local KEY = "dm.crosshair"
+local KEY = "dm.crosshair.v2"   -- chave nova: configurações antigas (mira ligada por padrão) são ignoradas
 local allowedStyles = { dot = true, classic = true, classicdot = true, plus = true, x = true, circle = true, circledot = true, tee = true }
 
 local DEFAULTS = {
@@ -11,7 +11,6 @@ local DEFAULTS = {
     gap = 4,
     opacity = 255,
     outline = true,
-    followAim = true,
     offsetX = 0,
     offsetY = 0,
 }
@@ -37,7 +36,6 @@ local function sanitize(data)
     out.offsetX = math.floor(clamp(data.offsetX or DEFAULTS.offsetX, -100, 100))
     out.offsetY = math.floor(clamp(data.offsetY or DEFAULTS.offsetY, -100, 100))
     out.outline = type(data.outline) == "boolean" and data.outline or DEFAULTS.outline
-    out.followAim = type(data.followAim) == "boolean" and data.followAim or DEFAULTS.followAim
 
     return out
 end

@@ -3,7 +3,7 @@ import { toLua, asObj } from '../bridge.js'
 import { Frame, Btn } from '../ui.jsx'
 
 // Galeria de miras. "native" = mira original do GTA (padrão ao entrar). Os demais são presets ajustáveis.
-const BASE = { enabled: true, style: 'classic', color: '#22E68A', size: 6, thickness: 2, gap: 4, opacity: 255, outline: true, followAim: true, offsetX: 0, offsetY: 0 }
+const BASE = { enabled: true, style: 'classic', color: '#22E68A', size: 6, thickness: 2, gap: 4, opacity: 255, outline: true, offsetX: 0, offsetY: 0 }
 export const PRESETS = [
   { key: 'native', name: 'Original do GTA', desc: 'A mira padrão do jogo', native: true },
   { key: 'dot', name: 'Ponto', s: { style: 'dot', size: 4, color: '#FFFFFF' } },
@@ -108,7 +108,7 @@ export default function Crosshair({ st }) {
   return (
     <Frame title="MIRA" subtitle="Escolha uma mira da galeria ou monte a sua. Ao entrar no servidor você usa a mira original do GTA; troque aqui quando quiser." icon="target.png"
       badge={s.enabled ? STYLE_NAMES[s.style] || 'Personalizada' : 'ORIGINAL DO GTA'} onClose={() => toLua('crosshair', 'close')} width="70vw" height="76vh"
-      footer="F9 ou ESC fecha · SALVAR grava na sua conta · a sniper sempre usa o scope original do jogo">
+      footer="F9 ou ESC fecha · SALVAR grava na sua conta · a mira aparece só ao mirar, fixa como a do GTA · a sniper sempre usa o scope original">
       <div className="xh">
         <div className="xh__gallery">
           <span className="eyebrow">Galeria de miras</span>
@@ -136,9 +136,12 @@ export default function Crosshair({ st }) {
             <Slider label="Espessura" k="thickness" min={1} max={6} />
             <Slider label="Espaço do centro" k="gap" min={0} max={16} />
             <Slider label="Opacidade" k="opacity" min={40} max={255} fmt={(v) => Math.round((v / 255) * 100) + '%'} />
+            <div className="xh__two">
+              <Slider label="Deslocar horizontal" k="offsetX" min={-40} max={40} fmt={(v) => (v > 0 ? '+' : '') + v + ' px'} />
+              <Slider label="Deslocar vertical" k="offsetY" min={-40} max={40} fmt={(v) => (v > 0 ? '+' : '') + v + ' px'} />
+            </div>
             <div className="xh__toggles">
               <label className="toggle"><input type="checkbox" checked={s.outline !== false} onChange={(e) => set({ outline: e.target.checked, enabled: true })} /><i /> Contorno preto</label>
-              <label className="toggle"><input type="checkbox" checked={s.followAim !== false} onChange={(e) => set({ followAim: e.target.checked, enabled: true })} /><i /> Seguir a mira ao mirar</label>
             </div>
           </div>
           <div className="hrow xh__acts">

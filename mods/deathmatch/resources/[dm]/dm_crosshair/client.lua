@@ -4,6 +4,8 @@
     · F9 (ou /mira) abre o painel de miras no dm_ui; aqui só fica o desenho (dx) e a persistência.
     · Estilos: dot, classic, classicdot, plus, x, circle, circledot, tee.
     · A mira nativa volta sozinha com a sniper (ID 34), porque "crosshair" também controla o scope.
+    · Comportamento igual ao do GTA: a mira só aparece enquanto o jogador está mirando, em posição FIXA na tela
+      (centro + deslocamento opcional). Nada é desenhado fora da mira.
     Exports (cliente): getCrosshair(), setCrosshair(data) [prévia ao vivo], saveCrosshair(data) [salva na conta], resetCrosshair().
 ]]
 
@@ -18,7 +20,6 @@ local DEFAULTS = {
     gap = 4,
     opacity = 255,
     outline = true,
-    followAim = true,
     offsetX = 0,
     offsetY = 0,
 }
@@ -45,7 +46,6 @@ local function sanitize(data)
     out.offsetX = math.floor(clamp(data.offsetX or out.offsetX, -100, 100))
     out.offsetY = math.floor(clamp(data.offsetY or out.offsetY, -100, 100))
     if type(data.outline) == "boolean" then out.outline = data.outline end
-    if type(data.followAim) == "boolean" then out.followAim = data.followAim end
     return out
 end
 
@@ -73,16 +73,9 @@ local function hexToColor(hex, alpha)
     return tocolor(r, g, b, alpha or 255)
 end
 
+-- posição fixa (como a mira do GTA): centro da tela + deslocamento escolhido no painel
 local function aimPosition()
-    local x, y = sw * 0.5, sh * 0.5
-    if settings.followAim and getPedControlState(localPlayer, "aim_weapon") then
-        local tx, ty, tz = getPedTargetEnd(localPlayer)
-        if tx then
-            local sx, sy = getScreenFromWorldPosition(tx, ty, tz, 0, true)
-            if sx then x, y = sx, sy end
-        end
-    end
-    return x + settings.offsetX, y + settings.offsetY
+    return sw * 0.5 + settings.offsetX, sh * 0.5 + settings.offsetY
 end
 
 local function outlineColor() return tocolor(0, 0, 0, math.min(220, settings.opacity)) end
@@ -118,6 +111,7 @@ local function drawCrosshair()
     if showNative then return end
     if getElementData(localPlayer, "dm:panel") == "crosshair" then return end   -- o painel mostra a prévia
     if getElementData(localPlayer, "dm:ready") ~= true or isPedDead(localPlayer) then return end
+    if not getPedControlState(localPlayer, "aim_weapon") then return end   -- só enquanto mira, como no GTA
 
     local cx, cy = aimPosition()
     local color = hexToColor(settings.color, settings.opacity)

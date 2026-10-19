@@ -162,7 +162,8 @@ CEF do MTA deve ser feita após reiniciar o servidor e reconectar.
 Ao entrar, todo jogador usa a **mira original do GTA**. O painel F9 (ou `/mira`) mostra uma galeria de miras
 (ponto, clássica, clássica + ponto, estilo CS, estilo Valorant, cruz cheia, X, círculo, círculo + ponto, T, fina)
 com prévia ao vivo e ajuste fino: cor (paleta ou hex), tamanho, espessura, espaço do centro, opacidade, contorno
-preto e "seguir a mira ao mirar". **SALVAR** grava na conta (`dm_crosshair/server.lua`, `setAccountData`);
+preto e deslocamento horizontal/vertical. A mira personalizada se comporta como a do GTA: aparece só enquanto o
+jogador está mirando, em posição fixa na tela (nunca segue o alvo). **SALVAR** grava na conta (`dm_crosshair/server.lua`, `setAccountData`);
 **VOLTAR AO ORIGINAL** devolve a mira do GTA; fechar sem salvar cancela as mudanças. O desenho é dx
 (`dm_crosshair/client.lua`) e a sniper sempre usa o scope original do jogo. A tela fica em
 `dm_ui/web/src/screens/Crosshair.jsx` (presets em `PRESETS`; a prévia SVG usa a mesma geometria do dx).
