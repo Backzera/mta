@@ -5,6 +5,11 @@ on:
     branches:
       - claude/modest-cray-8tz6fw
   workflow_dispatch:
+    inputs:
+      desde:
+        description: "Commit/ref de partida: envia só o que mudou desde ele (vazio = envia tudo de mods/deathmatch)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -47,86 +52,125 @@ jobs:
           BEFORE_SHA: ${{ github.event.before }}
           CURRENT_SHA: ${{ github.sha }}
           EVENT_NAME: ${{ github.event_name }}
+          DESDE: ${{ github.event.inputs.desde }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
+
+          # Mesmas exclusões do deploy/sync.txt (WinSCP): nada disso roda no servidor.
+          skip_file() {
+            local file="$1"
+            case "$file" in
+              mods/deathmatch/*) ;;
+              *) return 0 ;;
+            esac
+            case "$file" in
+              */node_modules/*|*/web/*|*/models/weapons/*|*.md|*/.gitignore|*/.gitattributes|.gitattributes) return 0 ;;
+            esac
+            return 1
+          }
+
+          remote_path() {
+            local root="${FTP_REMOTE_ROOT%/}"
+            local remote="${root}/$1"
+            printf '%s' "${remote#/}"
+          }
 
           encode_path() {
             python3 -c 'import sys; from urllib.parse import quote; print(quote(sys.argv[1], safe="/"))' "$1"
           }
 
+          # Cria cada nível da pasta remota explicitamente (alguns servidores FTP falham no --ftp-create-dirs).
+          declare -A MKD_DONE=()
+          ensure_dirs() {
+            local remote_dir="$1" acc="" part
+            IFS='/' read -r -a parts <<< "$remote_dir"
+            for part in "${parts[@]}"; do
+              [ -n "$part" ] || continue
+              acc="${acc:+$acc/}$part"
+              [ -n "${MKD_DONE[$acc]:-}" ] && continue
+              curl --silent --show-error --globoff --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
+                --quote "MKD ${acc}" "ftp://${FTP_HOST}/" >/dev/null 2>&1 || true
+              MKD_DONE[$acc]=1
+            done
+          }
+
+          FAILED=()
+          SENT=0
+
           upload_file() {
             local file="$1"
             [ -f "$file" ] || return 0
+            skip_file "$file" && return 0
 
-            case "$file" in
-              mods/deathmatch/*) ;;
-              *) return 0 ;;
-            esac
-
-            local root="${FTP_REMOTE_ROOT%/}"
-            local remote="${root}/${file}"
-            remote="${remote#/}"
-            local encoded
+            local remote encoded attempt
+            remote="$(remote_path "$file")"
             encoded="$(encode_path "$remote")"
 
-            echo "UPLOAD  $file"
-            curl --fail --silent --show-error \
-              --globoff \
-              --ftp-create-dirs \
-              --retry 3 \
-              --retry-delay 2 \
-              --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
-              --upload-file "$file" \
-              "ftp://${FTP_HOST}/${encoded}"
+            for attempt in 1 2 3 4; do
+              if curl --fail --silent --show-error --globoff --ftp-create-dirs \
+                   --connect-timeout 20 --max-time 300 \
+                   --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
+                   --upload-file "$file" "ftp://${FTP_HOST}/${encoded}"; then
+                echo "UPLOAD  $file"
+                SENT=$((SENT + 1))
+                return 0
+              fi
+              echo "  tentativa $attempt falhou para $file; criando pastas e tentando de novo..."
+              ensure_dirs "$(dirname "$remote")"
+              sleep $((attempt * 3))
+            done
+            echo "::error::Falhou: $file"
+            FAILED+=("$file")
+            return 0
           }
 
           delete_file() {
             local file="$1"
-
-            case "$file" in
-              mods/deathmatch/*) ;;
-              *) return 0 ;;
-            esac
-
-            local root="${FTP_REMOTE_ROOT%/}"
-            local remote="${root}/${file}"
-            remote="${remote#/}"
-
+            skip_file "$file" && return 0
+            local remote
+            remote="$(remote_path "$file")"
             echo "DELETE  $file"
-            curl --fail --silent --show-error \
-              --globoff \
-              --retry 2 \
+            curl --fail --silent --show-error --globoff --retry 2 \
               --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
-              --quote "DELE ${remote}" \
-              "ftp://${FTP_HOST}/" >/dev/null || true
+              --quote "DELE ${remote}" "ftp://${FTP_HOST}/" >/dev/null 2>&1 || true
           }
 
+          FROM=""
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            echo "Deploy manual completo de mods/deathmatch/"
+            if [ -n "$DESDE" ]; then
+              FROM="$(git rev-parse --verify "${DESDE}^{commit}")" || { echo "::error::Commit inválido em 'desde': $DESDE"; exit 1; }
+              echo "Deploy manual do que mudou desde $FROM"
+            else
+              echo "Deploy manual completo de mods/deathmatch/"
+            fi
+          elif [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ] && git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            FROM="$BEFORE_SHA"
+          fi
+
+          if [ -z "$FROM" ]; then
             mapfile -t FILES < <(git ls-files 'mods/deathmatch/**')
-            for file in "${FILES[@]}"; do
-              upload_file "$file"
-            done
+            DELETED=()
+          else
+            mapfile -t FILES < <(git diff --name-only --diff-filter=ACMRT "$FROM" "$CURRENT_SHA" -- 'mods/deathmatch/**')
+            mapfile -t DELETED < <(git diff --name-only --diff-filter=D "$FROM" "$CURRENT_SHA" -- 'mods/deathmatch/**')
+          fi
+
+          if [ "${#FILES[@]}" -eq 0 ] && [ "${#DELETED[@]}" -eq 0 ]; then
+            echo "Nenhum arquivo do servidor mudou neste push."
             exit 0
           fi
 
-          if [ -z "$BEFORE_SHA" ] || [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
-            mapfile -t FILES < <(git ls-files 'mods/deathmatch/**')
-          else
-            mapfile -t FILES < <(git diff --name-only --diff-filter=ACMRT "$BEFORE_SHA" "$CURRENT_SHA" -- 'mods/deathmatch/**')
-          fi
+          for file in "${FILES[@]}"; do
+            upload_file "$file"
+          done
+          for file in "${DELETED[@]}"; do
+            delete_file "$file"
+          done
 
-          if [ "${#FILES[@]}" -eq 0 ]; then
-            echo "Nenhum arquivo do servidor mudou neste push."
-          else
-            for file in "${FILES[@]}"; do
-              upload_file "$file"
-            done
-          fi
-
-          if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
-            mapfile -t DELETED < <(git diff --name-only --diff-filter=D "$BEFORE_SHA" "$CURRENT_SHA" -- 'mods/deathmatch/**')
-            for file in "${DELETED[@]}"; do
-              delete_file "$file"
-            done
+          echo ""
+          echo "Enviados: $SENT | Falharam: ${#FAILED[@]} | Removidos: ${#DELETED[@]}"
+          if [ "${#FAILED[@]}" -gt 0 ]; then
+            printf '  - %s\n' "${FAILED[@]}"
+            echo "::error::${#FAILED[@]} arquivo(s) não subiram. Rode o workflow de novo com 'desde' = commit anterior para reenviar."
+            exit 1
           fi
