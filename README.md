@@ -41,7 +41,8 @@ Arena AK47/, Arena CBUG/, Arena M4/, Arena X1/   mapas originais (já copiados p
 | F1    | Ajuda                 | F4    | Loja (tags, cores, VIP, extras)|
 | F2    | Arenas                | F5    | Partidas ranqueadas            |
 | F3    | Duelo X1              | F6    | Clã                            |
-| F7    | Caixas e inventário de armas | F10 | Personagens                 |
+| F7    | Caixas e inventário de armas | F9  | Mira (galeria e ajuste fino) |
+|       |                       | F10   | Personagens                    |
 | TAB   | Placar (tags, clã, elo, RP, K/D) | Y / N | Aceitar / recusar duelo |
 
 Comandos: `/arena <id>` `/lobby` `/duelo <jogador>` `/stats` `/top rp|kills|money|duelos` `/saldo`
@@ -155,6 +156,16 @@ sem depender do timer de quatro segundos. A câmera do F2 mantém o cenário sel
 o HUD não reenvia estados idênticos nem consulta o catálogo de skins a cada atualização.
 Testes locais: `python -m unittest discover -s tools/tests -v`. A validação de desempenho dentro do
 CEF do MTA deve ser feita após reiniciar o servidor e reconectar.
+
+## Mira (F9)
+
+Ao entrar, todo jogador usa a **mira original do GTA**. O painel F9 (ou `/mira`) mostra uma galeria de miras
+(ponto, clássica, clássica + ponto, estilo CS, estilo Valorant, cruz cheia, X, círculo, círculo + ponto, T, fina)
+com prévia ao vivo e ajuste fino: cor (paleta ou hex), tamanho, espessura, espaço do centro, opacidade, contorno
+preto e "seguir a mira ao mirar". **SALVAR** grava na conta (`dm_crosshair/server.lua`, `setAccountData`);
+**VOLTAR AO ORIGINAL** devolve a mira do GTA; fechar sem salvar cancela as mudanças. O desenho é dx
+(`dm_crosshair/client.lua`) e a sniper sempre usa o scope original do jogo. A tela fica em
+`dm_ui/web/src/screens/Crosshair.jsx` (presets em `PRESETS`; a prévia SVG usa a mesma geometria do dx).
 
 ## Chat
 

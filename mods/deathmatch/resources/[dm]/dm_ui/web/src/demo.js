@@ -80,6 +80,7 @@ export function run(screen) {
   data.crates.boxes = data.crates.boxes.map((b) => ({ ...b, pool: b.pool.filter((p) => !characterKeys.has(p.item)) }))
   data.crates.boxes.push({ key: 'personagens', name: 'Caixa de Personagens', price: 15000, color: rgb(190, 110, 255), icon: 'shield.png',
     desc: 'Somente skins de personagens. Equipe seus prêmios no painel F10.', pool: characters.map((it) => ({ item: it.key, weight: 1 })) })
+  data.crosshair = { settings: { enabled: true, style: 'classicdot', color: '#22E68A', size: 7, thickness: 2, gap: 4, opacity: 255, outline: true, followAim: true, offsetX: 0, offsetY: 0 } }
   data.characters = { items: characters, owned: data.crates.owned.filter((key) => characterKeys.has(key)), rarities: data.crates.rarities, equippedSkin: data.crates.equippedSkin }
   if (screen === 'inv') { ui.open('crates', data.crates); return }
   if (screen === 'reel') {

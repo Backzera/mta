@@ -1,12 +1,12 @@
 -- Persistência das configurações de mira por conta MTA.
 local KEY = "dm.crosshair"
-local allowedStyles = { dot = true, classic = true, plus = true, x = true }
+local allowedStyles = { dot = true, classic = true, classicdot = true, plus = true, x = true, circle = true, circledot = true, tee = true }
 
 local DEFAULTS = {
-    enabled = true,
-    style = "dot",
-    color = "#FFFFFF",
-    size = 4,
+    enabled = false,      -- ao entrar, o jogador vê a mira original do GTA
+    style = "classic",
+    color = "#22E68A",
+    size = 6,
     thickness = 2,
     gap = 4,
     opacity = 255,

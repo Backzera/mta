@@ -5,7 +5,7 @@
 
 const listeners = new Set()
 let state = {
-  screen: null,          // tela aberta (hub, shop, duel, ranked, clans, crates, board, help, login) ou null
+  screen: null,          // tela aberta (hub, shop, duel, ranked, clans, crates, characters, crosshair, board, help, login) ou null
   hub: null, shop: null, duel: null, ranked: null, clans: null, crates: null, board: null, login: null,
   hud: null,             // dados do HUD (atualizados ~10x/s pelo Lua)
   feed: { kills: [], toasts: [], rewards: [], pops: [], streak: null, duelResult: null, rankedResult: null, reel: null },

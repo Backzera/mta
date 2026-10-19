@@ -1,5 +1,5 @@
 --[[
-    Telas (CEF): hub F2, loja F4, duelo F3, ranqueadas F5, clãs F6, caixas F7, placar TAB, ajuda F1, login.
+    Telas (CEF): hub F2, loja F4, duelo F3, ranqueadas F5, clãs F6, caixas F7, mira F9, personagens F10, placar TAB, ajuda F1, login.
     Cada tela: monta os dados reais, abre com UI.open(nome, dados) e registra ações vindas do JS com UI.on.
     Protocolos com os servidores (dm:requestArena, shop:buy, duel:*, ranked:*, clans:*, crates:*, login:*) preservados.
 ]]
@@ -477,6 +477,45 @@ addEventHandler("onClientElementDataChange", localPlayer, function(name)
         UI.defer("shop", function() if UI.isOpen("shop") then UI.set("shop", shopState()) end end)
     end
 end)
+
+-- ============================================================
+-- MIRA (F9): galeria de miras + ajuste fino; desenho e salvamento no dm_crosshair
+-- ============================================================
+local crosshairOriginal = nil   -- ajustes antes de abrir (para cancelar)
+local function crosshairCall(fn, ...)
+    local ok, res = pcall(function(...) return exports.dm_crosshair[fn](exports.dm_crosshair, ...) end, ...)
+    if ok then return res end
+    return nil
+end
+local function crosshairState()
+    return { settings = crosshairCall("getCrosshair") or { enabled = false } }
+end
+function openCrosshairPanel()
+    if not ready() then return end
+    crosshairOriginal = crosshairCall("getCrosshair")
+    UI.open("crosshair", crosshairState())
+end
+UI.on("crosshair", "change", function(p) crosshairCall("setCrosshair", p) end)
+UI.on("crosshair", "save", function(p)
+    crosshairCall("saveCrosshair", p)
+    crosshairOriginal = nil
+    UI.close("crosshair")
+    notify(p.enabled and "Mira salva na sua conta." or "Mira original do GTA ativada.", "success", "Mira")
+end)
+UI.on("crosshair", "reset", function()
+    crosshairCall("resetCrosshair")
+    crosshairOriginal = nil
+    UI.set("crosshair", crosshairState())
+end)
+UI.on("crosshair", "close", function() UI.close("crosshair") end)
+UI.onClose("crosshair", function()
+    if crosshairOriginal then crosshairCall("setCrosshair", crosshairOriginal) crosshairOriginal = nil end   -- cancelou: volta ao que estava
+end)
+addEvent("crosshair:openPanel", false)
+addEventHandler("crosshair:openPanel", localPlayer, function() UI.toggle("crosshair", openCrosshairPanel) end)
+addEvent("crosshair:refreshPanel", false)
+addEventHandler("crosshair:refreshPanel", localPlayer, function() if UI.isOpen("crosshair") then UI.set("crosshair", crosshairState()) end end)
+bindKey("F9", "down", function() UI.toggle("crosshair", openCrosshairPanel) end)
 
 -- ============================================================
 -- PLACAR (TAB, segurar)

@@ -4,12 +4,12 @@ import { Frame } from '../ui.jsx'
 
 const KEYS = [
   ['F1', 'Esta ajuda'], ['F2', 'Arenas e ranqueadas'], ['F3', 'Duelo X1'], ['F4', 'Loja'], ['F5', 'Ranqueadas'], ['F6', 'Clã'], ['F7', 'Caixas'],
-  ['F10', 'Personagens'], ['TAB', 'Placar'], ['Y / N', 'Aceitar / recusar duelo'], ['ESC', 'Fechar painel'],
+  ['F9', 'Mira'], ['F10', 'Personagens'], ['TAB', 'Placar'], ['Y / N', 'Aceitar / recusar duelo'], ['ESC', 'Fechar painel'],
 ]
 const COMMANDS = [
   ['/arena <nome>', 'Entrar em uma arena'], ['/lobby', 'Voltar ao lobby'], ['/duelo <jogador>', 'Desafiar no X1'],
   ['/a  /c  /pm <id>', 'Chat da arena, do clã, privado'], ['/id', 'Seu ID'], ['/stats  /top', 'Estatísticas e rankings'],
-  ['/saldo  /pagar', 'Dinheiro'], ['/tag <texto>', 'Tag personalizada (loja)'], ['/cla criar <TAG> <nome>', 'Fundar um clã'], ['/skin <id>', 'Trocar skin'], ['/kill', 'Suicídio'],
+  ['/saldo  /pagar', 'Dinheiro'], ['/tag <texto>', 'Tag personalizada (loja)'], ['/cla criar <TAG> <nome>', 'Fundar um clã'], ['/skin <id>', 'Trocar skin'], ['/mira', 'Painel de miras (F9)'], ['/kill', 'Suicídio'],
 ]
 
 export default function Help({ server }) {

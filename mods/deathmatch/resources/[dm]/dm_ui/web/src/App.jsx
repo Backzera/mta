@@ -8,6 +8,7 @@ import Ranked from './screens/Ranked.jsx'
 import Clans from './screens/Clans.jsx'
 import Crates from './screens/Crates.jsx'
 import Characters from './screens/Characters.jsx'
+import Crosshair from './screens/Crosshair.jsx'
 import Scoreboard from './screens/Scoreboard.jsx'
 import Help from './screens/Help.jsx'
 import Login from './screens/Login.jsx'
@@ -19,7 +20,7 @@ const Panel = React.memo(function Panel({ screen, data, reel, server }) {
   if (screen === 'clans') return <Clans st={data} />
   if (screen === 'login') return <Login st={data} />
   if (!data) return null
-  const screens = { hub: Hub, shop: Shop, duel: Duel, ranked: Ranked, characters: Characters, board: Scoreboard }
+  const screens = { hub: Hub, shop: Shop, duel: Duel, ranked: Ranked, characters: Characters, crosshair: Crosshair, board: Scoreboard }
   if (screen === 'crates') return <Crates st={data} reel={reel} />
   const Component = screens[screen]
   return Component ? <Component st={data} /> : null
