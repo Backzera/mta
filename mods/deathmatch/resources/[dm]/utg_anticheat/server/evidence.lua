@@ -39,7 +39,8 @@ function AC.record(p, code, detector, family, weight, confidence, metadata, dete
     local s, now = AC.players[p], AC.now()
     if not s or not AC.enabled(detector) then return nil end
     if not deterministic and (s.ignoreUntil or 0) > now then return nil end
-    if s.cooldowns[code] and now-s.cooldowns[code] < AC.settings.evidenceCooldown then return nil end
+    local cooldown = (AC.settings.codeCooldown or {})[code] or AC.settings.evidenceCooldown
+    if s.cooldowns[code] and now-s.cooldowns[code] < cooldown then return nil end
     s.cooldowns[code] = now
     AC.pruneEvidence(p)
     sequence = sequence+1

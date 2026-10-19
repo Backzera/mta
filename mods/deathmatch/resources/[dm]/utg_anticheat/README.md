@@ -1,6 +1,6 @@
 # UTG AntiCheat — DM / PVP / C-BUG
 
-Resource independente para o servidor UTG, implementado após a auditoria em [AUDIT.md](AUDIT.md). A versão inicial observa e registra: **`debugMode = true` e `punishmentMode = "LOG_ONLY"`**. Não contém código remoto, bans globais, licença externa, updater ou dependência dos anticheats de referência.
+Resource independente para o servidor UTG, implementado após a auditoria em [AUDIT.md](AUDIT.md). Nesta integração ao servidor UTG o resource roda em **ENFORCE**, com ban automático restrito aos relatos de **testemunhas** (`client/witness.lua` + `server/witness.lua`: rapid fire, silent aim forte, aimbot por snap/lock), que vêm de outros clientes e não do próprio suspeito. As heurísticas do próprio jogador continuam sem kick/ban. Veja o README da raiz, seção Anti-cheat. Não contém código remoto, bans globais, licença externa, updater ou dependência dos anticheats de referência.
 
 É uma base funcional para homologação, não uma promessa de detectar todo cheat. Não houve execução no seu servidor FTP nem teste com jogadores reais. Os testes automatizados executam Lua 5.1 com APIs MTA simuladas; detalhes de rede, streaming, renderização e desempenho precisam da etapa dentro do jogo.
 

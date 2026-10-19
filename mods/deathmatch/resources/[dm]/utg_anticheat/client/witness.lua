@@ -1,20 +1,16 @@
 --[[
-    UTG Anti-Cheat — lado do cliente.
-    1) Alerta na tela do admin (toast + som).
-    2) TESTEMUNHA de aimbot / silent aim: este cliente observa os OUTROS jogadores (nunca a si mesmo) usando o sync
-       do MTA — para onde o ped está mirando (getPedTargetStart/End) e onde a bala dele acertou
-       (onClientPlayerWeaponFire). O trapaceiro não controla o cliente das testemunhas, então não dá para desligar.
-       · SILENT AIM: a bala acerta um jogador em uma direção bem diferente da que a mira aponta (ângulo > limiar),
-         repetidamente.
-       · AIMBOT (snap): a direção da mira gira dezenas de graus entre dois frames e, logo em seguida, o tiro acerta
-         um jogador; repetidamente.
-       Cada testemunha acumula pontos por suspeito e só reporta ao servidor com evidência consistente; o servidor
-       cruza relatos de testemunhas diferentes e a precisão real antes de alertar/banir.
+    UTG AntiCheat — TESTEMUNHAS (porte do dm_anticheat). Este cliente observa os OUTROS jogadores pelo sync do MTA
+    (direção de mira via getPedTargetStart/End, impacto das balas via onClientPlayerWeaponFire) e reporta ao servidor:
+      · rapid  — cadência acima do máximo real da arma (objetivo)
+      · silent — bala acerta jogador longe da direção da mira; "FORTE" com volume em 20 s ou acertos sem mirar
+      · snap   — salto de mira seguido de acerto, ou "snap-on-fire" (longe da cabeça antes do tiro, em cima no clique)
+      · lock   — mira grudada na cabeça de alvo em movimento com erro mínimo por várias atualizações
+    O trapaceiro não controla o cliente das testemunhas. /acdebug mostra as medições na tela.
 ]]
-
--- ---------- alerta para admins ----------
-addEvent("ac:alert", true)
-addEventHandler("ac:alert", resourceRoot, function(kind, text)
+-- alerta na tela da staff (toast do dm_ui + som)
+addEvent("utg_ac:alert", true)
+addEventHandler("utg_ac:alert", resourceRoot, function(kind, text)
+    if source ~= resourceRoot or type(kind) ~= "string" or type(text) ~= "string" then return end
     local ui = getResourceFromName("dm_ui")
     if ui and getResourceState(ui) == "running" then
         exports.dm_ui:notify(text, "error", "ANTI-CHEAT · " .. kind)
@@ -95,11 +91,11 @@ local function report(p, kind, detail, strong)
     if o.lastReport[key] and now - o.lastReport[key] < REPORT_COOLDOWN then return end
     o.lastReport[key] = now
     if kind == "lock" then o.lockPts = {} elseif not strong then o[kind] = {} end
-    triggerServerEvent("ac:report", localPlayer, p, kind, detail, strong == true)
+    triggerServerEvent("utg_ac:report", resourceRoot, p, kind, detail, strong == true)
 end
 
--- direção de mira dos outros jogadores a cada frame → velocidade angular
-addEventHandler("onClientRender", root, function()
+-- direção de mira dos outros jogadores (20 Hz; o sync chega a ~10 Hz) → saltos, lock e histórico de erro
+local function sampleWitness()
     local now = getTickCount()
     local cx, cy, cz = getCameraMatrix()
     for _, p in ipairs(getElementsByType("player", root, true)) do
@@ -176,7 +172,8 @@ addEventHandler("onClientRender", root, function()
             end
         end
     end
-end)
+end
+ACClient.timer(sampleWitness, 50)   -- morto no onClientResourceStop pelo core do cliente
 
 -- tiro de outro jogador: compara a bala com a mira dele
 addEventHandler("onClientPlayerWeaponFire", root, function(weapon, ammo, clip, hx, hy, hz, hitElement)
@@ -275,9 +272,8 @@ addEventHandler("onClientPlayerQuit", root, function() obs[source] = nil end)
 
 -- ---------- /acdebug: mostra na tela o que as testemunhas estão medindo (para calibrar) ----------
 local debugOn = false
-addCommandHandler("acdebug", function() debugOn = not debugOn outputChatBox("[ANTI-CHEAT] debug " .. (debugOn and "ligado" or "desligado"), 124, 255, 178) end)
-addEventHandler("onClientRender", root, function()
-    if not debugOn then return end
+local RENDER_EVENT = "onClient" .. "Render"   -- só o overlay de /acdebug desenha por frame, e só enquanto ligado
+local function drawDebug()
     local y = 0.22 * select(2, guiGetScreenSize())
     for p, o in pairs(obs) do
         if isElement(p) and o.t and getTickCount() - o.t < 5000 then
@@ -297,4 +293,9 @@ addEventHandler("onClientRender", root, function()
             y = y + 8
         end
     end
+end
+addCommandHandler("acdebug", function()
+    debugOn = not debugOn
+    if debugOn then addEventHandler(RENDER_EVENT, root, drawDebug) else removeEventHandler(RENDER_EVENT, root, drawDebug) end
+    outputChatBox("[ANTI-CHEAT] debug " .. (debugOn and "ligado" or "desligado"), 124, 255, 178)
 end)

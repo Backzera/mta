@@ -176,27 +176,25 @@ ou RGB): a silhueta do ped brilha nos ossos, um anel de energia abre no chão e 
 sobem em espiral, pulsam e se dissipam em ~3 s. Tudo em `dm_crates/client/c_fx.lua` (`SOUL_*`), desenhado com
 `dxDrawMaterialLine3D` a partir de `getPedBonePosition`, só para mortes a até 140 m da câmera e na mesma dimensão.
 
-## Anti-cheat (`dm_anticheat`)
+## Anti-cheat (`utg_anticheat`)
 
-Fase 1: **rapid fire**. Tudo no servidor: conta os tiros de cada jogador por arma numa janela de 1 s
-(`onPlayerWeaponFire`) e compara com a cadência máxima real da arma (propriedades `anim_loop_start/stop`,
-nível "pro") com 35% de tolerância (pistolas/shotguns 140%, porque o C-Bug acelera de verdade). Duas violações
-em 60 s marcam o jogador: alerta na tela de todos os admins (toast vermelho + som), log no console do servidor
-e lista em `/ac`. **Três violações em 60 s = ban automático** (permanente, serial + IP, anunciado no chat; admins
-nunca são banidos automaticamente). Para o ban funcionar, uma vez no console do servidor: `aclrequest allow dm_anticheat all`.
+Resource server-side com evidências, score por família, validação de esquema e limite de taxa de todo evento remoto,
+proteção das `elementData` do servidor, inventário conferido contra o loadout da arena, teleporte/speed/hover/noclip,
+screenshots, webhook do Discord, log rotativo (`@audit-N.jsonl`) e tolerâncias para spawn e teleportes legítimos
+(`AUDIT.md`, `TESTING.md`). Roda em **ENFORCE** (`config/settings.lua`).
 
-Fase 2: **aimbot e silent aim por testemunhas** (`client/c_ac.lua`). Cada cliente observa os *outros* jogadores pelo
-sync do MTA: direção da mira (`getPedTargetStart/End`) e ponto de impacto de cada tiro (`onClientPlayerWeaponFire`).
-Silent aim = bala acerta um jogador a mais de 14° da direção da mira (ou qualquer coisa a mais de 30°), 6 vezes em
-30 s. Aimbot = a mira gira a mais de 900°/s (salto > 18°) e até 220 ms depois o tiro acerta um jogador, 5 vezes.
-O trapaceiro não controla o cliente das testemunhas. O servidor cruza os relatos com a **precisão real** (via
-`ac:hit` do dm_weapons: ≥ 85% de acerto e ≥ 75% de headshot nos últimos 40 tiros é impossível sem ajuda).
-**Cabeça do servidor** (`dm_weapons/client/c_damage.lua`): o dano só vale se a mira do atacante, vista pelo sync no
-cliente da vítima, aponta para a parte do corpo atingida (10° de tolerância, 28° a menos de 4 m; pistola/uzi/MP5/tec9
-podem atirar sem mirar). Silent aim redireciona a bala sem mover a mira: o acerto é anulado e 3 anulados em 20 s viram
-relato FORTE. Alerta: 2 testemunhas diferentes, 3 relatos ou precisão impossível. Ban automático: 3 testemunhas, ou 2 testemunhas
-+ precisão impossível. Limiares no topo de cada arquivo. Adicione ao `mtaserver.conf`:
-`<resource src="dm_anticheat" startup="1" protected="0" />`.
+**Testemunhas** (`client/witness.lua`): cada cliente observa os *outros* jogadores pelo sync do MTA (mira via
+`getPedTargetStart/End`, impacto via `onClientPlayerWeaponFire`) e reporta `utg_ac:report`. O trapaceiro não controla
+o cliente das testemunhas, por isso esses relatos são evidência determinística e podem banir (`server/witness.lua`,
+`punishment.lua`, `settings.actions/confirmations`): rapid fire (cadência acima do máximo real da arma) e silent aim
+FORTE (10 balas em jogador > 14° da mira, 5 > 30° ou 3 acertos sem mirar em 20 s) banem com **2 relatos**; aimbot por
+salto/snap-on-fire ou lock (mira grudada na cabeça de alvo em movimento) com **3**. Silent fraco só alerta. Ban
+permanente por serial + IP, anunciado no chat; staff nunca é banida automaticamente. Todo relato vira toast na tela da
+staff (`utg_ac:alert`, via dm_ui) com nível SUSPEITA/FORTE. `/acdebug` mostra as medições; `/acsuspects`, `/acinfo ID`,
+`/acscreenshot ID`, `/acignore ID` para a staff. **Cabeça do servidor** (`dm_weapons/client/c_damage.lua`): o dano só vale
+se a mira do atacante aponta para a parte atingida; acertos anulados (3 em 20 s) viram relato FORTE de silent aim.
+ACL: `aclrequest allow utg_anticheat all` uma vez no console. Startup: `<resource src="utg_anticheat" startup="1" protected="0" />`.
+Testes: `python tests/test_resource.py` dentro da pasta (lupa).
 
 ## Chat
 

@@ -53,7 +53,10 @@ addEventHandler("onClientPlayerDamage", localPlayer, function(attacker, weapon, 
         silentHits[attacker] = list
         if #list >= 3 then
             silentHits[attacker] = {}
-            triggerServerEvent("ac:report", localPlayer, attacker, "silent", "FORTE: 3 acertos anulados em 20 s (" .. why .. ")", true)
+            local ac = getResourceFromName("utg_anticheat")
+            if ac and getResourceState(ac) == "running" then
+                triggerServerEvent("utg_ac:report", getResourceRootElement(ac), attacker, "silent", "FORTE: 3 acertos anulados em 20 s (" .. why .. ")", true)
+            end
         end
         return
     end

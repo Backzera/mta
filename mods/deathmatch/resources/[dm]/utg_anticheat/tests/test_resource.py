@@ -29,8 +29,48 @@ class ResourceTests(unittest.TestCase):
         for script in META.findall("script"):
             if script.attrib["type"] in (side, "shared"):
                 lua.execute((RESOURCE / script.attrib["src"]).read_text(encoding="utf-8"))
+        if side == "server":
+            # A produção roda em ENFORCE (ban automático por testemunhas); os testes partem do modo mais
+            # conservador e ligam ENFORCE explicitamente onde precisam.
+            lua.execute("AntiCheat.settings.debugMode = true; AntiCheat.settings.punishmentMode = 'LOG_ONLY'")
         return lua
 
+    def test_witness_reports_ban_only_with_confirmations_and_never_staff(self):
+        lua = self.runtime()
+        lua.execute("""
+            local ac = AntiCheat
+            ac.settings.debugMode=false; ac.settings.punishmentMode='ENFORCE'
+            getThisResource().rights = true
+            local w1, w2, s = Mock.player(1), Mock.player(2), Mock.player(3)
+            local function report(witness, kind, strong)
+                Mock.emit('utg_ac:report', resourceRoot, witness, nil, s, kind, 'teste', strong)
+            end
+            -- silent fraco: só alerta, nunca bane
+            report(w1, 'silent', false); Mock.advance(2000); report(w2, 'silent', false)
+            assert(Mock.bans==0, 'silent fraco não bane')
+            -- rapid fire: 2 relatos (de qualquer testemunha) banem
+            report(w1, 'rapid', false); assert(Mock.bans==0, 'um relato não bane')
+            Mock.advance(2000); report(w1, 'rapid', false)
+            assert(Mock.bans==1, 'rapid fire deveria banir com 2 relatos')
+            -- silent FORTE: 2 relatos banem
+            local s2 = Mock.player(4)
+            Mock.emit('utg_ac:report', resourceRoot, w1, nil, s2, 'silent', 'FORTE', true); Mock.advance(2000)
+            Mock.emit('utg_ac:report', resourceRoot, w2, nil, s2, 'silent', 'FORTE', true)
+            assert(Mock.bans==2, 'silent forte deveria banir com 2 relatos')
+        """)
+        lua = self.runtime()
+        lua.execute("""
+            local ac = AntiCheat
+            ac.settings.debugMode=false; ac.settings.punishmentMode='ENFORCE'
+            getThisResource().rights = true
+            local w, s = Mock.player(1), Mock.player(2)
+            Mock.staffAccount = 'user.a2'
+            for i = 1, 3 do
+                Mock.emit('utg_ac:report', resourceRoot, w, nil, s, 'rapid', 'teste', false); Mock.advance(2000)
+            end
+            assert(Mock.bans==0, 'staff nunca é banida automaticamente')
+            assert(Mock.remoteCalls>0, 'staff deve receber alerta')
+        """)
     def test_manifest_syntax_and_server_secret_boundary(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         compile_lua = lua.eval("function(s,n) local f,e=loadstring(s,n); return f~=nil,e end")
