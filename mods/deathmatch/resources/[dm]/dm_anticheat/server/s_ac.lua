@@ -119,7 +119,8 @@ end)
 local AIM_REPORT_TTL     = 180000
 local AIM_WITNESSES_ALERT = 2
 local AIM_REPORTS_ALERT   = 3
-local AIM_WITNESSES_BAN   = 3
+local AIM_WITNESSES_BAN   = 3       -- ou 2 testemunhas + precisão impossível, ou 1 testemunha com 4 relatos + precisão
+local AIM_REPORTS_BAN_ACC = 4
 local ACC_MIN_SHOTS       = 40      -- precisão só é avaliada com pelo menos este número de tiros (janela móvel)
 local ACC_HIT_RATIO       = 0.85    -- acertos/tiros impossíveis de sustentar sem ajuda
 local ACC_HS_RATIO        = 0.75    -- headshots/acertos
@@ -175,7 +176,7 @@ local function evaluateAim(suspect, kind, latestDetail)
     local id = tonumber(getElementData(suspect, "dm:id")) or 0
     local text = ("%s [%d] · %s · %d testemunha(s), %d relato(s)%s"):format(name, id, latestDetail or "", nWit, total, badAcc and (" · " .. accText) or "")
     local isAdmin = core:isPlayerAdmin(suspect)
-    if (nWit >= AIM_WITNESSES_BAN or (nWit >= AIM_WITNESSES_ALERT and badAcc)) and AUTOBAN and not isAdmin then
+    if (nWit >= AIM_WITNESSES_BAN or (nWit >= AIM_WITNESSES_ALERT and badAcc) or (total >= AIM_REPORTS_BAN_ACC and badAcc)) and AUTOBAN and not isAdmin then
         aimReports[suspect] = {}
         local reason = ("Anti-cheat: %s (%d testemunhas%s)"):format(KIND_NAME[kind], nWit, badAcc and ", " .. accText or "")
         outputServerLog(("[ANTI-CHEAT] BAN AUTOMÁTICO: %s serial %s ip %s — %s"):format(name, getPlayerSerial(suspect), getPlayerIP(suspect), reason))
@@ -183,13 +184,16 @@ local function evaluateAim(suspect, kind, latestDetail)
         if #admins > 0 then triggerClientEvent(admins, "ac:alert", resourceRoot, "BAN AUTOMÁTICO", name .. " · " .. reason, suspect) end
         outputChatBox(("#FF4D6D⚠ #FFFFFF%s #8FA39Afoi banido pelo anti-cheat: #FF4D6D%s"):format(name, KIND_NAME[kind]:lower()), root, 255, 255, 255, true)
         if not banPlayer(suspect, true, false, true, nil, reason, 0) then kickPlayer(suspect, reason) end
-    elseif nWit >= AIM_WITNESSES_ALERT or total >= AIM_REPORTS_ALERT or badAcc then
+    else
+        -- qualquer relato já alerta os admins (1 testemunha = "suspeita"; 2+ testemunhas ou precisão = "forte")
         if lastAlert[suspect] and now - lastAlert[suspect] < ALERT_COOLDOWN then return end
         lastAlert[suspect] = now
-        flagged[suspect] = { text = KIND_NAME[kind] .. " · " .. text, t = now, count = (flagged[suspect] and flagged[suspect].count or 0) + 1 }
-        outputServerLog(("[ANTI-CHEAT] %s: %s (serial %s)"):format(KIND_NAME[kind], text, getPlayerSerial(suspect)))
+        local level = (nWit >= AIM_WITNESSES_ALERT or total >= AIM_REPORTS_ALERT or badAcc) and "FORTE" or "SUSPEITA"
+        local title = KIND_NAME[kind] .. " · " .. level
+        flagged[suspect] = { text = title .. " · " .. text, t = now, count = (flagged[suspect] and flagged[suspect].count or 0) + 1 }
+        outputServerLog(("[ANTI-CHEAT] %s: %s (serial %s)"):format(title, text, getPlayerSerial(suspect)))
         local admins = adminsOnline()
-        if #admins > 0 then triggerClientEvent(admins, "ac:alert", resourceRoot, KIND_NAME[kind], text, suspect) end
+        if #admins > 0 then triggerClientEvent(admins, "ac:alert", resourceRoot, title, text, suspect) end
     end
 end
 

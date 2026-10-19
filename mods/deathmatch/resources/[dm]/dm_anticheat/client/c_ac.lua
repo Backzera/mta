@@ -27,11 +27,12 @@ end)
 -- ---------- testemunha ----------
 local SILENT_ANGLE_HIT   = 14      -- graus: bala em jogador fora da direção da mira (tolerância ao lag do sync)
 local SILENT_ANGLE_FAR   = 30      -- graus: bala em qualquer coisa muito fora da mira
-local SNAP_DEG_PER_S     = 900     -- velocidade angular da mira considerada "salto" (humano forte ≈ 300–500°/s)
-local SNAP_WINDOW_MS     = 220     -- o tiro que acerta tem de vir até este tempo depois do salto
+local SNAP_DEG           = 22      -- salto de mira (graus) entre duas atualizações de sync (~100 ms) considerado suspeito
+local SNAP_MAX_DT        = 260     -- ms: só vale se as duas atualizações forem próximas (sync normal)
+local SNAP_WINDOW_MS     = 320     -- o tiro que acerta tem de vir até este tempo depois do salto
 local MAX_DIST           = 90      -- só observa suspeitos a até esta distância da câmera
-local REPORT_SILENT      = 6       -- pontos para reportar (pontos decaem com o tempo)
-local REPORT_SNAP        = 5
+local REPORT_SILENT      = 5       -- pontos para reportar (pontos decaem com o tempo)
+local REPORT_SNAP        = 4
 local DECAY_MS           = 30000
 local REPORT_COOLDOWN    = 15000
 local WATCHED = { [22]=true,[23]=true,[24]=true,[25]=true,[26]=true,[27]=true,[28]=true,[29]=true,[30]=true,[31]=true,[32]=true,[33]=true,[34]=true,[38]=true }
@@ -78,11 +79,12 @@ addEventHandler("onClientRender", root, function()
                 if dx then
                     local o = observed(p)
                     if o.dx and o.t then
-                        local dt = (now - o.t) / 1000
-                        if dt > 0.004 then
-                            local ang = angleBetween(o.dx, o.dy, o.dz, dx, dy, dz)
-                            o.angSpeed = ang / dt
-                            if o.angSpeed > SNAP_DEG_PER_S and ang > 18 then o.lastSnap = now o.snapDeg = ang end
+                        local ang = angleBetween(o.dx, o.dy, o.dz, dx, dy, dz)
+                        if ang > 0.5 then   -- só conta quando o sync realmente atualizou a mira
+                            local dtms = now - (o.tUpd or o.t)
+                            o.lastAng, o.lastDt = ang, dtms
+                            if ang >= SNAP_DEG and dtms <= SNAP_MAX_DT then o.lastSnap = now o.snapDeg = ang end
+                            o.tUpd = now
                         end
                     end
                     o.dx, o.dy, o.dz, o.t = dx, dy, dz, now
@@ -106,6 +108,11 @@ addEventHandler("onClientPlayerWeaponFire", root, function(weapon, ammo, clip, h
     if dist < 2 then return end   -- muito perto: ângulos ficam instáveis
     local hitPlayer = isElement(hitElement) and getElementType(hitElement) == "player"
     local ang = angleBetween(o.dx, o.dy, o.dz, bx, by, bz)
+    local snapRecent = o.lastSnap and now - o.lastSnap <= SNAP_WINDOW_MS
+    o.log = o.log or {}
+    table.insert(o.log, 1, ("%s %s desvio %.0f° %s%s"):format(getWeaponNameFromID(weapon) or weapon, hitPlayer and "ACERTOU jogador" or "errou",
+        ang, snapRecent and ("SALTO " .. math.floor(o.snapDeg or 0) .. "° ") or "", ("sil %d/%d snap %d/%d"):format(#o.silent, REPORT_SILENT, #o.snap, REPORT_SNAP)))
+    while #o.log > 6 do table.remove(o.log) end
 
     -- SILENT AIM: bala em jogador longe da direção da mira
     if (hitPlayer and ang > SILENT_ANGLE_HIT) or ang > SILENT_ANGLE_FAR then
@@ -116,7 +123,7 @@ addEventHandler("onClientPlayerWeaponFire", root, function(weapon, ammo, clip, h
         end
     end
     -- AIMBOT (snap): salto brusco de mira seguido de tiro que acerta jogador
-    if hitPlayer and o.lastSnap and now - o.lastSnap <= SNAP_WINDOW_MS then
+    if hitPlayer and snapRecent then
         o.lastSnap = nil
         prune(o.snap, now)
         o.snap[#o.snap + 1] = now
@@ -127,3 +134,20 @@ addEventHandler("onClientPlayerWeaponFire", root, function(weapon, ammo, clip, h
 end)
 
 addEventHandler("onClientPlayerQuit", root, function() obs[source] = nil end)
+
+-- ---------- /acdebug: mostra na tela o que as testemunhas estão medindo (para calibrar) ----------
+local debugOn = false
+addCommandHandler("acdebug", function() debugOn = not debugOn outputChatBox("[ANTI-CHEAT] debug " .. (debugOn and "ligado" or "desligado"), 124, 255, 178) end)
+addEventHandler("onClientRender", root, function()
+    if not debugOn then return end
+    local y = 0.22 * select(2, guiGetScreenSize())
+    for p, o in pairs(obs) do
+        if isElement(p) and o.t and getTickCount() - o.t < 5000 then
+            local name = getPlayerName(p):gsub("#%x%x%x%x%x%x", "")
+            dxDrawText(("%s  mira: Δ%.0f° em %d ms  %s"):format(name, o.lastAng or 0, o.lastDt or 0, (o.lastSnap and getTickCount() - o.lastSnap < 1000) and "<< SALTO" or ""), 22, y, 0, 0, tocolor(124, 255, 178), 1.1, "default-bold")
+            y = y + 18
+            for _, line in ipairs(o.log or {}) do dxDrawText(line, 34, y, 0, 0, tocolor(230, 230, 230), 1, "default") y = y + 16 end
+            y = y + 8
+        end
+    end
+end)
